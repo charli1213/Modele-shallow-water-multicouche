@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#PBS -l walltime=120:00:00
+#PBS -l nodes=1:ppn=38
+#PBS -l mem=75gb
+#PBS -j oe
+#PBS -r n
+#PBS -N REC11Tau0.10SSTEE
+#       ################
+
+#### -q celiz2
+
+
+# GETTING HERE : 
+cd $PBS_O_WORKDIR
+
+# LOADING MODULES :
+module load intel/compilateurs
+module load intel/openmpi
+module load netcdf/ifort
+#module load rocks-openmpi
+#module load gcc/4.9.2
+#module load openmpi/2.0.1-gcc-4.9.2_knem
+module load dot
+
+mpirun -np 37 ww3_shel : -np 1 ./exec > textfile.txt
+

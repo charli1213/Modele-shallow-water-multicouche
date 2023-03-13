@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#PBS -l walltime=120:00:00
+#PBS -l nodes=1:ppn=5
+#PBS -j oe
+#PBS -r n
+#PBS -N nxNNN_DTTT_Tau01max_SW
+
+# launcher of the CLASSICAL SW model.
+
+
+# GETTING HERE : 
+cd $PBS_O_WORKDIR
+
+# LOADING MODULES :
+module load intel/compilateurs
+module load intel/openmpi
+module load netcdf/ifort
+module load dot
+
+mpirun -np 1 ./exec > textfile.txt

@@ -1,0 +1,69 @@
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+
+nx         = int(200)
+ny         = nx
+nt         = 79
+cube_data1top = np.zeros((nt,nx,ny))
+cube_data1bot = np.zeros((nt,nx,ny))
+cube_data2top = np.zeros((nt,nx,ny))
+cube_data2bot = np.zeros((nt,nx,ny))
+string1     = 'ww3'
+string2     = 'ww3'
+
+for it in range(1,nt+1) :
+    if it<10 :
+        t_matrix1 = np.fromfile('{}_10000{}'.format(string1,it), 'float32').reshape(2,nx,ny)
+        t_matrix2 = np.fromfile('{}_10000{}'.format(string2,it), 'float32').reshape(2,nx,ny)
+    elif it<100 :
+        t_matrix1 = np.fromfile('{}_1000{}'.format(string1,it), 'float32').reshape(2,nx,ny)
+        t_matrix2 = np.fromfile('{}_1000{}'.format(string2,it), 'float32').reshape(2,nx,ny)
+    elif it<1000 :
+        t_matrix1 = np.fromfile('{}_100{}'.format(string1,it), 'float32').reshape(2,nx,ny)
+        t_matrix2 = np.fromfile('{}_100{}'.format(string2,it), 'float32').reshape(2,nx,ny)
+    elif it<10000 :
+        t_matrix1 = np.fromfile('{}_10{}'.format(string1,it), 'float32').reshape(2,nx,ny)
+        t_matrix2 = np.fromfile('{}_10{}'.format(string2,it), 'float32').reshape(2,nx,ny)
+    else :
+        t_matrix1 = np.fromfile('{}_1{}'.format(string1,it), 'float32').reshape(2,nx,ny)
+        t_matrix2 = np.fromfile('{}_1{}'.format(string2,it), 'float32').reshape(2,nx,ny)
+
+    iit = it-1
+    cube_data1top[iit,:,:] = t_matrix1[0,:,:]
+    cube_data1bot[iit,:,:] = t_matrix1[1,:,:]
+    cube_data2top[iit,:,:] = t_matrix2[0,:,:]
+    cube_data2bot[iit,:,:] = t_matrix2[1,:,:]
+    
+time_array = np.linspace(0,nt-1,nt)
+x_array    = np.linspace(0,nx-1,nx)
+y_array    = np.linspace(0,ny-1,ny)
+
+da1 = xr.DataArray(cube_data1top, coords = [time_array,x_array,y_array], dims = ['time','x','y'])
+da2 = xr.DataArray(cube_data1bot, coords = [time_array,x_array,y_array], dims = ['time','x','y'])
+
+da3 = xr.DataArray(cube_data2top, coords = [time_array,x_array,y_array], dims = ['time','x','y'])
+da4 = xr.DataArray(cube_data2bot, coords = [time_array,x_array,y_array], dims = ['time','x','y'])
+
+def eke(ds) :
+    return np.square(ds.ucur-ds.ucur.mean('y')) + np.square(ds.vcur-ds.vcur.mean('y'))
+
+#if __name__ == '__main__' :
+    # Showing EKE. 
+    #top_KE = (np.square(da1)+np.square(da3)).mean(['x','y'])
+    #top_KE.plot(label='Couche superieure')
+    #bot_KE = (np.square(da2)+np.square(da4)).mean(['x','y'])
+    #bot_KE.plot(label='Couche inferieure')
+    #top_EKE = np.square(da1-da1.mean('y')) + np.square(da3-da3.mean('y'))
+    #bot_EKE = np.square(da2-da2.mean('y')) + np.square(da4-da4.mean('y'))
+    #da1.mean(['x','y']).plot(label='Couche superieure')
+    #da2.mean(['x','y']).plot(label='Couche inferieure')
+    #top_EKE.mean(['x','y']).plot(label='Couche superieure')
+    #bot_EKE.mean(['x','y']).plot(label='Couche inferieure')
+    #plt.legend()
+    #plt.ylabel(r'$u^2+v^2$')
+    #plt.title('EKE')
+    #plt.tight_layout()
+    #plt.show()
+    #print('ayoye')
+    
