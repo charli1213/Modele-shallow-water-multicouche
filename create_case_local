@@ -1,0 +1,16 @@
+#!/bin/bash
+
+data_path=$PATH_SLAB_MODEL
+echo "Model path is ${data_path}"
+#case_dir=/share/work/celiz2/MPI_learning/Slab
+case_dir=/share/work/celiz2/MPI_learning/Field_npi1_wndperiod8_step0.3
+read -p "Is your case directory ${case_dir}? (yes/no)" answer
+
+
+if [ "${answer}" == "yes" ] 
+then
+    mkdir ${case_dir}
+    mkdir ${case_dir}/data ${case_dir}/specdata ${case_dir}/rst
+    cp ./kxky* ${case_dir} 
+    cp  ./parameters_copy.f90 ${case_dir}/parameters.f90 
+fi
