@@ -10,11 +10,11 @@
         im = i-1
 
         ! W : 
-        zeta_stokes(i,j) = (Vst(i,jm,1) - Vst(im,j,1))/dy &
-             &           - (Ust(i,j,1) - Ust(i,jm,1))/dx
+        zeta_stokes(i,j) = (VStokes(i,jm,1) - VStokes(im,j,1))/dy &
+             &           - (UStokes(i,j,1) - UStokes(i,jm,1))/dx
 
-        div_stokes(i,j) = (Ust(ip,j,1) - Ust(i,j,1))/dx &
-             &          + (Vst(i,jp,1) - Vst(i,j,1))/dy
+        div_stokes(i,j) = (UStokes(ip,j,1) - UStokes(i,j,1))/dx &
+             &          + (VStokes(i,jp,1) - VStokes(i,j,1))/dy
      end do
   end do
 

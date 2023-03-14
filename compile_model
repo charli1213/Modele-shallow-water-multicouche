@@ -1,0 +1,54 @@
+#!/bin/bash
+#read -p "Enter case folder name:  " ${case}
+# "case" is the place workdir directory in a sence.
+
+read -p "!! Enter machine: 0) Oxygen with scratch; 1) local mac with scratch; 2) ptz-poisson; 3) mac_solo; 4) mingan; 5) My computer" pcid
+#read pcid
+if [ "${pcid}" == "0" ]
+then 
+    machine_name=Oxygen
+    fftw_path=/share/apps/fftw/3.3.4
+    data_path=/scratch/tpeng/
+elif [ "${pcid}" == "1" ] 
+then
+    machine_name=mac_scratch_mounted
+    fftw_path=/share/apps/fftw/3.3.4
+    data_path=/Volumes/scratch/
+elif [ "${pcid}" == "2" ] 
+then
+    machine_name=ptz-poisson
+    fftw_path=/usr/include
+    data_path=./
+elif [ "${pcid}" == "3" ] 
+then
+    machine_name=mac_solo
+    fftw_path=/usr/local/include
+    data_path=./
+elif [ "${pcid}" == "4" ] 
+then
+    machine_name=mingan
+    fftw_path=/share/apps/fftw/3.3.4
+    data_path=$PATH_SLAB_MODEL
+    # Which case : 
+    case=/share/work/celiz2/MPI_learning/CLASSIQUE_2pi_init
+    #case=/share/work/celiz2/MPI_learning/SW_after
+    #case=/share/work/celiz2/MPI_learning/COU_2pi_init
+elif [ "${pcid}" == "5" ] 
+then
+    machine_name=Bepsi
+    fftw_path=/usr/share/doc/libfftw3-bin/
+    data_path=./
+    # Which case : 
+    case=~/Desktop/Modele-shallow-water-multicouche/testcase
+    #case=/share/work/celiz2/MPI_learning/SW_after
+    #case=/share/work/celiz2/MPI_learning/COU_2pi_init
+
+fi
+echo "!! ${pcid} was selected"
+echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
+cp "${data_path}/parameters.f90" "${case}/."
+echo "!! Parameters file copied from ${data_path} to ${case}"
+#mpiifort -O3 -o  $case/exec $data_path/main.f90  -L$fftw_path -lfftw3
+gfortran -o  $case/exec $data_path/main.f90  -L$fftw_path -lfftw3 
+mv ${case}/parameters.f90 ${case}/parameters.f90_last_compiled
+echo "!! Compilation of $case completed on the computer $machine_name "

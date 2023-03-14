@@ -108,31 +108,31 @@
   include 'subs/bndy_large.f90'
   Tstokes(:,:,2) = large_array
 
-  Ust(:,:,2) = 0
-  Vst(:,:,2) = 0
+  UStokes(:,:,2) = 0
+  VStokes(:,:,2) = 0
 
   ! On interpole même si stokes == .false. pour faire des diagnostiques.
   do i = 1,nx
      do j = 1,ny
         im = i-1
         jm = j-1
-        Ust(i,j,2)  = 0.5*(Tstokes(i+int(nghost/2),j,1) &
+        UStokes(i,j,2)  = 0.5*(Tstokes(i+int(nghost/2),j,1) &
              &           + Tstokes(im+int(nghost/2),j,1))
-        Vst(i,j,2)  = 0.5*(Tstokes(i+int(nghost/2),j,2) &
+        VStokes(i,j,2)  = 0.5*(Tstokes(i+int(nghost/2),j,2) &
              &           + Tstokes(i+int(nghost/2),jm,2))
      end do
   end do
   
   ! Finding slope in Stokes transport such that
-  ! Ust(ix,:) = (ast)*ix + mean_x(Ust(ix,:)) + bst
+  ! UStokes(ix,:) = (ast)*ix + mean_x(UStokes(ix,:)) + bst
   delta_xtau(:) = (taux_ocean(nx,1:ny,2)-taux_ocean(1,1:ny,2))
   delta_ytau(:) = (tauy_ocean(nx,1:ny,2)-tauy_ocean(1,1:ny,2))
   a_xtau(:)     = delta_xtau(:)/(nx-1)
   a_ytau(:)     = delta_ytau(:)/(nx-1)
 
   
-  delta_ust(:) = (Ust(nx,1:ny,2)-Ust(1,1:ny,2))
-  delta_vst(:) = (Vst(nx,1:ny,2)-Vst(1,1:ny,2))
+  delta_ust(:) = (UStokes(nx,1:ny,2)-UStokes(1,1:ny,2))
+  delta_vst(:) = (VStokes(nx,1:ny,2)-VStokes(1,1:ny,2))
   a_ust(:)     = delta_ust(:)/(nx-1)
   a_vst(:)     = delta_vst(:)/(nx-1)
   
@@ -141,13 +141,13 @@
      im = i-1
      taux_ocean(i,1:ny,2) = taux_ocean(i,1:ny,2) - a_xtau(:)*im + delta_xtau(:)/2
      tauy_ocean(i,1:ny,2) = tauy_ocean(i,1:ny,2) - a_ytau(:)*im + delta_ytau(:)/2     
-     Ust(i,1:ny,2) = alpha(i,1:ny)*(Ust(i,1:ny,2) - a_ust(:)*im + delta_ust(:)/2)
-     Vst(i,1:ny,2) = alpha(i,1:ny)*(Vst(i,1:ny,2) - a_vst(:)*im + delta_vst(:)/2)
+     UStokes(i,1:ny,2) = alpha(i,1:ny)*(UStokes(i,1:ny,2) - a_ust(:)*im + delta_ust(:)/2)
+     VStokes(i,1:ny,2) = alpha(i,1:ny)*(VStokes(i,1:ny,2) - a_vst(:)*im + delta_vst(:)/2)
   end do
   
-  array = Ust(:,:,2)
+  array = UStokes(:,:,2)
   include 'subs/bndy.f90'
-  Ust(:,:,2) = array
-  array = Vst(:,:,2)
+  UStokes(:,:,2) = array
+  array = VStokes(:,:,2)
   include 'subs/bndy.f90'
-  Vst(:,:,2) = array
+  VStokes(:,:,2) = array

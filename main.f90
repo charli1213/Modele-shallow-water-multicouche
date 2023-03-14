@@ -21,14 +21,13 @@
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_ek, IO_coupling
       !
-      ! Defining WAVEWATCH III coupling variables !
+      ! >>> Defining WAVEWATCH III coupling variables >>>
       LOGICAL slab_layer, cou, wind_top, wind_slab, ustar, waves, stokes
       REAL tau_max, step
-      LOGICAL :: oldfile
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
       CHARACTER(80) :: err_str
       INTEGER :: MPI_SECOND
-      ! Defining WAVEWATCH III coupling variables (End) !
+      ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
       include 'parameters.f90'
       parameter( ntsrow=itape/ispechst  )! how many lines for a time series table (e.g. spectrum)   
@@ -46,9 +45,10 @@
 
       program main
       use data_initial
-      USE MPI 
+      !USE MPI 
       implicit none
-      ! ### --- Modification CEL --- 
+      !
+      ! >>> Modification CEL >>>
       ! Coupling terms diagnostic quantities. 
       REAL :: rhsu_CL(0:nnx,0:nny),rhsu_SC(0:nnx,0:nny), rhsu_B_stokes(0:nnx,0:nny)
       REAL :: rhsv_CL(0:nnx,0:nny),rhsv_SC(0:nnx,0:nny), rhsv_B_stokes(0:nnx,0:nny)
@@ -65,7 +65,7 @@
       REAL :: taux_ust(0:nnx,0:nny), tauy_ust(0:nnx,0:nny)
       REAL :: taux_waves(0:nnx,0:nny), tauy_waves(0:nnx,0:nny)
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
-      REAL :: Ust(0:nnx,0:nny,2), Vst(0:nnx,0:nny,2),B_St(0:nnx,0:nny)
+      REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2),B_St(0:nnx,0:nny)
       REAL :: large_array(0:nnx+nghost,0:nny) ! See bndy_large.f90
       REAL :: a_ust(1:ny),a_vst(1:ny)! y=(a_u/vst)x+b
       REAL :: a_xtau(1:ny),a_ytau(1:ny)
@@ -105,8 +105,8 @@
       REAL :: div_SC(0:nnx,0:nny),rot_SC(0:nnx,0:nny)
       REAL :: div_SC_snap(0:nnx,0:nny),rot_SC_snap(0:nnx,0:nny)
       REAL :: div_SC_filtered(0:nnx,0:nny),rot_SC_filtered(0:nnx,0:nny)
-      
-      ! ### --- Modification CEL (END) --- 
+      ! ### <<< Modification CEL (END) <<<
+      !
       REAL :: sl, ed
       real ran2
       real u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3), eta(0:nnx,0:nny,nz,3)
@@ -152,8 +152,8 @@
       real zeta1_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real div_ek_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta_ek_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: Ust_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: Vst_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: UStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: VStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
       REAL :: taux_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
       REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
       ! ### --- Modification CEL --- 
@@ -230,34 +230,34 @@
       include 'fftw_stuff/fft_params.f90'
       include 'fftw_stuff/fft_init.f90'
 
-      ! ### --- Modification CEL --- 
-      IF (cou) THEN
+      ! >>> Modification CEL >>>
+      !IF (cou) THEN
          ! --- Creating zonal alpha window (North/South continuity) --- !
-         DO i=1,nx
-            DO j=1,ny
-               IF (j .le. 64) THEN
-                  alpha(i,j) = 1.-((real(j)-64.)/64.)**2
-               ELSE IF (j .ge. 448) THEN
-                  alpha(i,j) = 1.-((real(j)-448.)/64.)**2
-               ELSE 
-                  alpha(i,j) = 1.
-               ENDIF
-            ENDDO
-         ENDDO
+         !DO i=1,nx
+            !DO j=1,ny
+               !IF (j .le. 64) THEN
+                  !alpha(i,j) = 1.-((real(j)-64.)/64.)**2
+               !ELSE IF (j .ge. 448) THEN
+                  !alpha(i,j) = 1.-((real(j)-448.)/64.)**2
+               !ELSE 
+                  !alpha(i,j) = 1.
+               !ENDIF
+            !ENDDO
+         !ENDDO
          
          !  --- Starting MPI --- !!!
-         CALL MPI_INIT(ierror)
-         CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
-         CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
-         PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
+         !CALL MPI_INIT(ierror)
+         !CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
+         !CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
+         !PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
          
          ! --- Splitting MPI because WW3 is dumb
-         CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
-         CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
-         CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
-         PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
-      END IF
-      ! ### Modification CEL (END) --- !
+         !CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
+         !CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
+         !CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
+         !PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
+      !END IF
+      ! <<< Modification CEL (END) <<<
 
       
       ! === Complex number i
@@ -312,7 +312,7 @@
       include 'subs/initialize_forcing.f90'
 
 
-      if(restart==.false.)   nspecfile=0
+      if(restart .eqv. .false.)   nspecfile=0
       write(*,*) 'iout,ispechst,ntsrow',iout,ispechst,ntsrow
       
       call get_taux(taux_steady,amp_matrix(its),taux)
@@ -332,26 +332,27 @@
       endif
 
 
-
-      ! #################### Modification CEL ################# !
+      !
+      ! >>> Modification CEL >>>
       ! --- FIRST MPI CALL HERE. 
       ! Receiving first  Wavewatch atmospheric stresses here.
-      IF (cou) THEN
-         ! --- Coupling
-         its = 1
-         include 'subs/coupling_ww3.f90'
+      !IF (cou) THEN
+      !   ! --- Coupling
+      !   its = 1
+      !   include 'subs/coupling_ww3.f90'
 
-         ! ... then forgetting them to keep our restart files. 
-         Ust(:,:,2) = Ust(:,:,1) 
-         Vst(:,:,2) = Vst(:,:,1) 
-         taux_ocean(:,:,2) = taux_ocean(:,:,1)
-         tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
-      END IF
-      ! ################# Modification CEL (END) ############## !
+      !   ! ... then forgetting them to keep our restart files. 
+      !   UStokes(:,:,2) = UStokes(:,:,1) 
+      !   VStokes(:,:,2) = VStokes(:,:,1) 
+      !   taux_ocean(:,:,2) = taux_ocean(:,:,1)
+      !   tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
+      !END IF
+      ! <<< Modification CEL (END) <<<.
+      !
       
 
 
-      ! #################### Modification CEL ################# !
+      ! >>> Modification CEL >>>
       ! --- Choosing between slab layer or traditionnal wind input 
       if (slab_layer) then
          uu(:,:) = Uek(:,:,1)
@@ -368,8 +369,8 @@
          rhs_Uek(:,:) = 0
          rhs_Vek(:,:) = 0
       endif
-      ! ################# Modification CEL (END) ############## !
-
+      ! <<< Modification CEL (END) <<<
+      !
 
 
       pressure(:,:) =  0.
@@ -379,17 +380,20 @@
          uu_old(:,:) = u(:,:,k,1) 
          vv_old(:,:) = v(:,:,k,1)
 
-         ! Modification CEL : Random noise
-         if (restart .eq. .false.) then
+         !!
+         ! >>> Modification CEL : Random noise >>>
+         if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
             uu(:,:) = uu(:,:)/100.
             CALL RANDOM_NUMBER(vv)
             vv(:,:) = vv(:,:)/100.
          endif
+         ! <<< Modification CEL (End) <<<
+         !
          
          if (k.eq.1) then
             thickness(:,:) = H(k) - eta(:,:,k+1,1) 
-         elseif (k.eq.nz) then
+         else if (k.eq.nz) then
             pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,1) 
             thickness(:,:) = H(k) + eta(:,:,k,1)
          else
@@ -477,17 +481,18 @@
 
 
 
-         
-         ! #################### Modification CEL ################# !
+         !
+         ! >>> Modification CEL >>>
          ! --- SUBSEQUENT MPI CALL HERE. 
-         IF (cou) THEN
-            include 'subs/coupling_ww3.f90'
-         END IF
-         ! #################### Modification CEL ################# !
+         !IF (cou) THEN
+         !   include 'subs/coupling_ww3.f90'
+         !END IF
+         ! <<< Modification CEL <<<
+         !
          
 
-         
-         ! ### --- Modification CEL ---
+         !
+         ! >>> Modification CEL >>>
          ! Slab layer activation here. 
          if (slab_layer) then
             uu(:,:) = Uek(:,:,2)
@@ -503,8 +508,8 @@
             rhs_Uek(:,:) = 0
             rhs_Vek(:,:) = 0
          endif
-         ! ### --- Modification CEL (END) ---
-
+         ! <<< Modification CEL (END) <<<
+         !
 
          
          pressure(:,:) =  0.
@@ -516,7 +521,7 @@
 
             if (k.eq.1) then
                thickness(:,:) = H(k) - eta(:,:,k+1,2) 
-            elseif (k.eq.nz) then
+            else if (k.eq.nz) then
                pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2)
             else
@@ -593,7 +598,7 @@
          enddo
          enddo      
 
-         write(300,'(i6,1f12.4,3e12.4)'),its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
+         write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
          if(nsteps.lt.start_movie.and.save_movie) then
@@ -606,7 +611,7 @@
 
          !start diognostics
 
-         ! CEL Modifications
+         ! >>> CEL Modifications >>>
          !
          if (cou) then
             tstart  = 20.*86400. ! 20 days
@@ -622,7 +627,7 @@
          if (time.ge.tstart) then
             include 'subs/weight_function.f90'
          endif
-         ! CEL Modifications
+         ! <<< CEL Modifications <<<
          
          
          if ( its .gt. min(start_movie,start_spec) ) then
@@ -841,7 +846,7 @@ FUNCTION gasdev(idum)
       real,intent(out)::taux_out(0:nnx,0:nny)
       if (forcingtype==0) then
          taux_out(:,:) = taux_steady_in(:,:) +  c_tauvar*tau0*amp_in
-      elseif(forcingtype==1) then
+      else if(forcingtype==1) then
          taux_out(:,:) = taux_steady_in(:,:)*(1.+amp_in)
       endif
    end subroutine
@@ -864,7 +869,7 @@ FUNCTION gasdev(idum)
                ! inferred v at eta-grid from v-grid (going upward)
                array(1:nx,1:ny)= 0.5*(array1(1:nx,1:ny)+array1(1-dirx:nx-dirx,1-diry:ny-diry))
                include 'subs/bndy.f90'
-            elseif (dirx*diry.ne.0) then
+            else if (dirx*diry.ne.0) then
                array(1:nx,1:ny)= 0.25*(array1(1:nx,1:ny)+array1(1+dirx:nx+dirx,1:ny)+ &
                &              array1(1:nx,1+diry:ny+diry)+array1(1+dirx:nx+dirx,1+diry:ny+diry))
                include 'subs/bndy.f90'

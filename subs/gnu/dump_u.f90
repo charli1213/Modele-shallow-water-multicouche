@@ -3,27 +3,27 @@
 
        string1 = 'data/Uek_lp' ! // '_' // which(1:3)
        open(11, file = string1, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string2 = 'data/Uek_snap' ! // '_' // which(1:3)
        open(12, file = string2, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string3 = 'data/u1_lp' ! // '_' // which(1:3)
        open(13, file = string3, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string4 = 'data/u1_snap'  !// '_' // which(1:3)
        open(14, file = string4, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string5 = 'data/u2_lp' ! // '_' // which(1:3)
        open(15, file = string5, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string6 = 'data/u2_snap'  !// '_' // which(1:3)
        open(16, file = string6, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        !!!string6 = 'data/u1_A1'  !// '_' // which(1:3)
        !!!open(16, file = string6, status = 'UNKNOWN')

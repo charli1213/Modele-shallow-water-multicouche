@@ -62,8 +62,8 @@
        rhsv_CL(:,:) = 0.
        rhsu_B_stokes(:,:) = 0.
        rhsv_B_stokes(:,:) = 0.
-       Ust(:,:,:) = 0.
-       Vst(:,:,:) = 0.
+       UStokes(:,:,:) = 0.
+       VStokes(:,:,:) = 0.
   ! --- Lowpass
        w_ek(:,:) = 0.
        rot_CL(:,:) = 0.
@@ -142,29 +142,23 @@
             
          end if
          
-       array = eta(:,:,1,1)
-       include 'subs/bndy.f90'
-       eta(:,:,1,1) = array
+         array = eta(:,:,1,1)
+         include 'subs/bndy.f90'
+         eta(:,:,1,1) = array
 
-       else !if restart
-          open(0,file='restart')
+      else !if restart
+         open(0,file='restart')
           do j = 0,nny
           do i = 0,nnx
-             if (oldfile .eq. .false.) then
-                read(0,*) Uek(i,j,1),Vek(i,j,1),u(i,j,1,1), &
-                     &      u(i,j,2,1),v(i,j,1,1),v(i,j,2,1), &
-                     &      eta(i,j,2,1), &
-                     &      Ust(i,j,1),Vst(i,j,1), & ! Modification CE
-                     &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
-             ELSE
-                read(0,*) Uek(i,j,1),Vek(i,j,1),u(i,j,1,1), &
-                     &      u(i,j,2,1),v(i,j,1,1),v(i,j,2,1), &
-                     &      eta(i,j,2,1)
-             ENDIF
+             read(0,*) Uek(i,j,1),Vek(i,j,1),u(i,j,1,1),       &
+                  &      u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),     &
+                  &      eta(i,j,2,1),                         &
+                  &      UStokes(i,j,1),VStokes(i,j,1),        &
+                  &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
           enddo
           enddo
-          read(0,*) icount_srt,time,nspecfile,iftcount_srt
-          close(0)
+         read(0,*) icount_srt,time,nspecfile,iftcount_srt
+         close(0)
          restart_from=time/86400
          print*, 'Restart from', restart_from, 'day'
  
@@ -201,7 +195,7 @@
 
 !         eta(:,:,1,:) = 0.
 
-       endif  ! --- restart
+      endif  ! --- restart
 
 
 !

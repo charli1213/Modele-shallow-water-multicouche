@@ -58,28 +58,28 @@
 
        
        ! === Calcutating Bernouilli-Stokes.
-       ! B_st = (Ust*Ust/hek + 2 uu*Ust/hek + 2*uu1*Ust) [(m/s)*(m^2/s)]
+       ! B_st = (UStokes*UStokes/hek + 2 uu*UStokes/hek + 2*uu1*UStokes) [(m/s)*(m^2/s)]
        if (stokes) then
-          array = Ust(:,:,2)
+          array = UStokes(:,:,2)
           include 'subs/bndy.f90'
-          Ust(:,:,2) = array
-          array = Vst(:,:,2)
+          UStokes(:,:,2) = array
+          array = VStokes(:,:,2)
           include 'subs/bndy.f90'
-          Vst(:,:,2) = array
+          VStokes(:,:,2) = array
        do j = 1,ny
        do i = 1,nx
-          B_St(i,j) = (0.5/hek)*(0.5)*( Ust(i,j,2)*Ust(i,j,2)          &
-                    &                 + Ust(i+1,j,2)*Ust(i+1,j,2)      &
-                    &                 + Vst(i,j,2)*Vst(i,j,2)          &
-                    &                 + Vst(i,j+1,2)*Vst(i,j+1,2) )    &
-                    & + (0.5/hek)*( uu(i,j)*Ust(i,j,2)                 &
-                    &             + uu(i+1,j)*Ust(i+1,j,2)             &
-                    &             + vv(i,j)*Vst(i,j,2)                 &
-                    &             + vv(i,j+1)*Vst(i,j+1,2) )           &
-                    & + (0.5)*( uu1(i,j)*Ust(i,j,2)                    &
-                    &         + uu1(i+1,j)*Ust(i+1,j,2)                &
-                    &         + vv1(i,j)*Vst(i,j,2)                    &
-                    &         + vv1(i,j+1)*Vst(i,j+1,2) )
+          B_St(i,j) = (0.5/hek)*(0.5)*( UStokes(i,j,2)*UStokes(i,j,2)          &
+                    &                 + UStokes(i+1,j,2)*UStokes(i+1,j,2)      &
+                    &                 + VStokes(i,j,2)*VStokes(i,j,2)          &
+                    &                 + VStokes(i,j+1,2)*VStokes(i,j+1,2) )    &
+                    & + (0.5/hek)*( uu(i,j)*UStokes(i,j,2)                 &
+                    &             + uu(i+1,j)*UStokes(i+1,j,2)             &
+                    &             + vv(i,j)*VStokes(i,j,2)                 &
+                    &             + vv(i,j+1)*VStokes(i,j+1,2) )           &
+                    & + (0.5)*( uu1(i,j)*UStokes(i,j,2)                    &
+                    &         + uu1(i+1,j)*UStokes(i+1,j,2)                &
+                    &         + vv1(i,j)*VStokes(i,j,2)                    &
+                    &         + vv1(i,j+1)*VStokes(i,j+1,2) )
        end do
        end do
 
@@ -156,9 +156,10 @@
        &            -  0*0.25*(div1(i,j)+div1(im,j))* uu(i,j) &   !dns
        &            -  Ah*grad4u(i,j)
 
+       
        ! Internal wind on slab layer (wind_slab) vs coupling (cou) :
        ! f0 is the coriolis parameter also known as the coriolis angular freq.
-       if ((wind_slab) .and. (cou .eq. .false.)) then
+       if ((wind_slab) .and. (cou .eqv. .false.)) then
           rhs_Uek(i,j) = rhs_Uek(i,j) &
                &       + 0.01*(100.+step*SIN(1.*(its*dt)*f0))*tau_max*SIN(1.*twopi*jm/ny)/1000
           
@@ -171,19 +172,19 @@
           if (stokes) then
              
              ! Stokes-Coriolis
-             rhsu_SC(i,j) = 0.25*(f(j)*(Vst(i,j,2)+Vst(im,j,2))  &
-                  &                +  f(jp)*(Vst(i,jp,2)+Vst(im,jp,2)))
+             rhsu_SC(i,j) = 0.25*(f(j)*(VStokes(i,j,2)+VStokes(im,j,2))  &
+                  &                +  f(jp)*(VStokes(i,jp,2)+VStokes(im,jp,2)))
              
              ! Craik-Lebovich [(zeta1+zeta_ek) x u_st]
              rhsu_CL(i,j) =  0.25*(zeta1(i,j) + zeta(i,j)/hek)*(&
-                  &                        Vst(i,j,2)+Vst(im,j,2)) &
+                  &                        VStokes(i,j,2)+VStokes(im,j,2)) &
                   &       +  0.25*(zeta1(i,jp) + zeta(i,jp)/hek)*(&
-                  &                        Vst(i,jp,2)+Vst(im,jp,2)) 
+                  &                        VStokes(i,jp,2)+VStokes(im,jp,2)) 
              
              ! Bernouilli-Stokes
              rhsu_B_stokes(i,j) = -(B_St(i,j)-B_St(im,j))/dx
 
-             ! Frontières
+             ! Frontières homogènes
              array(:,:) = rhsu_SC(:,:)
              include 'subs/bndy.f90'
              rhsu_SC(:,:) = array(:,:)
@@ -223,14 +224,14 @@
           if (stokes) then
 
              ! Stokes-Coriolis
-             rhsv_SC(i,j) = - 0.25*f(j)*(Ust(i,j,2)+Ust(i,jm,2))  &
-                  &         - 0.25*f(jp)*(Ust(ip,j,2)+Ust(ip,jm,2)) 
+             rhsv_SC(i,j) = - 0.25*f(j)*(UStokes(i,j,2)+UStokes(i,jm,2))  &
+                  &         - 0.25*f(jp)*(UStokes(ip,j,2)+UStokes(ip,jm,2)) 
 
              ! Craik-Lebovich [(zeta1+zeta_ek) x u_st]
              rhsv_CL(i,j) = - 0.25*(zeta1(i,j)+zeta(i,j)/hek)*( &
-                  &                 Ust(i,j,2)+Ust(i,jm,2)) &
+                  &                 UStokes(i,j,2)+UStokes(i,jm,2)) &
                   &         - 0.25*(zeta1(ip,j)+zeta(ip,j)/hek)*( &
-                  &                 Ust(ip,j,2)+Ust(ip,jm,2))
+                  &                 UStokes(ip,j,2)+UStokes(ip,jm,2))
              
              ! Bernouilli-Stokes
              rhsv_B_stokes(i,j) = - (B_St(i,j)-B_St(i,jm))/dy

@@ -33,8 +33,8 @@
                   &         + (Vek(i,j+1,ilevel)-Vek(i,j,ilevel))/dy
              if (stokes) then
                 rhs_Psurf(i,j) = rhs_Psurf(i,j)   &
-                     &         + (Ust(i+1,j,2)-Ust(i,j,2))/dx &
-                     &         + (Vst(i,j+1,2)-Vst(i,j,2))/dy
+                     &         + (UStokes(i+1,j,2)-UStokes(i,j,2))/dx &
+                     &         + (VStokes(i,j+1,2)-VStokes(i,j,2))/dy
              end if
           enddo
        enddo

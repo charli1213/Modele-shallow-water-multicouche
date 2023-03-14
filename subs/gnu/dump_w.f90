@@ -3,47 +3,47 @@
        ! --- w_slab 
        string1 = 'data/w_lp' !  // '_' // which(1:3)
        open(11, file = string1, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string2 = 'data/w_snap'   !// '_' // which(1:3)
        open(12, file = string2, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        ! --- pressure action on interior flow
        string3 = 'data/pwek_lp'   !// '_' // which(1:3)
        open(13, file = string3, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string4 = 'data/pwek_snap'   !// '_' // which(1:3)
        open(14, file = string4, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        ! --- Stokes-Coriolis et Craik-Leibovich
        string5 = 'data/div_CL_lp' ! // '_' // which(1:3)
        open(15, file = string5, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string6 = 'data/div_CL_snap' ! // '_' // which(1:3)
        open(16, file = string6, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string7 = 'data/rot_CL_lp' ! // '_' // which(1:3)
        open(17, file = string7, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string8 = 'data/rot_CL_snap' ! // '_' // which(1:3)
        open(18, file = string8, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string9 = 'data/div_SC_lp' ! // '_' // which(1:3)
        open(19, file = string9, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string10 = 'data/div_SC_snap' ! // '_' // which(1:3)
        open(20, file = string10, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string11 = 'data/rot_SC_lp' ! // '_' // which(1:3)
        open(21, file = string11, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        string12 = 'data/rot_SC_snap' ! // '_' // which(1:3)
        open(22, file = string12, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        
 !      icount = icount + 1
 

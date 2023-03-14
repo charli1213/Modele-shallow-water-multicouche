@@ -97,7 +97,7 @@
          write(0,*) Uek(i,j,3),Vek(i,j,3),u(i,j,1,3), &
             &      u(i,j,2,3),v(i,j,1,3),v(i,j,2,3), &
             &      eta(i,j,2,3), &
-            &      Ust(i,j,2),Vst(i,j,2), &
+            &      UStokes(i,j,2),VStokes(i,j,2), &
             &      taux_ocean(i,j,2), tauy_ocean(i,j,2)
       enddo
       enddo

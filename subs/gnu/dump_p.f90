@@ -3,11 +3,11 @@
 
        string1 = 'data/p_lp' !  // '_' // which(1:3)
        open(11, file = string1, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string2 = 'data/p_snap'  ! // '_' // which(1:3)
        open(12, file = string2, access='DIRECT',&
-            & form='BINARY', status = 'UNKNOWN', RECL=4*nx*ny)
+            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        !!!string3 = 'data/p_A1'   !// '_' // which(1:3)
        !!!open(13, file = string3, status = 'UNKNOWN')

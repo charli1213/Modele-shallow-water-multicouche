@@ -1,5 +1,5 @@
 
- ! --- Misc ---
+  ! --- Misc ---
 
    parameter ( pi = 2.*asin(1.), twopi = 2.*pi )
 
@@ -10,7 +10,7 @@
    parameter ( H1 = 1.0e3, Htotal = 4.0e3 )
 
  
-   parameter ( nx = 512, ny = nx, nz = 2 )
+   parameter ( nx = 256, ny = nx, nz = 2 )
  
    parameter ( dx = Lx/nx, dy = Ly/ny )
  
@@ -26,22 +26,23 @@
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah = 2.5e-6*dx**4 ) !parameter ( Ah = 1.e-5*dx**4 ) quand on a tau=0.1  
+   parameter ( Ah = 1.e-5*dx**4 ) !parameter ( Ah = 2.5e-6*dx**4 ) 
  
    parameter ( rf = 0.001 )
  
    parameter ( c_bc = 2. )
  
-   parameter ( hek = 0050. )
- 
+   parameter ( hek = 50. )   
+      
   ! ---  Time ---
  
    parameter ( dt = 300. )
   
-   parameter ( ndays= 365, totaltime = 86400 * ndays ) ! 365
+   parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+2 ,fileperday=4 ) ! +1 pour être égal et +1 pour avoir un restart de WW3, +1 car le premier timestep compte pas?
- 
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) !4
+
+   
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
   
@@ -54,21 +55,20 @@
    parameter ( ifsteady = .false., forcingtype=0, iou_method=1) 
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way
+
+   parameter (restart = .false. , daysperrestart = 365)
+   parameter (use_ramp = .false., gaussian_bump_eta = .false.)
  
- !  parameter ( restart = .true. , use_ramp = .false. )
-   parameter ( restart = .true., oldfile = .false., use_ramp = .false., gaussian_bump_eta = .false.)
-   parameter ( daysperrestart = 30 )
-   
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true.,IO_forcing=.false.,IO_QGAG=.false.,IO_psivort=.false.,IO_ek=.true., IO_coupling=.true.)
+   parameter ( IO_field=.true.,IO_forcing=.false.,IO_QGAG=.false.,IO_psivort=.false.,IO_ek=.true., IO_coupling=.false.)
 
  ! --- Slab model/coupling switches --- 
 
    parameter ( slab_layer = .true.) !!! Do we want a slab layer? 
 
-   parameter ( cou=.true., wind_top = .false., wind_slab = .false.) !!! Coupling vs Wind on top layervs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false., wind_top = .false., wind_slab = .true.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
    
-   parameter ( ustar=.true., waves=.true., stokes=.true.) !!! Coupling activation.
+   parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    
-   parameter ( tau_max = 0.09 , step=0.0, nghost=70, ng2=nghost/2)
+   parameter ( tau_max = 10, step = 0.1, nghost=0, ng2=nghost/2)
