@@ -1,13 +1,13 @@
 
        WRITE(which,'(I3)') 100 + icount -1
 
-       string1 = 'data/Vek_lp' ! // '_' // which(1:3)
-       open(11, file = string1, access='DIRECT',&
-            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
+       !string1 = 'data/Vek_lp' ! // '_' // which(1:3)
+       !open(11, file = string1, access='DIRECT',&
+       !     & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
        
-       string2 = 'data/Vek_snap' ! // '_' // which(1:3)
-       open(12, file = string2, access='DIRECT',&
-            & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
+       !string2 = 'data/Vek_snap' ! // '_' // which(1:3)
+       !open(12, file = string2, access='DIRECT',&
+       !     & form='UNFORMATTED', status = 'UNKNOWN', RECL=4*nx*ny)
 
        string3 = 'data/v1_lp'  !// '_' // which(1:3)
        open(13, file = string3, access='DIRECT',&
@@ -61,8 +61,6 @@
        !!!tmp_out(7) = tmp_out(5) - tmp_out(6)
        !!!tmp_out(8) = -uu_G(i,j)
 
-       write(11,REC=1) Vek_filtered(1:nx,1:ny)
-       write(12,REC=1) Vek_snap(1:nx,1:ny)
        write(13,REC=1) v1_filtered(1:nx,1:ny)
        write(14,REC=1) v1_snap(1:nx,1:ny)
        write(15,REC=1) v2_filtered(1:nx,1:ny)
@@ -86,7 +84,7 @@
        !!!do j = 11,15  !forces write from buffer
        !!!flush(j) 
        !!!enddo
-       do j = 11,16
+       do j = 13,16
        close(j)
        enddo
 

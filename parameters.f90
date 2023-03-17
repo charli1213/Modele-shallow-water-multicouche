@@ -8,9 +8,8 @@
    parameter ( Lx = 2e6, Ly = Lx )
 
    parameter ( H1 = 1.0e3, Htotal = 4.0e3 )
-
  
-   parameter ( nx = 256, ny = nx, nz = 2 )
+   parameter ( nx = 512, ny = nx, nz = 2 )
  
    parameter ( dx = Lx/nx, dy = Ly/ny )
  
@@ -18,7 +17,7 @@
  
   ! --- Paraterers ---
  
-   parameter ( tau0 = 1.e-4, tau1 = 1.e-5 )
+   parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = 0.1)
  
    parameter ( f0 = 7.e-5, beta = 0) ! 1.e-11 )
  
@@ -31,8 +30,6 @@
    parameter ( rf = 0.001 )
  
    parameter ( c_bc = 2. )
- 
-   parameter ( hek = 50. )   
       
   ! ---  Time ---
  
@@ -57,18 +54,16 @@
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way
 
    parameter (restart = .false. , daysperrestart = 365)
+   
    parameter (use_ramp = .false., gaussian_bump_eta = .false.)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true.,IO_forcing=.false.,IO_QGAG=.false.,IO_psivort=.false.,IO_ek=.true., IO_coupling=.false.)
+   parameter ( IO_field=.true.,IO_forcing=.false.,IO_QGAG=.false.,IO_psivort=.false.,IO_coupling=.false.)
 
  ! --- Slab model/coupling switches --- 
-
-   parameter ( slab_layer = .true.) !!! Do we want a slab layer? 
-
-   parameter ( cou=.false., wind_top = .false., wind_slab = .true.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
    
    parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    
-   parameter ( tau_max = 10, step = 0.1, nghost=0, ng2=nghost/2)
+   parameter ( step = 0.1, nghost=0, ng2=nghost/2)

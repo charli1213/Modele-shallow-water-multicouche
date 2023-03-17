@@ -37,7 +37,8 @@
           array = zeta
           include 'subs/bndy.f90'
           zeta = array
- 
+
+          ! Vorticité planétaire
           do j = 1, ny
           do i = 1, nx
              q(i,j,k) = zeta(i,j) -0.25*f(j)*(thickness(i,j)+    &

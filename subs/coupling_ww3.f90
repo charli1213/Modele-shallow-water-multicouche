@@ -1,3 +1,26 @@
+      
+      ! Coupling quantities. 
+      REAL :: u_ww3(1:nx,1:ny), v_ww3(1:nx,1:ny)
+      REAL :: tauww3ust(0:nnx+nghost,0:nny,2)
+      REAL :: tauww3waves(0:nnx+nghost,0:nny,2)
+      REAL :: Tstokes(0:nnx+nghost,0:nny,2)
+      REAL :: new_cur_WW3(0:nnx+nghost,0:nny,2) ! Larger current sent to WW3.
+      REAL :: taux_ust(0:nnx,0:nny), tauy_ust(0:nnx,0:nny)
+      REAL :: taux_waves(0:nnx,0:nny), tauy_waves(0:nnx,0:nny)
+      REAL :: large_array(0:nnx+nghost,0:nny) ! See bndy_large.f90
+      REAL :: a_ust(1:ny),a_vst(1:ny)! y=(a_u/vst)x+b
+      REAL :: a_xtau(1:ny),a_ytau(1:ny)
+      REAL :: delta_ust(1:ny), delta_vst(1:ny)
+      REAL :: delta_xtau(1:ny), delta_ytau(1:ny)
+      REAL :: alpha(1:nx,1:ny)
+      REAL :: u_lag(0:nnx,0:nny,2)
+      REAL :: Uef(0:nnx,0:nny), Vef(0:nnx,0:nny)
+      ! ### <<< Modification CEL (END) <<<
+
+
+
+
+
 !!! This subroutine make an MPI CALL to receive the ww3 atmospheric stresses. Then it interpolate to fit the SW grid. Then it sends back the currents to WW3.
 
   PRINT *, "SW :::::: its :",its

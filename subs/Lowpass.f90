@@ -1,3 +1,51 @@
+! Variables : 
+
+  ! Lowpass
+  REAL :: tcenter, tstart, tstop, param
+  REAL :: w_filtered(0:nnx,0:nny)
+  REAL :: p_filtered(0:nnx,0:nny)
+  REAL :: u1_filtered(0:nnx,0:nny)
+  REAL :: u2_filtered(0:nnx,0:nny)
+  REAL :: v1_filtered(0:nnx,0:nny)
+  REAL :: v2_filtered(0:nnx,0:nny)
+  REAL :: eta_filtered(0:nnx,0:nny)
+  REAL :: u1_snap(0:nnx,0:nny)
+  REAL :: v1_snap(0:nnx,0:nny)
+  REAL :: u2_snap(0:nnx,0:nny)
+  REAL :: v2_snap(0:nnx,0:nny)
+  REAL :: p_snap(0:nnx,0:nny)
+  REAL :: eta_snap(0:nnx,0:nny)
+  REAL :: div_CL(0:nnx,0:nny),rot_CL(0:nnx,0:nny)
+  REAL :: div_CL_snap(0:nnx,0:nny),rot_CL_snap(0:nnx,0:nny)
+  REAL :: div_CL_filtered(0:nnx,0:nny),rot_CL_filtered(0:nnx,0:nny)
+  REAL :: div_SC(0:nnx,0:nny),rot_SC(0:nnx,0:nny)
+  REAL :: div_SC_snap(0:nnx,0:nny),rot_SC_snap(0:nnx,0:nny)
+  REAL :: div_SC_filtered(0:nnx,0:nny),rot_SC_filtered(0:nnx,0:nny)
+
+!!! Main line :
+  
+  ! >>> CEL Modifications >>>
+  !
+  if (cou) then
+     tstart  = 20.*86400. ! 20 days
+  else 
+     tstart  = 2.*365.*86400. ! 2 years
+     !tstart  = 4.*86400. ! 3 years
+  endif
+  tstop   = tstart + 8.*86400.
+  tcenter = (tstart + tstop)/2
+  if (time.ge.tstart) then
+     include 'subs/Lowpass.f90'
+  endif
+  if (time.ge.tstart) then
+     include 'subs/weight_function.f90'
+  endif
+  ! <<< CEL Modifications <<<
+
+
+
+
+
 !
 !   use rhs_Psurf for w_ek (calc between ilevel 2,3)
        p_out(:,:) = p_out(:,:)/2/dt ! Nécessaire?
@@ -86,8 +134,6 @@
             v1_snap(:,:) = v(:,:,1,2)
             u2_snap(:,:) = u(:,:,2,2)
             v2_snap(:,:) = v(:,:,2,2)
-            Uek_snap(:,:) = Uek(:,:,2)
-            Vek_snap(:,:) = Vek(:,:,2)
             p_snap(:,:) = p_out(:,:)
             wek_snap(:,:) = w_ek(:,:)
             eta_snap(:,:) = eta(:,:,2,2)
@@ -109,6 +155,7 @@
         !!!Psurf_A = gprime(2)*eta_A
         !!!Psurf_G = gprime(2)*eta_G
 
+        ! Exporte les champs 
         include 'subs/gnu/dump_w.f90'
         include 'subs/gnu/dump_p.f90'
         include 'subs/gnu/dump_u.f90'

@@ -5,11 +5,8 @@
      
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
-  !  real div_ek_out(0:nx/subsmprto+1,0:ny/subsmprto+1), eta_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
     ! U and V field
-    string1 = 'data/u_o'  // '_' // trim(which)
-    string2 = 'data/v_o'  // '_' // trim(which)
     
     do k = 1,nz
       u_out(:,:,k)   = u(isubx,isuby,k,3)
@@ -19,59 +16,54 @@
 
     zeta1_out(:,:) = zeta1(isubx,isuby)
     div1_out(:,:)  = div1(isubx,isuby)
+
+    ! Velocity :
+    do k = 1,nz
+       WRITE (k_str,'(I0)') k
+       string1 = 'data/u' // trim(k_str) // '_' // trim(which)
+       string2 = 'data/v' // trim(k_str) // '_' // trim(which)
+
+       ! Velocity first layer : 
     
-    open(unit=101,file=string1,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isubx)*nz))
-    write(101,REC=1) (((u_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
-    close(101)
+       open(unit=101,file=string1,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isubx)))
+       write(101,REC=1) ((u_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       close(101)
     
-    open(unit=102,file=string2,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
-    write(102,REC=1) (((v_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
-    close(102)
+       open(unit=102,file=string2,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(102,REC=1) ((v_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       close(102)
 
-    ! ETA field
-    !string3 = 'data/eta_o'  // '_' // trim(which)
-    !open(unit=103,file=string3,access='DIRECT',&
-    !& form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
-    !write(103,REC=1) (((eta_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
-    !close(103)
+    end do 
 
-    ! DIV_EK (W_EK)
-    !string4 = 'data/div_o'  // '_' // trim(which)
-    !div_ek_out=div_ek(isubx,isuby)
-    !open(unit=104,file=string4,access='DIRECT',&
-    !& form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-    !write(104,REC=1) ((div_ek_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-    !close(104)
+    
+    ! Divergence AND curl of first layer [1/s]
+    string39 = 'data/div1'  // '_' // trim(which)
+    open(unit=139,file=string39,access='DIRECT',&
+         & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+    write(139,REC=1) ((div1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+    close(139)
 
-
-     ! Divergence AND curl of first layer [1/s]
-     string39 = 'data/div1'  // '_' // trim(which)
-     open(unit=139,file=string39,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(139,REC=1) ((div1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(139)
-
-     string40 = 'data/zeta1'  // '_' // trim(which)
-     open(unit=140,file=string40,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(140,REC=1) ((zeta1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(140)
-
-     ! Divergence AND curl of second layer [1/s]
-     !string41= 'data/div2'  // '_' // trim(which)
-     !open(unit=141,file=string41,access='DIRECT',&
-     !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(141,REC=1) ((div2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     !close(141)
-
-     !string42= 'data/zeta2'  // '_' // trim(which)
-     !open(unit=142,file=string42,access='DIRECT',&
-     !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(142,REC=1) ((zeta2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     !close(142)
-
+    string40 = 'data/zeta1'  // '_' // trim(which)
+    open(unit=140,file=string40,access='DIRECT',&
+         & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+    write(140,REC=1) ((zeta1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+    close(140)
+    
+    ! Divergence AND curl of second layer [1/s]
+    !string41= 'data/div2'  // '_' // trim(which)
+    !open(unit=141,file=string41,access='DIRECT',&
+    !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+    !write(141,REC=1) ((div2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+    !close(141)
+    
+    !string42= 'data/zeta2'  // '_' // trim(which)
+    !open(unit=142,file=string42,access='DIRECT',&
+    !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+    !write(142,REC=1) ((zeta2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+    !close(142)
+    
     
     
   end if !IO_field
@@ -122,44 +114,7 @@
 
 
      
-  endif ! IO_coupling
-  
-  if (IO_ek) then ! IO_ek
-     div_ek_out(:,:)  = div_ek(isubx,isuby)
-     zeta_ek_out(:,:) = zeta_ek(isubx,isuby)
-     Uek_out(:,:)     = Uek(isubx,isuby,2)
-     Vek_out(:,:)     = Vek(isubx,isuby,2)
-     
-     ! Divergence AND curl of Ekman layer (of Ekman transport) [m/s]
-     string37 = 'data/div_ek'  // '_' // trim(which)
-     open(unit=137,file=string37,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(137,REC=1) ((div_ek_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(137)
-
-     string38 = 'data/zeta_ek'  // '_' // trim(which)
-     open(unit=138,file=string38,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(138,REC=1) ((zeta_ek_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(138)
-
-     
-     ! Transport
-     string5 = 'data/Uek'  // '_' // trim(which)
-     open(unit=105,file=string5,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(105,REC=1) ((Uek_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(105)
-     
-     string6 = 'data/Vek'  // '_' // trim(which)
-     open(unit=106,file=string6,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(106,REC=1) ((Vek_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-     close(106)
-
-     
-  end if ! IO_ek
-
+  endif ! IO_coupling  
 
   if (IO_forcing) then
     ! Forcing-AG

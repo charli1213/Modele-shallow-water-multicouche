@@ -37,7 +37,7 @@ elif [ "${pcid}" == "5" ]
 then
     machine_name=Bepsi
     fftw_path=/usr/share/doc/libfftw3-bin/
-    data_path=./
+    data_path=~/Desktop/Modele-shallow-water-multicouche
     # Which case : 
     case=~/Desktop/Modele-shallow-water-multicouche/testcase
     #case=/share/work/celiz2/MPI_learning/SW_after
@@ -50,5 +50,7 @@ cp "${data_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${data_path} to ${case}"
 #mpiifort -O3 -o  $case/exec $data_path/main.f90  -L$fftw_path -lfftw3
 gfortran -o  $case/exec $data_path/main.f90  -L$fftw_path -lfftw3 
-mv ${case}/parameters.f90 ${case}/parameters.f90_last_compiled
+#cp ${data_path}/parameters.f90 ${case}/parameters.f90_last_compiled
+cp ${data_path}/parameters.f90 ${case}/parameters.f90_last_compiled
+cp ${data_path}/parameters.f90 ${data_path}/parameters.f90_last_compiled
 echo "!! Compilation of $case completed on the computer $machine_name "

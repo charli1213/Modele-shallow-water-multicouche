@@ -28,17 +28,3 @@
             write(996,specform) tstime(i),key2_spec_tb(:,i)/nx/ny
          end do
       close (996)
-
-      pathspects='specdata/ke_ekx_'//trim(which2)//'.dat'
-      open (unit=995, file = pathspects, form = 'formatted', access = 'sequential')
-         do i=1,ntsrow
-            write(995,specform) tstime(i),kex_ek_spec_tb(:,i)/nx/ny
-         end do
-      close (995)
-
-      pathspects='specdata/ke_eky_'//trim(which2)//'.dat'
-      open (unit=994, file = pathspects, form = 'formatted', access = 'sequential')
-         do i=1,ntsrow
-            write(994,specform) tstime(i),key_ek_spec_tb(:,i)/nx/ny
-         end do
-      close (994)

@@ -1,5 +1,11 @@
 
 
+  ! >>> Coupling quantities >>>
+       taux_ocean(:,:,:) = 0.
+       tauy_ocean(:,:,:) = 0.
+       UStokes(:,:,:) = 0.
+       VStokes(:,:,:) = 0.
+  ! <<< Coupling quantities (END) <<<
        u(:,:,:,:) = 0.
        v(:,:,:,:) = 0.
        eta(:,:,:,:) = 0.
@@ -22,8 +28,6 @@
        array(:,:) = 0.
        thickness(:,:) = H1
        rhs_eta(:,:,:) = 0.
-       Uek(:,:,3) = 0.
-       Vek(:,:,3) = 0.
 
        top(:) = 0.
        bot(:) = 0.
@@ -32,12 +36,10 @@
 
        count_specs_1 = 0
        count_specs_2 = 0
-       count_specs_ek = 0
        count_specs_to = 0
        count_specs_AG = 0
        ke1_spec(:) = 0.
        ke2_spec(:) = 0.
-       ke_ek_spec(:) = 0.
        for_to_spec(:) = 0.
        for_ag_spec(:) = 0.
 
@@ -52,54 +54,6 @@
           print*, 'bug; need to set gprimes'
           stop
        endif
-  ! --- Coupling quantities :
-       B_St(:,:) = 0.
-       taux_ocean(:,:,:) = 0.
-       tauy_ocean(:,:,:) = 0.
-       rhsu_SC(:,:) = 0.
-       rhsv_SC(:,:) = 0.
-       rhsu_CL(:,:) = 0.
-       rhsv_CL(:,:) = 0.
-       rhsu_B_stokes(:,:) = 0.
-       rhsv_B_stokes(:,:) = 0.
-       UStokes(:,:,:) = 0.
-       VStokes(:,:,:) = 0.
-  ! --- Lowpass
-       w_ek(:,:) = 0.
-       rot_CL(:,:) = 0.
-       div_CL(:,:) = 0.
-       rot_SC(:,:) = 0.
-       div_SC(:,:) = 0.
-       w_filtered(:,:) = 0.
-       p_filtered(:,:) = 0.
-       u1_filtered(:,:) = 0.
-       u2_filtered(:,:) = 0.
-       v1_filtered(:,:) = 0.
-       v2_filtered(:,:) = 0.
-       Uek_filtered(:,:) = 0.
-       Vek_filtered(:,:) = 0.
-       eta_filtered(:,:) = 0.
-       rot_CL_filtered(:,:) = 0.
-       div_CL_filtered(:,:) = 0.
-       rot_SC_filtered(:,:) = 0.
-       div_SC_filtered(:,:) = 0.
-       pwek_filtered(:,:) = 0.
-       wek_snap(:,:) = 0.
-       p_snap(:,:) = 0.
-       u1_snap(:,:) = 0.
-       v1_snap(:,:) = 0.
-       u2_snap(:,:) = 0.
-       v2_snap(:,:) = 0.
-       Uek_snap(:,:) = 0.
-       Vek_snap(:,:) = 0.
-       eta_snap(:,:) = 0.
-       rot_CL_snap(:,:) = 0.
-       div_CL_snap(:,:) = 0.
-       rot_SC_snap(:,:) = 0.
-       div_SC_snap(:,:) = 0.
-       pwek_snap(:,:) = 0.
-  ! --- Wind Stress 
-
        f(:) = f0
 
        do j = 1,ny
@@ -150,8 +104,7 @@
          open(0,file='restart')
           do j = 0,nny
           do i = 0,nnx
-             read(0,*) Uek(i,j,1),Vek(i,j,1),u(i,j,1,1),       &
-                  &      u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),     &
+             read(0,*) u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),       &
                   &      eta(i,j,2,1),                         &
                   &      UStokes(i,j,1),VStokes(i,j,1),        &
                   &      taux_ocean(i,j,1),tauy_ocean(i,j,1)

@@ -13,33 +13,20 @@
              thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
               &             -  eta(:,:,k+1,ilevel)
           endif
-          include 'subs/divBT.f90'
+          include 'subs/divBT.f90' ! array = div(u*h)
           rhs_Psurf(:,:) = rhs_Psurf(:,:) + array(:,:)
        enddo
 
-       !!! Modification CEL :
-       !!! Making sure there's no more Ekman layer if slab_layer==False
-       if (slab_layer) then
-          array = Uek(:,:,ilevel)          
-          include 'subs/bndy.f90'
-          Uek(:,:,ilevel) = array
-          array = Vek(:,:,ilevel)
-          include 'subs/bndy.f90'
-          Vek(:,:,ilevel) = array
-          do j = 1, ny
-          do i = 1, nx          
-             rhs_Psurf(i,j) = rhs_Psurf(i,j)   &
-                  &         + (Uek(i+1,j,ilevel)-Uek(i,j,ilevel))/dx &
-                  &         + (Vek(i,j+1,ilevel)-Vek(i,j,ilevel))/dy
-             if (stokes) then
-                rhs_Psurf(i,j) = rhs_Psurf(i,j)   &
-                     &         + (UStokes(i+1,j,2)-UStokes(i,j,2))/dx &
-                     &         + (VStokes(i,j+1,2)-VStokes(i,j,2))/dy
-             end if
-          enddo
+
+       ! N.B. UStokes\VStokes = 0 (see initialize.f90) if coupling = .false.
+       do j = 1, ny
+       do i = 1, nx          
+          rhs_Psurf(i,j) = rhs_Psurf(i,j)                        &
+               &         + (UStokes(i+1,j,2)-UStokes(i,j,2))/dx  &
+               &         + (VStokes(i,j+1,2)-VStokes(i,j,2))/dy
        enddo
-       endif
-       !!! (End) Modification CEL
+       enddo
+
        rhs_Psurf(:,:) = rhs_Psurf(:,:)/Htot !/dt
 !
 !      rhs_Psurf is vert average of d/dt (div u) 

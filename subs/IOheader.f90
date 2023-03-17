@@ -28,16 +28,16 @@
           write(996,specform) 0.0,ky1d
           close(996)
 
-          WRITE(spectbszx,'(I3)') size(kex1_spec)+1
-          specform='('//trim(spectbszx)//'e13.5)'
-          write(*,*) 'spectra-x time series length+1=',spectbszx
-          open (unit=995, file = 'specdata/ke_ekx.dat', form = 'formatted',access = 'sequential')
-          write(995,specform) 0.0,kx1d
-          close(995)
+          !WRITE(spectbszx,'(I3)') size(kex1_spec)+1
+          !specform='('//trim(spectbszx)//'e13.5)'
+          !write(*,*) 'spectra-x time series length+1=',spectbszx
+          !open (unit=995, file = 'specdata/ke_ekx.dat', form = 'formatted',access = 'sequential')
+          !write(995,specform) 0.0,kx1d
+          !close(995)
 
-          WRITE(spectbszy,'(I3)') size(key1_spec)+1
-          specform='('//trim(spectbszy)//'e13.5)'
-          write(*,*) 'spectra-y time series length+1=',spectbszy
-          open (unit=994, file = 'specdata/ke_eky.dat', form = 'formatted',access = 'sequential')
-          write(994,specform) 0.0,ky1d
-          close(994)
+          !WRITE(spectbszy,'(I3)') size(key1_spec)+1
+          !specform='('//trim(spectbszy)//'e13.5)'
+          !write(*,*) 'spectra-y time series length+1=',spectbszy
+          !open (unit=994, file = 'specdata/ke_eky.dat', form = 'formatted',access = 'sequential')
+          !write(994,specform) 0.0,ky1d
+          !close(994)

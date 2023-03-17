@@ -29,14 +29,6 @@
                for_ag_spec = for_ag_spec + spectrum
                fagfft=datc
 
-               datr(:,:) = Uek(1:nx,1:ny,2)       
-               include 'fftw_stuff/spec1.f90'
-               ke_ek_spec =  ke_ek_spec + spectrum
-
-               datr(:,:) = Vek(1:nx,1:ny,2)       
-               include 'fftw_stuff/spec1.f90'
-               ke_ek_spec =  ke_ek_spec + spectrum
-
                datr(:,:) = u_ag(1:nx,1:ny,1)
                include 'fftw_stuff/spec1.f90'
                ke1_ag_spec = ke1_ag_spec + spectrum

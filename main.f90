@@ -5,7 +5,7 @@
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy,H1,Htotal
       real f0, beta, r_drag, Ah, r_invLap, rf
-      real tau0, tau1, hek
+      real tau0, tau1
       real fileperday, daysperrestart
       integer nsteps,start_movie,start_spec
       real ndays,totaltime,dt
@@ -19,11 +19,11 @@
       !
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
-      logical  IO_psivort, IO_ek, IO_coupling
+      logical  IO_psivort, IO_coupling
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
-      LOGICAL slab_layer, cou, wind_top, wind_slab, ustar, waves, stokes
-      REAL tau_max, step
+      LOGICAL cou, ustar, waves, stokes
+      REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
       CHARACTER(80) :: err_str
       INTEGER :: MPI_SECOND
@@ -45,67 +45,8 @@
 
       program main
       use data_initial
-      !USE MPI 
+      !!!USE MPI 
       implicit none
-      !
-      ! >>> Modification CEL >>>
-      ! Coupling terms diagnostic quantities. 
-      REAL :: rhsu_CL(0:nnx,0:nny),rhsu_SC(0:nnx,0:nny), rhsu_B_stokes(0:nnx,0:nny)
-      REAL :: rhsv_CL(0:nnx,0:nny),rhsv_SC(0:nnx,0:nny), rhsv_B_stokes(0:nnx,0:nny)
-      !
-      REAL :: div_rhs_waves(1:nx,1:ny), div_rhs_ust(1:nx,1:ny), div_stokes(1:nx,1:ny)
-      REAL :: curl_rhs_waves(1:nx,1:ny), curl_rhs_ust(1:nx,1:ny), zeta_stokes(1:nx,1:ny)
-      
-      ! Coupling quantities. 
-      REAL :: u_ww3(1:nx,1:ny), v_ww3(1:nx,1:ny)
-      REAL :: tauww3ust(0:nnx+nghost,0:nny,2)
-      REAL :: tauww3waves(0:nnx+nghost,0:nny,2)
-      REAL :: Tstokes(0:nnx+nghost,0:nny,2)
-      REAL :: new_cur_WW3(0:nnx+nghost,0:nny,2) ! Larger current sent to WW3.
-      REAL :: taux_ust(0:nnx,0:nny), tauy_ust(0:nnx,0:nny)
-      REAL :: taux_waves(0:nnx,0:nny), tauy_waves(0:nnx,0:nny)
-      REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
-      REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2),B_St(0:nnx,0:nny)
-      REAL :: large_array(0:nnx+nghost,0:nny) ! See bndy_large.f90
-      REAL :: a_ust(1:ny),a_vst(1:ny)! y=(a_u/vst)x+b
-      REAL :: a_xtau(1:ny),a_ytau(1:ny)
-      REAL :: delta_ust(1:ny), delta_vst(1:ny)
-      REAL :: delta_xtau(1:ny), delta_ytau(1:ny)
-      REAL :: alpha(1:nx,1:ny)
-      REAL :: u_lag(0:nnx,0:nny,2)
-      REAL :: Uef(0:nnx,0:nny), Vef(0:nnx,0:nny)
-      ! Lowpass
-      REAL :: tcenter, tstart, tstop, param
-      REAL :: w_ek(0:nnx,0:nny)
-      REAL :: w_filtered(0:nnx,0:nny)
-      REAL :: p_filtered(0:nnx,0:nny)
-      REAL :: u1_filtered(0:nnx,0:nny)
-      REAL :: u2_filtered(0:nnx,0:nny)
-      REAL :: v1_filtered(0:nnx,0:nny)
-      REAL :: v2_filtered(0:nnx,0:nny)
-      REAL :: Uek_filtered(0:nnx,0:nny)
-      REAL :: Vek_filtered(0:nnx,0:nny)
-      REAL :: eta_filtered(0:nnx,0:nny)
-      REAL :: u1_snap(0:nnx,0:nny)
-      REAL :: v1_snap(0:nnx,0:nny)
-      REAL :: u2_snap(0:nnx,0:nny)
-      REAL :: v2_snap(0:nnx,0:nny)
-      REAL :: Uek_snap(0:nnx,0:nny)
-      REAL :: Vek_snap(0:nnx,0:nny)
-      REAL :: p_snap(0:nnx,0:nny)
-      REAL :: wek_snap(0:nnx,0:nny)
-      REAL :: eta_snap(0:nnx,0:nny)
-      REAL :: p_out(0:nnx,0:nny)
-      REAL :: pwek_filtered(0:nnx,0:nny)
-      REAL :: pwek(0:nnx,0:nny)
-      REAL :: pwek_snap(0:nnx,0:nny)
-      REAL :: div_CL(0:nnx,0:nny),rot_CL(0:nnx,0:nny)
-      REAL :: div_CL_snap(0:nnx,0:nny),rot_CL_snap(0:nnx,0:nny)
-      REAL :: div_CL_filtered(0:nnx,0:nny),rot_CL_filtered(0:nnx,0:nny)
-      REAL :: div_SC(0:nnx,0:nny),rot_SC(0:nnx,0:nny)
-      REAL :: div_SC_snap(0:nnx,0:nny),rot_SC_snap(0:nnx,0:nny)
-      REAL :: div_SC_filtered(0:nnx,0:nny),rot_SC_filtered(0:nnx,0:nny)
-      ! ### <<< Modification CEL (END) <<<
       !
       REAL :: sl, ed
       real ran2
@@ -120,8 +61,8 @@
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
       real div1(0:nnx,0:nny), zeta1(0:nnx,0:nny)
       real div2(0:nnx,0:nny), zeta2(0:nnx,0:nny)
-      real div_ek(0:nnx,0:nny), zeta_ek(0:nnx,0:nny) 
-      real div_ek_qg(0:nnx,0:nny),zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
+
+      real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
       real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
       real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
       real dissi_u(0:nnx,0:nny), dissi_v(0:nnx,0:nny)
@@ -129,9 +70,7 @@
       real taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
       real rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
       real rhs_eta(0:nnx,0:nny,nz)
-      real Uek(0:nnx,0:nny,3), Vek(0:nnx,0:nny,3)
-      real Uek_qg(0:nnx,0:nny), Vek_qg(0:nnx,0:nny)
-      real rhs_Uek(0:nnx,0:nny), rhs_Vek(0:nnx,0:nny)
+      real wind_x(0:nnx,0:nny)
       real uu(0:nnx,0:nny), vv(0:nnx,0:nny)
       real uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
       real uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
@@ -145,19 +84,18 @@
       real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real Uek_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real Vek_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div1_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta1_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real div_ek_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real zeta_ek_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      ! >>> Coupling quantities >>>
+      REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
+      REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2)
       REAL :: UStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
       REAL :: VStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
       REAL :: taux_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
       REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      ! ### --- Modification CEL --- 
-      ! --- Coupling OUT quantities
+      ! <<< Coupling quantities (End) <<<
       real f(0:nny)
       real gprime(nz), Htot, H(nz)
       real top(nz), bot(nz), Fmode(nz)
@@ -172,16 +110,16 @@
       real*4 tmp_out(10)
 
       !2-D FFT spectra reduced
-      real*4 ke1_spec(0:nx), ke2_spec(0:nx), ke_ek_spec(0:nx)
+      real*4 ke1_spec(0:nx), ke2_spec(0:nx)
       real*4 ke1_qg_spec(0:nx), ke2_qg_spec(0:nx)
       real*4 ke1_ag_spec(0:nx), ke2_ag_spec(0:nx)
       real*4 for_to_spec(0:nx), for_ag_spec(0:nx)
       !1-D spectra
-      real*4 kex1_spec(0:nx/2), kex2_spec(0:nx/2), kex_ek_spec(0:nx/2)
-      real*4 key1_spec(0:ny/2), key2_spec(0:ny/2), key_ek_spec(0:ny/2)
+      real*4 kex1_spec(0:nx/2), kex2_spec(0:nx/2)
+      real*4 key1_spec(0:ny/2), key2_spec(0:ny/2)
       real*4 kex1_spec_tb(0:nx/2,1:ntsrow),key1_spec_tb(0:ny/2,1:ntsrow),tstime(1:ntsrow)
       real*4 kex2_spec_tb(0:nx/2,1:ntsrow),key2_spec_tb(0:ny/2,1:ntsrow)
-      real*4 kex_ek_spec_tb(0:nx/2,1:ntsrow),key_ek_spec_tb(0:ny/2,1:ntsrow)
+      !
       double complex,dimension(nx/2+1,ny,nz) :: ufft,vfft,etafft
       double complex,dimension(nx/2+1,ny) :: ftotalfft,fagfft,div_fft
 
@@ -204,10 +142,11 @@
       !subsampling size
       integer szsubx,szsuby,szftrdrow,szftrdcol
       !I/O info
-      integer icount,iftcount, count_specs_1, count_specs_2, count_specs_ek
+      integer icount,iftcount, count_specs_1, count_specs_2
       integer icount_srt,iftcount_srt
       integer count_specs_to, count_specs_ag
 
+      character(2)  k_str
       character(88) scrap, which,which2,which3, spectbszx,spectbszy,specform, pathspects
       character(88) string1, string2, string3, string4, string5
       character(88) string1i, string2i, string3i, string4i, string5i
@@ -349,29 +288,6 @@
       !END IF
       ! <<< Modification CEL (END) <<<.
       !
-      
-
-
-      ! >>> Modification CEL >>>
-      ! --- Choosing between slab layer or traditionnal wind input 
-      if (slab_layer) then
-         uu(:,:) = Uek(:,:,1)
-         vv(:,:) = Vek(:,:,1)
-         uu_old(:,:) = Uek(:,:,1)
-         vv_old(:,:) = Vek(:,:,1)
-         uu1(:,:) = u(:,:,1,1)
-         vv1(:,:) = v(:,:,1,1)
-         
-         include 'subs/rhs_ek.f90'
-      else
-         Uek(:,:,:)   = 0
-         Vek(:,:,:)   = 0
-         rhs_Uek(:,:) = 0
-         rhs_Vek(:,:) = 0
-      endif
-      ! <<< Modification CEL (END) <<<
-      !
-
 
       pressure(:,:) =  0.
       do k = 1,nz
@@ -384,9 +300,9 @@
          ! >>> Modification CEL : Random noise >>>
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/100.
+            uu(:,:) = uu(:,:)/10.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/100.
+            vv(:,:) = vv(:,:)/10.
          endif
          ! <<< Modification CEL (End) <<<
          !
@@ -401,9 +317,6 @@
             thickness(:,:) =  H(k) + eta(:,:,k,1) - eta(:,:,k+1,1)
          endif
 
-         Uek(:,:,2) = Uek(:,:,1) 
-         Vek(:,:,2) = Vek(:,:,1) ! needed for 1st time step in rhs.f90
-         
          include 'subs/rhs.f90'
 
 
@@ -421,8 +334,6 @@
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
       eta(:,:,:,2) = eta(:,:,:,1) + dt*rhs_eta(:,:,:)
-      Uek(:,:,2) = Uek(:,:,1) + dt*rhs_Uek(:,:)
-      Vek(:,:,2) = Vek(:,:,1) + dt*rhs_Vek(:,:)
       time = dt
       its = its + 1
       call get_taux(taux_steady,amp_matrix(its),taux)
@@ -489,29 +400,7 @@
          !END IF
          ! <<< Modification CEL <<<
          !
-         
-
-         !
-         ! >>> Modification CEL >>>
-         ! Slab layer activation here. 
-         if (slab_layer) then
-            uu(:,:) = Uek(:,:,2)
-            vv(:,:) = Vek(:,:,2)
-            uu_old(:,:) = Uek(:,:,1)
-            vv_old(:,:) = Vek(:,:,1)
-            uu1(:,:) = u(:,:,1,2)
-            vv1(:,:) = v(:,:,1,2)
-            include 'subs/rhs_ek.f90'
-         else
-            Uek(:,:,:) = 0
-            Vek(:,:,:) = 0
-            rhs_Uek(:,:) = 0
-            rhs_Vek(:,:) = 0
-         endif
-         ! <<< Modification CEL (END) <<<
-         !
-
-         
+                  
          pressure(:,:) =  0.
          do k = 1,nz
             uu(:,:) = u(:,:,k,2)
@@ -538,8 +427,6 @@
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
          eta(:,:,:,3) = eta(:,:,:,1) + 2.*dt*rhs_eta(:,:,:)
-         Uek(:,:,3) = Uek(:,:,1) + 2*dt * rhs_Uek(:,:)
-         Vek(:,:,3) = Vek(:,:,1) + 2*dt * rhs_Vek(:,:)
 
 
          ! --- Updating time ---
@@ -564,30 +451,16 @@
             eta(:,:,k,3) = array
          enddo
 
-         array = Uek(:,:,3)
-         include 'subs/bndy.f90'
-         Uek(:,:,3) = array
-         array = Vek(:,:,3)
-         include 'subs/bndy.f90'
-         Vek(:,:,3) = array
-
          u(:,:,:,2) = u(:,:,:,2) + rf*(u(:,:,:,1)+u(:,:,:,3)-2*u(:,:,:,2))
          v(:,:,:,2) = v(:,:,:,2) + rf*(v(:,:,:,1)+v(:,:,:,3)-2*v(:,:,:,2))
          eta(:,:,:,2) = eta(:,:,:,2)   &
             &        + rf*(eta(:,:,:,1)+eta(:,:,:,3)-2*eta(:,:,:,2))
-         Uek(:,:,2) = Uek(:,:,2) + rf*(Uek(:,:,1)+Uek(:,:,3)-2*Uek(:,:,2))
-         Vek(:,:,2) = Vek(:,:,2) + rf*(Vek(:,:,1)+Vek(:,:,3)-2*Vek(:,:,2))
-
          u(:,:,:,1) = u(:,:,:,2)
          v(:,:,:,1) = v(:,:,:,2)
          eta(:,:,:,1) = eta(:,:,:,2)
-         Uek(:,:,1) = Uek(:,:,2)
-         Vek(:,:,1) = Vek(:,:,2)
          u(:,:,:,2) = u(:,:,:,3)
          v(:,:,:,2) = v(:,:,:,3)
          eta(:,:,:,2) = eta(:,:,:,3)
-         Uek(:,:,2) = Uek(:,:,3)
-         Vek(:,:,2) = Vek(:,:,3)
 
          ke1 = 0.
          ke2 = 0.
@@ -601,49 +474,27 @@
          write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
-         if(nsteps.lt.start_movie.and.save_movie) then
-            if ( mod(its,iout).eq.0 ) then  ! output 
-               include 'subs/div_vort.f90'
-               include 'subs/dump_gnu1a.f90'
-            end if
-         end if
+         !if(nsteps.lt.start_movie.and.save_movie) then
+         !   if ( mod(its,iout).eq.0 ) then  ! output 
+         !      include 'subs/div_vort.f90'
+         !      include 'subs/dump_gnu1a.f90'
+         !   end if
+         !end if
 
 
-         !start diognostics
-
-         ! >>> CEL Modifications >>>
-         !
-         if (cou) then
-            tstart  = 20.*86400. ! 20 days
-         else 
-            tstart  = 2.*365.*86400. ! 2 years
-            !tstart  = 4.*86400. ! 3 years
-         endif
-         tstop   = tstart + 8.*86400.
-         tcenter = (tstart + tstop)/2
-         if (time.ge.tstart) then
-            include 'subs/Lowpass.f90'
-         endif
-         if (time.ge.tstart) then
-            include 'subs/weight_function.f90'
-         endif
-         ! <<< CEL Modifications <<<
-         
-         
+         !start of diognostics en savefiles.
          if ( its .gt. min(start_movie,start_spec) ) then
-            ! Diognostic only when outputting physical or Fourier fields
+            ! Calculating diognostic only when outputting physical or Fourier fields
             if(mod(its,ispechst).eq.0.or.mod(its,iout).eq.0) then 
-               include 'subs/div_vort.f90'
+               include 'subs/div_vort.f90' 
                !  include 'subs/tmp_complex.f90'
                !  include 'subs/calc_q.f90'
                include 'subs/diags.f90'
             end if
-            
+
+            ! Printing/saving fields in /data/. 
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1
-               !!! Modification CEL
-               include 'subs/div_vort.f90'
-               !!! Modification CEL
                include 'subs/dump_bin.f90'
                if(mod(its,iout).eq.0)write(*,*) 'current its',its
                print*, 'writing data No.', icount
@@ -652,7 +503,6 @@
             if ( its.gt.start_spec .and. mod(its,ispechst).eq.0 ) then
                count_specs_1 = count_specs_1 + 1
                count_specs_2 = count_specs_2 + 1 
-               count_specs_ek = count_specs_ek + 1
                count_specs_to = count_specs_to + 1
                count_specs_ag = count_specs_ag + 1
 

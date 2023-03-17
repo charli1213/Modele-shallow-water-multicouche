@@ -12,13 +12,6 @@
          write(99,'(1i4,1e12.4)')i,ke1_spec(i)/nx/nx/ny/ny/count_specs_1
       enddo
       close(99)
-
-      which3=trim(which2)//'ke_ek_spec'//trim(adjustl(which))
-      open(98, file = which3)
-      do i = 1,ny
-         write(98,'(1i4,1e12.4)') i, ke_ek_spec(i)/nx/nx/ny/ny/count_specs_ek
-      enddo
-      close(98)
       
       which3=trim(which2)//'ke2_spec'//trim(adjustl(which))
       open(97, file = which3)
@@ -71,12 +64,6 @@
 
       which3=trim(which2)//'restart'//trim(adjustl(which))
       open(0,file=which3)
-      array = Uek(:,:,3)
-      include 'subs/bndy.f90'
-      Uek(:,:,3) = array
-      array = Vek(:,:,3)
-      include 'subs/bndy.f90'
-      Vek(:,:,3) = array
       array = u(:,:,1,3)
       include 'subs/bndy.f90'
       u(:,:,1,3) = array
@@ -94,10 +81,9 @@
       eta(:,:,2,3) = array
       do j = 0,nny
       do i = 0,nnx
-         write(0,*) Uek(i,j,3),Vek(i,j,3),u(i,j,1,3), &
-            &      u(i,j,2,3),v(i,j,1,3),v(i,j,2,3), &
-            &      eta(i,j,2,3), &
-            &      UStokes(i,j,2),VStokes(i,j,2), &
+         write(0,*) u(i,j,2,3),v(i,j,1,3),v(i,j,2,3),    &
+            &      eta(i,j,2,3),                         &
+            &      UStokes(i,j,2),VStokes(i,j,2),        &
             &      taux_ocean(i,j,2), tauy_ocean(i,j,2)
       enddo
       enddo
