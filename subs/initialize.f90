@@ -43,10 +43,12 @@
        for_to_spec(:) = 0.
        for_ag_spec(:) = 0.
 
+       ! Dealing with thicknesses (call DAVID)
        Htot = Htotal
        H(1) = H1
-       H(2) = Htot - H(1)
-
+       H(2) = H2
+       H(3) = Htot - H(1) - H(2)
+    
        if (nz.eq.2) then
           gprime(1) = 0.
           gprime(2) = Htot*c_bc**2/H(1)/H(2) 

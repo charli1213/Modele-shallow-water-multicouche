@@ -61,9 +61,6 @@
        uh(i,j) = 0.5*(thickness(i,j)+thickness(i-1,j))*uu(i,j)
        vh(i,j) = 0.5*(thickness(i,j)+thickness(i,j-1))*vv(i,j)
        
-       wind_x(i,j) = (1+step*SIN(it*f0*dt)) * tau0 * SIN(twopi*jm/ny*1.)
-       wind_x(i,j) = wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))
-
        enddo
        enddo
 
@@ -104,6 +101,9 @@
        grad4v(i,j) = (grad2v(ip,j)+grad2v(im,j)-2.*grad2v(i,j))/dx/dx   &
        &           + (grad2v(i,jp)+grad2v(i,jm)-2.*grad2v(i,j))/dy/dy
 
+       wind_x(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * SIN(twopi*jm/ny*1.)
+       wind_x(i,j) = wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))
+       
        enddo
        enddo
 

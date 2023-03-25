@@ -1,4 +1,5 @@
-
+!    This subroutine calculate div and zeta if you're in a k-loop
+!    after the RHS has been applied.
 !
 !    bndy condition: periodic in x,y
 !
@@ -26,28 +27,18 @@
           ip = i+1
           im = i-1
 
-       div1(i,j) = (u(ip,j,1,3)-u(i,j,1,3))/dx + (v(i,jp,1,3)-v(i,j,1,3))/dy
-
-       div2(i,j) = (u(ip,j,2,3)-u(i,j,2,3))/dx + (v(i,jp,2,3)-v(i,j,2,3))/dy 
-    
-       zeta1(i,j) = (v(i,j,1,3)-v(im,j,1,3))/dx - (u(i,j,1,3)-u(i,jm,1,3))/dy 
-
-       zeta2(i,j) = (v(i,j,2,3)-v(im,j,2,3))/dx - (u(i,j,2,3)-u(i,jm,2,3))/dy
+       div(i,j)  = (u(ip,j,k,3)-u(i,j,k,3))/dx + (v(i,jp,k,3)-v(i,j,k,3))/dy 
+       zeta(i,j) = (v(i,j,k,3)-v(im,j,k,3))/dx - (u(i,j,k,3)-u(i,jm,k,3))/dy
 
        enddo
        enddo
 
-       array = div1(:,:)
+       array = div(:,:)
        include 'subs/bndy.f90'
-       div1(:,:) = array
-       array = div2(:,:)
+       div(:,:) = array
+       array = zeta(:,:)
        include 'subs/bndy.f90'
-       div2(:,:) = array
-       array = zeta1(:,:)
-       include 'subs/bndy.f90'
-       zeta1(:,:) = array
-       array = zeta2(:,:)
-       include 'subs/bndy.f90'
-       zeta2(:,:) = array
+       zeta(:,:) = array
+
 
 

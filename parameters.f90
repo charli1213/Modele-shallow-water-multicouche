@@ -7,9 +7,9 @@
  
    parameter ( Lx = 2e6, Ly = Lx )
 
-   parameter ( H1 = 1.0e3, Htotal = 4.0e3 )
+   parameter ( H1 = 1.0e3, H2 = 1.0e3, Htotal = 4.0e3 )
  
-   parameter ( nx = 512, ny = nx, nz = 2 )
+   parameter ( nx = 512, ny = nx, nz = 3 )
  
    parameter ( dx = Lx/nx, dy = Ly/ny )
  

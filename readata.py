@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import cmocean.cm as cmo
 import xarray as xr
 from os import listdir
 
@@ -25,7 +26,7 @@ for name in data_names :
     data = np.zeros((lenght, nx, nx))
     for it in range(1,lenght+1) :
         f = open( data_path + '/{}_{}'.format(name,100000+it), 'rb' )        
-        data[it-1,:,:] = np.fromfile(f,dtype='float32').reshape((256,256))
+        data[it-1,:,:] = np.fromfile(f,dtype='float32').reshape((256,256)).transpose()
         f.close()
         
     # coords/data = form (dims, data[, attrs, encoding])
@@ -36,11 +37,26 @@ for name in data_names :
                                           ),
                             )
 
+    
+if __name__ == "__main__" :
 
+    # --- Figure : 
+    fig, axes = plt.subplots(nrows = 3, ncols = 2,
+                             figsize = (10.5,8.5),
+                             sharey = True, width_ratios = [0.7,0.3])
+    vmaxs = [1e-5, 1e-7, 0.2]
+    cmaps = [cmo.curl, cmo.diff, 'bwr']
 
-plt.imshow(data[5,:,:])
-plt.colorbar()
-plt.show()
-#data = open(data_path + '/' + data_names[0] + '100001', mode='rb').read()
+    for i,name in enumerate(['zeta1','div1','v1']) :
+        ds[name] .isel(x=128).transpose().plot(ax=axes[i,0], cmap = cmaps[i],
+                                               vmin = -vmaxs[i], vmax = vmaxs[i],
+                                               add_colorbar = False)
+        ds[name].isel(time=3300).transpose().plot(ax = axes[i,1], cmap = cmaps[i],
+                                                           vmin = -vmaxs[i], vmax = vmaxs[i])
+        axes[i,1].set_ylabel('')
 
+    plt.tight_layout()
+    plt.show()
+
+    del ds
 

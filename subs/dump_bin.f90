@@ -14,17 +14,16 @@
       eta_out(:,:,k) = eta(isubx,isuby,k,3)
     enddo
 
-    zeta1_out(:,:) = zeta1(isubx,isuby)
-    div1_out(:,:)  = div1(isubx,isuby)
 
-    ! Velocity :
+    ! Velocity/Curl/Divergence :
     do k = 1,nz
+       ! >>> velocities 
+       
        WRITE (k_str,'(I0)') k
        string1 = 'data/u' // trim(k_str) // '_' // trim(which)
        string2 = 'data/v' // trim(k_str) // '_' // trim(which)
 
-       ! Velocity first layer : 
-    
+       ! Writing
        open(unit=101,file=string1,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isubx)))
        write(101,REC=1) ((u_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
@@ -35,36 +34,31 @@
        write(102,REC=1) ((v_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
        close(102)
 
-    end do 
+       ! >>> Divergence AND curl for each layers :
+       
+       WRITE (k_str,'(I0)') k
+       string39 = 'data/div'   // trim(k_str)  // '_' // trim(which)
+       string40 = 'data/zeta1' // trim(k_str)  // '_' // trim(which)
 
-    
-    ! Divergence AND curl of first layer [1/s]
-    string39 = 'data/div1'  // '_' // trim(which)
-    open(unit=139,file=string39,access='DIRECT',&
-         & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-    write(139,REC=1) ((div1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-    close(139)
+       ! calculate div and curl
+       INCLUDE 'subs/div_vort.f90'
+       zeta_out(:,:) = zeta(isubx,isuby)
+       div_out(:,:)  = div(isubx,isuby)
 
-    string40 = 'data/zeta1'  // '_' // trim(which)
-    open(unit=140,file=string40,access='DIRECT',&
-         & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-    write(140,REC=1) ((zeta1_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-    close(140)
-    
-    ! Divergence AND curl of second layer [1/s]
-    !string41= 'data/div2'  // '_' // trim(which)
-    !open(unit=141,file=string41,access='DIRECT',&
-    !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-    !write(141,REC=1) ((div2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-    !close(141)
-    
-    !string42= 'data/zeta2'  // '_' // trim(which)
-    !open(unit=142,file=string42,access='DIRECT',&
-    !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-    !write(142,REC=1) ((zeta2(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
-    !close(142)
-    
-    
+       ! Writing
+       open(unit=139,file=string39,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(139,REC=1) ((div_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       close(139)
+
+       open(unit=140,file=string40,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(140,REC=1) ((zeta_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       close(140)
+
+    end do ! end of k-loop
+
+
     
   end if !IO_field
   

@@ -15,7 +15,7 @@
           endif
           include 'subs/divBT.f90' ! array = div(u*h)
           rhs_Psurf(:,:) = rhs_Psurf(:,:) + array(:,:)
-       enddo
+       enddo !end k-loop
 
 
        ! N.B. UStokes\VStokes = 0 (see initialize.f90) if coupling = .false.
@@ -58,7 +58,8 @@
        array(:,:) = v(:,:,k,ilevel)
        include 'subs/bndy.f90'
        v(:,:,k,ilevel) = array(:,:)
-       enddo
+       enddo ! end k-loop
 
-!!! Charles-Édouard (parce que y'a plusieurs p_corrections)
+       ! We re-apply the p_correction,
+       ! because we can have as much p-correction as we want (we just took 2 because)
        p_out(:,:) = p_out(:,:) + Psurf(:,:)

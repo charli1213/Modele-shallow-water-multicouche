@@ -3,7 +3,7 @@
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
       integer i_diags
-      double precision pi, twopi, Lx, Ly, dx, dy,H1,Htotal
+      double precision pi, twopi, Lx, Ly, dx, dy,H1,H2,Htotal
       real f0, beta, r_drag, Ah, r_invLap, rf
       real tau0, tau1
       real fileperday, daysperrestart
@@ -58,10 +58,9 @@
       real eta_ag_p(0:nnx,0:nny,2)
       real Psurf(0:nnx,0:nny), rhs_Psurf(0:nnx,0:nny)
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
+      real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-      real div1(0:nnx,0:nny), zeta1(0:nnx,0:nny)
-      real div2(0:nnx,0:nny), zeta2(0:nnx,0:nny)
-
+      
       real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
       real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
       real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
@@ -86,8 +85,8 @@
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real div1_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real zeta1_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
       ! >>> Coupling quantities >>>
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
       REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2)
@@ -296,22 +295,21 @@
          uu_old(:,:) = u(:,:,k,1) 
          vv_old(:,:) = v(:,:,k,1)
 
-         !!
-         ! >>> Modification CEL : Random noise >>>
+         ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/10.
+            uu(:,:) = uu(:,:)/100.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/10.
+            vv(:,:) = vv(:,:)/100.
          endif
-         ! <<< Modification CEL (End) <<<
          !
-         
+
+         ! Finding thickness
          if (k.eq.1) then
             thickness(:,:) = H(k) - eta(:,:,k+1,1) 
          else if (k.eq.nz) then
             pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,1) 
-            thickness(:,:) = H(k) + eta(:,:,k,1)
+            thickness(:,:) = H(k) + eta(:,:,k,1)   
          else
             pressure(:,:) =  pressure(:,:) + gprime(k)*eta(:,:,k,1) 
             thickness(:,:) =  H(k) + eta(:,:,k,1) - eta(:,:,k+1,1)
@@ -328,12 +326,26 @@
       !    set eta(k =1) to be zero (rigid lid)
       !    for nz = 2, rhs_eta(k = 2) is just d/dt of eta(k=2)
       !    fo  nz > 2, need to solve a system of eqns to get from d/dt of thickness
-      !    to d/dt of eta.
+      !    to d/dt of
       !
-      rhs_eta(:,:,1) = 0.
+      !
+      !    >>> RHS : 
+      rhs_eta(:,:,1) = 0. ! First
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
-      eta(:,:,:,2) = eta(:,:,:,1) + dt*rhs_eta(:,:,:)
+
+      ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+      array(:,:) = rhs_eta(:,:,nz)
+      eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
+      do k = nz-1, 2, -1
+         array(:,:) = rhs_eta(:,:,k) + array(:,:)
+         eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
+      end do ! end k-loop
+      ! <<< RHS (end)
+
+
+      ! Ça marche juste parce que rhs_h2 et rhs_eta2 sont la même chose à deux couches.
+      ! Tout ce qui est en haut, ça marche, sinon.
       time = dt
       its = its + 1
       call get_taux(taux_steady,amp_matrix(its),taux)
@@ -414,6 +426,7 @@
                pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2)
             else
+               !(ERREUR)
                pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,1) - eta(:,:,k+1,2)
             endif
@@ -423,10 +436,19 @@
          !
          !   same bug as in first time step if nz /= 2
          !
+         ! >>> RHS : 
          rhs_eta(:,:,1) = 0.
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
-         eta(:,:,:,3) = eta(:,:,:,1) + 2.*dt*rhs_eta(:,:,:)
+
+         ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+         array(:,:) = rhs_eta(:,:,nz)
+         eta(:,:,nz,2) = eta(:,:,nz,1) + 2.*dt*array(:,:)
+         do k = nz-1, 2, -1
+            array(:,:) = rhs_eta(:,:,k) + array(:,:)
+            eta(:,:,k,2) = eta(:,:,k,1) + 2.*dt*array(:,:)
+         end do ! end k-loop
+         ! <<< RHS (end)
 
 
          ! --- Updating time ---
@@ -486,7 +508,7 @@
          if ( its .gt. min(start_movie,start_spec) ) then
             ! Calculating diognostic only when outputting physical or Fourier fields
             if(mod(its,ispechst).eq.0.or.mod(its,iout).eq.0) then 
-               include 'subs/div_vort.f90' 
+               !  include 'subs/div_vort.f90' 
                !  include 'subs/tmp_complex.f90'
                !  include 'subs/calc_q.f90'
                include 'subs/diags.f90'
@@ -515,7 +537,15 @@
                datr(:,:) = eta_ag(1:nx,1:ny)
                include 'fftw_stuff/spec1.f90'
                eta_agfft(:,:)=datc ! BC mode
-   
+
+               k=1
+               include 'subs/div_vort.f90'
+               div1 = div
+
+               k=2
+               include 'subs/div_vort.f90'
+               div2 = div
+               
                datr(:,:) = div2(1:nx,1:ny)-div1(1:nx,1:ny)
                include 'fftw_stuff/spec1.f90'
                div_fft(:,:)=datc ! BC mode

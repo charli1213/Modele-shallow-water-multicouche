@@ -1,7 +1,7 @@
-
-!
+!    Calculate the horizontal divergence of transport locally (for a specific layer)
+!    
 !    bndy condition: periodic in x,y
-!
+!    
 
        array = uu
        include 'subs/bndy.f90'
