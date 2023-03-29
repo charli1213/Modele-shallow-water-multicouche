@@ -13,7 +13,7 @@
              thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
               &             -  eta(:,:,k+1,ilevel)
           endif
-          include 'subs/divBT.f90' ! array = div(u*h)
+          include 'subs/divBT.f90' ! array = div(u*h) Barotropic Divergence
           rhs_Psurf(:,:) = rhs_Psurf(:,:) + array(:,:)
        enddo !end k-loop
 
@@ -61,5 +61,5 @@
        enddo ! end k-loop
 
        ! We re-apply the p_correction,
-       ! because we can have as much p-correction as we want (we just took 2 because)
+       ! because we can have as much p-correction as we want (we just took 2 because it's enough)
        p_out(:,:) = p_out(:,:) + Psurf(:,:)

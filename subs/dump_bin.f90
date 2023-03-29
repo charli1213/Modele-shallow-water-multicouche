@@ -17,11 +17,12 @@
 
     ! Velocity/Curl/Divergence :
     do k = 1,nz
-       ! >>> velocities 
+       ! >>> velocities and eta
        
        WRITE (k_str,'(I0)') k
        string1 = 'data/u' // trim(k_str) // '_' // trim(which)
        string2 = 'data/v' // trim(k_str) // '_' // trim(which)
+       string3 = 'data/eta' // trim(k_str) // '_' // trim(which)       
 
        ! Writing
        open(unit=101,file=string1,access='DIRECT',&
@@ -34,11 +35,17 @@
        write(102,REC=1) ((v_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
        close(102)
 
+       open(unit=103,file=string3,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(103,REC=1) ((eta_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       close(103)
+
+
        ! >>> Divergence AND curl for each layers :
        
        WRITE (k_str,'(I0)') k
        string39 = 'data/div'   // trim(k_str)  // '_' // trim(which)
-       string40 = 'data/zeta1' // trim(k_str)  // '_' // trim(which)
+       string40 = 'data/zeta' // trim(k_str)  // '_' // trim(which)
 
        ! calculate div and curl
        INCLUDE 'subs/div_vort.f90'

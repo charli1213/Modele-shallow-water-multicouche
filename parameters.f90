@@ -7,7 +7,7 @@
  
    parameter ( Lx = 2e6, Ly = Lx )
 
-   parameter ( H1 = 1.0e3, H2 = 1.0e3, Htotal = 4.0e3 )
+   parameter ( H1 = 1.0e3, H2 = 1.0e3, H3 = 2.0e3 )
  
    parameter ( nx = 512, ny = nx, nz = 3 )
  
@@ -17,7 +17,7 @@
  
   ! --- Paraterers ---
  
-   parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = 0.1)
+   parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
  
    parameter ( f0 = 7.e-5, beta = 0) ! 1.e-11 )
  
@@ -37,7 +37,7 @@
   
    parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) !4
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) !4
 
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )

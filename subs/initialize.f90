@@ -43,19 +43,30 @@
        for_to_spec(:) = 0.
        for_ag_spec(:) = 0.
 
-       ! Dealing with thicknesses (call DAVID)
-       Htot = Htotal
+       ! This could be cleaner : 
+       Htot = H1 + H2 + H3
        H(1) = H1
        H(2) = H2
-       H(3) = Htot - H(1) - H(2)
-    
-       if (nz.eq.2) then
-          gprime(1) = 0.
-          gprime(2) = Htot*c_bc**2/H(1)/H(2) 
-       else
-          print*, 'bug; need to set gprimes'
-          stop
-       endif
+       H(3) = H3
+       rho(1) = 1.0000
+       rho(2) = 1.0025
+       rho(3) = 1.0050
+       g = 9.81
+
+       ! gprime
+       gprime(1) = g
+       do k = 2,nz
+          gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
+       enddo
+       !if (nz.eq.2) then
+       !   gprime(1) = 0.
+       !   gprime(2) = Htot*c_bc**2/H(1)/H(2)
+       !   gprime(3) 
+       !else
+       !   print*, 'bug; need to set gprimes'
+       !   stop
+       !endif
+
        f(:) = f0
 
        do j = 1,ny

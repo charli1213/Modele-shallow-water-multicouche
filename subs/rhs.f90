@@ -1,7 +1,7 @@
 
        tmp(1) = minval(thickness)/H(k)
        if(tmp(1).le.0.02) then
-       print*, 'thickness too small'
+       print*, k,'thickness too small'
        stop
        endif
 
@@ -120,7 +120,7 @@
        &            + 0.25*(f(jp)+zeta(i,jp))*(vv(i,jp)+vv(im,jp))   &  ! Coriolis/Vorticité
        &            - Ah*grad4u(i,j)                                 &  ! Viscosité
        &            + r_invLap*invLap_u(i,j)                         &  ! Laplacien inverse
-       &            - r_drag*uu_old(i,j)*bot(k)                      &  ! Frottement au fond
+       &            - bot(k)*r_drag*uu_old(i,j)                      &  ! Frottement au fond
        &            + top(k)*wind_x(i,j)                                ! Vent en x
        
        rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                           &  ! Bernouilli
@@ -128,7 +128,7 @@
        &            - 0.25*(f(jp)+zeta(ip,j))*(uu(ip,j)+uu(ip,jm))   &  ! coriolis/Vorticité
        &            - Ah*grad4v(i,j)                                 &  ! Viscosité
        &            + r_invLap*invLap_v(i,j)                         &  ! Laplacien inverse
-       &            - r_drag*vv_old(i,j)*bot(k)                         ! Frottement au fond
+       &            - bot(k)*r_drag*vv_old(i,j)                         ! Frottement au fond
        
        rhs_eta(i,j,k) = -(uh(ip,j)-uh(i,j))/dx                       &  ! div(u*h)
        &              - ( vh(i,jp)-vh(i,j))/dy                       &  

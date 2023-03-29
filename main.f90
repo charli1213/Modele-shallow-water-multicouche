@@ -3,8 +3,8 @@
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
       integer i_diags
-      double precision pi, twopi, Lx, Ly, dx, dy,H1,H2,Htotal
-      real f0, beta, r_drag, Ah, r_invLap, rf
+      double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3
+      real f0, beta, r_drag, Ah, r_invLap, rf, g
       real tau0, tau1
       real fileperday, daysperrestart
       integer nsteps,start_movie,start_spec
@@ -15,13 +15,14 @@
       logical restart, use_ramp, ifsteady, gaussian_bump_eta
       logical calc1Dspec,save_movie,save2dfft
       real c_theta, c_mu, c_sigma, c_tauvar
-      integer nghost, ng2
+
       !
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_coupling
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
+      integer nghost, ng2
       LOGICAL cou, ustar, waves, stokes
       REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
@@ -96,7 +97,7 @@
       REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
       ! <<< Coupling quantities (End) <<<
       real f(0:nny)
-      real gprime(nz), Htot, H(nz)
+      real gprime(nz), Htot, H(nz), rho(nz)
       real top(nz), bot(nz), Fmode(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
@@ -296,15 +297,15 @@
          vv_old(:,:) = v(:,:,k,1)
 
          ! Adding random noise 
-         if (restart .eqv. .false.) then
-            CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/100.
-            CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/100.
-         endif
+         !if (restart .eqv. .false.) then
+         !   CALL RANDOM_NUMBER(uu)
+         !   uu(:,:) = uu(:,:)/1000.
+         !   CALL RANDOM_NUMBER(vv)
+         !   vv(:,:) = vv(:,:)/1000.
+         !endif
          !
 
-         ! Finding thickness
+         ! Finding thickness locally
          if (k.eq.1) then
             thickness(:,:) = H(k) - eta(:,:,k+1,1) 
          else if (k.eq.nz) then
@@ -320,32 +321,24 @@
 
       enddo  ! end of the do k = 1,nz loop
 
+      
       !
-      !    bug here if nz \= 2
-      !    rhs_eta gives nz eqns for nz-1 interfaces
-      !    set eta(k =1) to be zero (rigid lid)
-      !    for nz = 2, rhs_eta(k = 2) is just d/dt of eta(k=2)
-      !    fo  nz > 2, need to solve a system of eqns to get from d/dt of thickness
-      !    to d/dt of
+      ! ---- RHS (begining) ----
       !
-      !
-      !    >>> RHS : 
       rhs_eta(:,:,1) = 0. ! First
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
 
       ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
-      array(:,:) = rhs_eta(:,:,nz)
+      array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = /Delta \eta_{k+1}
       eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
       do k = nz-1, 2, -1
-         array(:,:) = rhs_eta(:,:,k) + array(:,:)
+         array(:,:)   = rhs_eta(:,:,k) + array(:,:)
          eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
       end do ! end k-loop
-      ! <<< RHS (end)
-
-
-      ! Ça marche juste parce que rhs_h2 et rhs_eta2 sont la même chose à deux couches.
-      ! Tout ce qui est en haut, ça marche, sinon.
+      !
+      ! ---- RHS (end) ----
+      !
       time = dt
       its = its + 1
       call get_taux(taux_steady,amp_matrix(its),taux)
@@ -373,7 +366,7 @@
       !==============================================================
 
       do its = 2, nsteps
-
+         write(*,*) 'its :::::', its
          ! determine local time step !tstime
          itlocal=mod(its,itape)       ! for 1-D time series, relative its for itape
          itsrow=int(itlocal/ispechst) ! xxth row in a 1-D time series file
@@ -426,29 +419,30 @@
                pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2)
             else
-               !(ERREUR)
                pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,1) - eta(:,:,k+1,2)
-            endif
+            end if
             include 'subs/rhs.f90' 
          enddo  ! k
 
          !
-         !   same bug as in first time step if nz /= 2
+         ! ---- RHS (begining) ---- !
          !
-         ! >>> RHS : 
+         ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)
          rhs_eta(:,:,1) = 0.
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
 
          ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
          array(:,:) = rhs_eta(:,:,nz)
-         eta(:,:,nz,2) = eta(:,:,nz,1) + 2.*dt*array(:,:)
+         eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
          do k = nz-1, 2, -1
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
-            eta(:,:,k,2) = eta(:,:,k,1) + 2.*dt*array(:,:)
+            eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop
-         ! <<< RHS (end)
+         !
+         ! ---- RHS (end) ----
+         !
 
 
          ! --- Updating time ---
