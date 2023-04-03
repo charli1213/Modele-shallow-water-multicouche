@@ -24,9 +24,10 @@
           rhs_Psurf(i,j) = rhs_Psurf(i,j)                        &
                &         + (UStokes(i+1,j,2)-UStokes(i,j,2))/dx  &
                &         + (VStokes(i,j+1,2)-VStokes(i,j,2))/dy
+          ! UEkman was here
        enddo
        enddo
-
+       
        rhs_Psurf(:,:) = rhs_Psurf(:,:)/Htot !/dt
 !
 !      rhs_Psurf is vert average of d/dt (div u) 

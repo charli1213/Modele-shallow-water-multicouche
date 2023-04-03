@@ -366,7 +366,6 @@
       !==============================================================
 
       do its = 2, nsteps
-         write(*,*) 'its :::::', its
          ! determine local time step !tstime
          itlocal=mod(its,itape)       ! for 1-D time series, relative its for itape
          itsrow=int(itlocal/ispechst) ! xxth row in a 1-D time series file

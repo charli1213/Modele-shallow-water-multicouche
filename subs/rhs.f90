@@ -103,7 +103,7 @@
 
        wind_x(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * SIN(twopi*jm/ny*1.)
        wind_x(i,j) = wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))
-       
+
        enddo
        enddo
 

@@ -43,21 +43,30 @@
        for_to_spec(:) = 0.
        for_ag_spec(:) = 0.
 
-       ! This could be cleaner : 
-       Htot = H1 + H2 + H3
+       ! This could be cleaner :
        H(1) = H1
        H(2) = H2
        H(3) = H3
+       ! The variable nz decides which layers are added to Htot
+       Htot = 0
+       do k = 1,nz
+          Htot = Htot + H(k)
+       end do
+       
        rho(1) = 1.0000
-       rho(2) = 1.0025
-       rho(3) = 1.0050
-       g = 9.81
+       rho(2) = 1.0008
+       rho(3) = 1.0014
+       g = 10.00
 
        ! gprime
        gprime(1) = g
        do k = 2,nz
           gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
+          print *, '### gprime(',k,') from Delta rho :', gprime(k)
+          print *, '### gprime(',k,') from cbc       :', (H(k-1) + H(k))*c_bc**2/H(k-1)/H(k)
        enddo
+
+       
        !if (nz.eq.2) then
        !   gprime(1) = 0.
        !   gprime(2) = Htot*c_bc**2/H(1)/H(2)

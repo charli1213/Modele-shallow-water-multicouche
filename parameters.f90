@@ -33,11 +33,11 @@
       
   ! ---  Time ---
  
-   parameter ( dt = 300. )
+   parameter ( dt = 360. )
   
-   parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
+   parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) !4
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) !4
 
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
