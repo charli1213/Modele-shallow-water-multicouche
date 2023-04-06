@@ -97,7 +97,7 @@
       REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
       ! <<< Coupling quantities (End) <<<
       real f(0:nny)
-      real gprime(nz), Htot, H(nz), rho(nz)
+      real gprime(nz), Htot, H(nz+1), rho(nz+1) ! +1 because see initialise.f90
       real top(nz), bot(nz), Fmode(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
@@ -297,12 +297,12 @@
          vv_old(:,:) = v(:,:,k,1)
 
          ! Adding random noise 
-         !if (restart .eqv. .false.) then
-         !   CALL RANDOM_NUMBER(uu)
-         !   uu(:,:) = uu(:,:)/1000.
-         !   CALL RANDOM_NUMBER(vv)
-         !   vv(:,:) = vv(:,:)/1000.
-         !endif
+         if (restart .eqv. .false.) then
+            CALL RANDOM_NUMBER(uu)
+            uu(:,:) = uu(:,:)/10.
+            CALL RANDOM_NUMBER(vv)
+            vv(:,:) = vv(:,:)/10.
+         endif
          !
 
          ! Finding thickness locally
@@ -413,13 +413,14 @@
             vv_old(:,:) = v(:,:,k,1)
 
             if (k.eq.1) then
+               ! p = 0, because eta(:,:,1,:) = 0.
                thickness(:,:) = H(k) - eta(:,:,k+1,2) 
             else if (k.eq.nz) then
-               pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
+               pressure(:,:)  = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2)
             else
-               pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
-               thickness(:,:) = H(k) + eta(:,:,k,1) - eta(:,:,k+1,2)
+               pressure(:,:)  = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
+               thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
             end if
             include 'subs/rhs.f90' 
          enddo  ! k
@@ -436,6 +437,7 @@
          array(:,:) = rhs_eta(:,:,nz)
          eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
          do k = nz-1, 2, -1
+            print *, 'Ici, ça marche ::', k
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
             eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop

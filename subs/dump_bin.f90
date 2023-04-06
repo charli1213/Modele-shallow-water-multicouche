@@ -48,6 +48,7 @@
        string40 = 'data/zeta' // trim(k_str)  // '_' // trim(which)
 
        ! calculate div and curl
+       ! ilevel = 3 (latest field)
        INCLUDE 'subs/div_vort.f90'
        zeta_out(:,:) = zeta(isubx,isuby)
        div_out(:,:)  = div(isubx,isuby)

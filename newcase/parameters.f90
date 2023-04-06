@@ -43,9 +43,9 @@
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
   
-   parameter ( itape=86400*10/dt,ispechst=18) !spectrum output file, output one spectra per ispechst
+   parameter (itape=86400*10/dt,ispechst=18) !spectrum output file, output one spectra per ispechst
  
-   parameter (save2dfft=.false.,calc1Dspec=.false. )
+   parameter(save2dfft=.false.,calc1Dspec=.false. )
  
    parameter ( start_movie = 1. , start_spec=1., subsmprto=2, ftsubsmprto=1, save_movie=.true. )
  
@@ -53,9 +53,9 @@
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way
 
-   parameter ( restart = .false. , daysperrestart = 365)
+   parameter (restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false., gaussian_bump_eta = .false.)
+   parameter (use_ramp = .false., gaussian_bump_eta = .false.)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -66,4 +66,4 @@
    
    parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    
-   parameter ( step = 0.0, nghost=0, ng2=nghost/2)
+   parameter ( step = 0.1, nghost=0, ng2=nghost/2)

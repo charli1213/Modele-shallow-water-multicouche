@@ -52,16 +52,19 @@
        do k = 1,nz
           Htot = Htot + H(k)
        end do
-       
+
+       ! On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
+       g = 10.00       
        rho(1) = 1.0000
-       rho(2) = 1.0008
-       rho(3) = 1.0014
-       g = 10.00
+       rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
+       rho(3) = rho(2) + rho(1)*(H(2)+H(3))*c_bc**2/H(2)/H(3)/g
+
 
        ! gprime
        gprime(1) = g
        do k = 2,nz
           gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
+          
           print *, '### gprime(',k,') from Delta rho :', gprime(k)
           print *, '### gprime(',k,') from cbc       :', (H(k-1) + H(k))*c_bc**2/H(k-1)/H(k)
        enddo
@@ -70,7 +73,6 @@
        !if (nz.eq.2) then
        !   gprime(1) = 0.
        !   gprime(2) = Htot*c_bc**2/H(1)/H(2)
-       !   gprime(3) 
        !else
        !   print*, 'bug; need to set gprimes'
        !   stop

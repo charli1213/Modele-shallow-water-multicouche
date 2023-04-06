@@ -116,7 +116,7 @@
           im = i-1
 
        rhs_u(i,j,k) = -(B(i,j)-B(im,j))/dx                           &  ! Bernouilli
-       &            + 0.25*(f(j)+zeta(i,j))*(vv(i,j)+vv(im,j))       &  ! Coriolis/Vorticité
+       &            + 0.25*(f(j) +zeta(i,j))* (vv(i,j) +vv(im,j))    &  ! Coriolis/Vorticité
        &            + 0.25*(f(jp)+zeta(i,jp))*(vv(i,jp)+vv(im,jp))   &  ! Coriolis/Vorticité
        &            - Ah*grad4u(i,j)                                 &  ! Viscosité
        &            + r_invLap*invLap_u(i,j)                         &  ! Laplacien inverse
@@ -131,7 +131,7 @@
        &            - bot(k)*r_drag*vv_old(i,j)                         ! Frottement au fond
        
        rhs_eta(i,j,k) = -(uh(ip,j)-uh(i,j))/dx                       &  ! div(u*h)
-       &              - ( vh(i,jp)-vh(i,j))/dy                       &  
+       &              -  (vh(i,jp)-vh(i,j))/dy                       &  
        &              - top(k)*(                                     &  ! div(uStokes*h)
        &                (UStokes(ip,j,2)-UStokes(i,j,2))/dx          &
        &              + (VStokes(i,jp,2)-VStokes(i,j,2))/dy  )

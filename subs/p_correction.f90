@@ -20,7 +20,7 @@
 
        ! N.B. UStokes\VStokes = 0 (see initialize.f90) if coupling = .false.
        do j = 1, ny
-       do i = 1, nx          
+       do i = 1, nx
           rhs_Psurf(i,j) = rhs_Psurf(i,j)                        &
                &         + (UStokes(i+1,j,2)-UStokes(i,j,2))/dx  &
                &         + (VStokes(i,j+1,2)-VStokes(i,j,2))/dy

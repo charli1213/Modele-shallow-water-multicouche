@@ -43,7 +43,7 @@
         zeta = array
 
         ! Quasi-Geostrophic Potential vorticity (where beta = 0)
-        ! Here, it works for any number of layers
+        ! This is the definition, works for any number of layers
         do j = 1, ny
         do i = 1, nx
            q(i,j,k) = zeta(i,j) -0.25*f(j)*(thickness(i,j)   +    &
@@ -56,12 +56,41 @@
         array(:,:) = q(:,:,k)
         include 'subs/bndy.f90'
         q(:,:,k) = array(:,:)
-        ! We found the QG potential vorticity (QGPV) for each layer. 
-
+        
      enddo ! k loop (end)
   
-  
+
+
+     ! --- Finding each baroclinic streamfunctions :
+     ! > Creating matrix
+     ! > Here g is defined for ceiling not floor (Which is why it's different than LP's code)
+     do k=1,nz,1
+        F_layer(k,k-1) = f0**2/(H(k)*g(k-1))
+        F_layer(k,k) = f0**2/(H(k)*g(k))
+        print*, g(k) ,  F_layer(k,k)
+     end do
+     F_layer(nz,nz) = 0.
      
+     M(:,:) = 0. 
+     M2(:,:)= 0.
+
+     M(1,1) = - (F_layer(1,0)+F_layer(1,1))
+     M(2,1) =    F_layer(2,1)
+
+
+     do k=2,nz-1,1
+        M(k-1,k) =    F_layer(k-1,k-1) 
+        M(k,k)   = - (F_layer(k,k-1) + F_layer(k,k))
+        M(k+1,k) =    F_layer(k+1,k) 
+     end do
+
+
+
+
+
+
+     
+     ! [L.P.] F_mode = eigenvalues of "mode" system of equation : q_mode = laplacian(psi_mode)+F*psi_mode
      ! [***] À modifier pour nz > 2
      !if (nz.eq.2) then
      qmode(:,:,1) = (H(1)*q(:,:,1) + H(2)*q(:,:,2))/Htot ! Barotrope
@@ -72,6 +101,7 @@
      !   print*,  'error, nz /= 2'
      !endif
 
+     
 
      !  invert to get psimode
      
@@ -142,7 +172,8 @@
            ! gprime(nk)
            ! psi(nx,ny,nz)
            ! psi
-           eta_qg(i,j) = (f0/gprime(2))*0.25*(psi(i,j,2)-psi(i,j,1)   &
+           eta_qg(i,j) = (f0/gprime(2))*0.25*(                        &
+                &                 psi(i,j,2)-psi(i,j,1)               &
                 &               + psi(i+1,j,2)-psi(i+1,j,1)           &
                 &               + psi(i,j+1,2)-psi(i,j+1,1)           &
                 &               + psi(i+1,j+1,2)-psi(i+1,j+1,1))
