@@ -5,7 +5,7 @@
         do j = 1,ny
          do i = 1,nx/2+1
           if ( k2(i,j) /= 0 )  then
-           datc(i,j) = - datc(i,j)/(k2(i,j)+Fmode(k))
+           datc(i,j) = - datc(i,j)/(k2(i,j)+Fmodes(k))
           else
            datc(i,j) = 0       
           endif

@@ -8,8 +8,8 @@ from os import listdir
 
 # ---- parametres ----
 data_path = './testcase/data'
+data_path = './testcase_3couche/data'
 #data_path = './testgprime/data'
-
 
 data_filenames = listdir(data_path) # On liste tous les fichiers
 data_names     = list(set([name[:-7] for name in data_filenames])) # string
@@ -18,7 +18,7 @@ nz             = max(set([int(name[-1:]) for name in data_names])) # layer numbe
 nb_of_files    = max_filenumber%100000
 recentrage     = True
 
-nx   = 256 # Output dt
+nx   = 256 # Output resolution
 dt   = 0.5 # days
 outt = 5 # Dénominateur du ratio de fichiers qu'on prend ratio = 1/outt
 xx   = np.linspace(-2000,2000,nx)
@@ -43,7 +43,7 @@ for name in data_names :
                                           y=('y',xx,{'units':'km','name':'y'}),
                                           ),
                             )
-
+for i in range(1,nz+1) : ds['unorm'+str(i)] = np.sqrt(ds['u'+str(i)]**2 + ds['v'+str(i)]**2)
     
 # ---- Figures ----
 if __name__ == "__main__" :
@@ -51,41 +51,56 @@ if __name__ == "__main__" :
     # ---- Général figure  parameters ----    
 
     figures    = [True, False]
-    colorchart = {'eta' :'bwr',
+    colorchart = {'eta' :cmo.tarn_r,
                   'zeta':cmo.curl,
-                  'div' :cmo.diff,
-                  'u' :'bwr','v' :'bwr',}
+                  'div' :'RdBu_r',
+                  'u' :'bwr',
+                  'v' :'bwr',
+                  'unorm':cmo.ice_r}
+    saturation = dict(eta = 0.9,
+                      zeta  = 0.9,
+                      div   = 0.4,
+                      u     = 0.9,
+                      v     = 0.9,
+                      unorm = 0.9)
     
     # ---- Hovmoler and snapshot of 3 field ----
     if figures[0] :
         # > Params : 
-        layer        = 1
-        maxday       = 300
-        which_fields = ['zeta','div','u']
+        which_layer  = 3
+        
+        maxday       = 1400
+        which_fields = ['zeta','div','eta','unorm']
 
         # > Figure :
-        fig, axes = plt.subplots(nrows = 3, ncols = 2,
-                                 figsize = (10.5,8.5),
-                                 sharey = True, width_ratios = [0.7,0.3],
+        fig, axes = plt.subplots(nrows = 4, ncols = 2,
+                                 figsize = (10.5,4*8.5/3),
+                                 sharey = True, sharex=False,
+                                 width_ratios = [0.75,0.28],
                                  )
 
-        for i,name in enumerate([field+str(layer) for field in which_fields]) :
+        for i,name in enumerate([field+str(which_layer) for field in which_fields]) :
             # Right panel
-            vmax = ds[name].sel(time=maxday, method = 'nearest').max()
+            vmax = saturation[name[:-1]]*ds[name].sel(time=maxday, method = 'nearest').max()
+            vmin = min(0,ds[name].sel(time=maxday, method = 'nearest').min())
+            if vmin != 0 : vmin =-vmax 
             ds[name].sel(time=maxday,
                          method = 'nearest').transpose().plot(ax = axes[i,1],
                                                               cmap = colorchart[name[:-1]],
-                                                              #vmin = -vmaxs[i],
-                                                              #vmax =  vmaxs[i],
+                                                              vmin = vmin,
+                                                              vmax = vmax,
                                                               add_colorbar = True)
+            #ds.zeta1.isel(time=-1).transpose().plot(cmap=colorchart['zeta'])
             # Left panel
-            ds[name].isel(x=128).transpose().plot(ax=axes[i,0], cmap = colorchart[name[:-1]],
-                                                  vmin = -vmax,
-                                                  vmax = vmax,
-                                                  add_colorbar = False)
+            ds[name].sel(x=0.0,
+                         method = 'nearest').transpose().plot(ax=axes[i,0], cmap = colorchart[name[:-1]],
+                                               vmin = vmin,
+                                               vmax = vmax,
+                                               add_colorbar = False)
             axes[i,1].set_ylabel('')
             axes[i,0].set_xlim([0,maxday])
-
+        [axe.set_xticklabels([]) for axe in axes[:-1,0]]
+        [axe.set_xticklabels([]) for axe in axes[:-1,1]]
         plt.tight_layout()
         plt.show()
 
@@ -117,3 +132,4 @@ if __name__ == "__main__" :
 
     
 
+    del ds 

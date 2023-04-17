@@ -58,53 +58,9 @@
         q(:,:,k) = array(:,:)
         
      enddo ! k loop (end)
-  
-
-
-     ! --- Finding each baroclinic streamfunctions :
-     ! > Creating matrix
-     ! > Here g is defined for ceiling not floor (Which is why it's different than LP's code)
-     do k=1,nz,1
-        F_layer(k,k-1) = f0**2/(H(k)*g(k-1))
-        F_layer(k,k) = f0**2/(H(k)*g(k))
-        print*, g(k) ,  F_layer(k,k)
-     end do
-     F_layer(nz,nz) = 0.
-     
-     M(:,:) = 0. 
-     M2(:,:)= 0.
-
-     M(1,1) = - (F_layer(1,0)+F_layer(1,1))
-     M(2,1) =    F_layer(2,1)
-
-
-     do k=2,nz-1,1
-        M(k-1,k) =    F_layer(k-1,k-1) 
-        M(k,k)   = - (F_layer(k,k-1) + F_layer(k,k))
-        M(k+1,k) =    F_layer(k+1,k) 
-     end do
-
-
-
-
-
-
-     
-     ! [L.P.] F_mode = eigenvalues of "mode" system of equation : q_mode = laplacian(psi_mode)+F*psi_mode
-     ! [***] À modifier pour nz > 2
-     !if (nz.eq.2) then
-     qmode(:,:,1) = (H(1)*q(:,:,1) + H(2)*q(:,:,2))/Htot ! Barotrope
-     qmode(:,:,2) = q(:,:,2) - q(:,:,1) ! Barocline
-     Fmode(1) = 0.
-     Fmode(2) = (f0/c_bc)**2
-     !else
-     !   print*,  'error, nz /= 2'
-     !endif
-
      
 
-     !  invert to get psimode
-     
+     !  invert to get psimode     
      !do k=1,nz
      do k=1,2
         datr(:,:) = qmode(1:nx,1:ny,k)

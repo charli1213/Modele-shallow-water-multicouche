@@ -61,6 +61,12 @@
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
+      ! Baroclinic/Barotropic modes with LAPACK ; 
+      REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
+      REAL WI(1:nz), VL(1:nz,1:nz)
+      REAL L2M(1:nz,1:nz),M2L(1:nz,1:nz)
+      INTEGER WORK(1:4*nz), INFO
+      CHARACTER(8) :: ministr
       
       real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
       real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
@@ -98,7 +104,7 @@
       ! <<< Coupling quantities (End) <<<
       real f(0:nny)
       real gprime(nz), Htot, H(nz+1), rho(nz+1) ! +1 because see initialise.f90
-      real top(nz), bot(nz), Fmode(nz)
+      real top(nz), bot(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
       real Lrossby
@@ -299,9 +305,9 @@
          ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/10.
+            uu(:,:) = uu(:,:)/100.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/10.
+            vv(:,:) = vv(:,:)/100.
          endif
          !
 
@@ -437,7 +443,6 @@
          array(:,:) = rhs_eta(:,:,nz)
          eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
          do k = nz-1, 2, -1
-            print *, 'Ici, ça marche ::', k
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
             eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop

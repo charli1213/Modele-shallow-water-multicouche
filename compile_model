@@ -37,6 +37,7 @@ elif [ "${pcid}" == "5" ]
 then
     machine_name=Bepsi
     fftw_path=/usr/share/doc/libfftw3-bin/
+    lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     model_path=~/Desktop/Modele-shallow-water-multicouche
     # Which case :
     case=~/Desktop/Modele-shallow-water-multicouche/testcase
@@ -50,7 +51,7 @@ echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
 cp "${model_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${model_path} to ${case}"
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-gfortran -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3 
+gfortran -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3 -lblas -L$lapack_path -llapack
 #cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
