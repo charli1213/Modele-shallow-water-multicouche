@@ -1,14 +1,1 @@
-testcase/exec
-testcase/forcing_frequency_dist.dat
-testcase/kxky_full_nx_1024.txt
-testcase/kxky_full_nx_256.txt
-testcase/kxky_full_nx_512.txt
-testcase/kxky_subsmp_nx_1024.txt
-testcase/kxky_subsmp_nx_256.txt
-testcase/kxky_subsmp_nx_512.txt
-testcase/parameters.f90_last_compiled
-testcase/restart
-testcase
-testcase2
-parameters.f90_last_compiled
-testcase3
+testcase*
