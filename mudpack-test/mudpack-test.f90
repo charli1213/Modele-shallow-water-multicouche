@@ -3,30 +3,43 @@ PROGRAM mudpack_test
   !USE MUDPACK
   IMPLICIT NONE
   REAL,    PARAMETER :: pi  = 3.14159265358979323846
-  INTEGER, PARAMETER :: nx  = 2**8+1,      ny  = 2**8+1
-  INTEGER, PARAMETER :: nnx = nx+2,        nny = ny+2
-  REAL,    PARAMETER :: xa = -1000.,       xb = 1000.
-  REAL,    PARAMETER :: yc = -1000.,       yd = 1000.
-  REAL,    PARAMETER :: dx  = (xb-xa)/nx,  dy = (yd-yc)/ny
+  INTEGER, PARAMETER :: iex = 9,            jey = 9
+  INTEGER, PARAMETER :: ixp = 2,            jyq = 2
+  INTEGER, PARAMETER :: nx  = ixp*2**(iex-1)+1
+  INTEGER, PARAMETER :: ny  = jyq*2**(jey-1)+1
+  INTEGER, PARAMETER :: nnx = nx+1,         nny = ny+1
+  REAL,    PARAMETER :: xa  = 0.,       xb  = 10.
+  REAL,    PARAMETER :: yc  = 0.,       yd  = 10.
+  REAL,    PARAMETER :: dx  = (xb-xa)/(nx-1),   dy  = (yd-yc)/(ny-1)
   INTEGER            :: i,j,k,ip,jp,ierror
-  REAL               :: phi(0:nnx,0:nny), array(0:nnx,0:nny), mudphi(1:nx,1:ny)
-  REAL               :: mean_phix(1:nx,1:ny),mean_phiy(1:nx,1:ny)
-  REAL               :: RHS(1:nx,1:ny)
+  REAL               :: phi(0:nnx,0:nny), array(0:nnx,0:nny)
+  REAL               :: RHS(1:nx,1:ny), mean_phix(1:nx,1:ny) ,mean_phiy(1:nx,1:ny)
+  REAL               :: mudphi(1:nx,1:ny), noise(1:nx,1:ny)
   ! FUNCTIONS
   REAL               :: true_solution
-  REAL               :: testing
   ! MUDPACK INPUT
-  INTEGER            :: iparm(17), mgopt(4), neq
-  REAL               :: work, length, fparm(6)
+  INTEGER            :: iparm(17), mgopt(4), neq, length
+  REAL               :: fparm(6)
+  REAL,ALLOCATABLE   :: work(:)
   integer            :: kbdy
   CHARACTER(LEN=80)  :: myformat
   ! COMMON VARIABLES
-  COMMON/boundaries/mean_phix,mean_phiy
+  INTEGER            :: nn(2)
+  REAL               :: dims(6)
+  COMMON/boundaries/nn,dims
   ! SUBROUTINES CALLS
   external coef,bndyc,mean_derivative
-  ! --- PREAMBULE (END) ---
-
+  ! --- INITIALISATION ---
+  nn(1) = nx
+  nn(2) = ny
+  dims(1) = dx
+  dims(2) = dy
+  dims(3) = xa
+  dims(4) = xb
+  dims(5) = yc
+  dims(6) = yd
   
+  ! --- PROGRAMME
   ! Initalisation du champ à résoudre : 
   PRINT *, "> 1. Initialisation du champ à résoudre à l'aide de la fonction true_solution"
   DO i = 0,nnx
@@ -34,12 +47,12 @@ PROGRAM mudpack_test
         phi(i,j) = true_solution(i,j)
      END DO
   END DO
+
+  array = phi
+  INCLUDE 'bndy.f90'
+  phi = array
   
-
-  ! On trouve la dérivée première : 
-  PRINT *, "> 2. On trouve la dérivée première et on la recentre : "
-  call MEAN_DERIVATIVE(phi,nx,ny,dx,dy,mean_phix,mean_phiy)
-
+  CALL mean_derivative(phi,nx,ny,dx,dy,mean_phix,mean_phiy)
   
   ! On trouve le laplacien du champ phi (le RHS de la fonction)
   ! -- Définit sur le champ, lui-même (Aux coins)
@@ -65,16 +78,16 @@ PROGRAM mudpack_test
 
   ! >>> INITIALISATION >>>
   ! iparm : integer vector of length 17
-  iparm(1) = 0    ! intl : Initializing {0,1}.
-  iparm(2) = 2    ! nxa  : Flag for boundary conditions.
-  iparm(3) = 2 ! nxb
-  iparm(4) = 2 ! nyc
-  iparm(5) = 2 ! nyd  ! {2}=mixed boundary condition (Neumann)
+  iparm(1)  = 0    ! intl : Initializing {0,1}.
+  iparm(2)  = 2    ! nxa  : Flag for boundary conditions.
+  iparm(3)  = 2    ! nxb
+  iparm(4)  = 2    ! nyc
+  iparm(5)  = 2    ! nyd  ! {2}=mixed boundary condition (Neumann)
 
-  iparm(6) = 2 ! ixp
-  iparm(7) = 2 ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
-  iparm(8) = 8
-  iparm(9) = 8 ! 2^[8] = nx = ny  >>>>  iparm(8 ou 9) = log2(nx ou ny)
+  iparm(6)  = ixp ! ixp
+  iparm(7)  = jyq ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
+  iparm(8)  = iex
+  iparm(9)  = jey ! 2^[8] = nx = ny  >>>>  iparm(8 ou 9) = log2(nx ou ny)
   iparm(10) = nx          ! nx : # de points dans l'intervalle [xa,xb] (incluant la frontière)
                           ! nx = ixp*(2**(iex-1)) + 1
   iparm(11) = ny          ! ny
@@ -100,9 +113,9 @@ PROGRAM mudpack_test
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 10 ! maxcy  : the exact number of cycles executed between the finest and the coarsest
-  iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout.
-  length = 4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3
+  iparm(13) = 5  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
+  length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
 
   
@@ -110,9 +123,9 @@ PROGRAM mudpack_test
   100 format(' > 5. integer input arguments ',/'      intl = ',I2,       &
            /'      nxa = ',I4,' nxb = ', I4,' nyc = ',I4, ' nyd = ',I4,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
-           /'      nx = ',I3,' ny = ',I3,'iguess = ',I2,' maxcy = ',I2,  &
+           /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
            /'      method = ',I2, ' work space estimate = ',I7)
-  PRINT *, "      Calculated nx=", iparm(6)*(2**(iparm(8)-1)) + 1  
+  PRINT *, "     Calculated nx = ", iparm(6)*(2**(iparm(8)-1)) + 1  
 
   
   ! fparm : float point vector of length 6
@@ -129,7 +142,8 @@ PROGRAM mudpack_test
 
   
   ! work : one dimensionnal real save work space.
-  work = 0.0
+  ALLOCATE(work(length))
+  work(:) = 0.0
 
   ! bndyc : Boundary conditions (Voir plus bas) :
   !
@@ -174,8 +188,19 @@ PROGRAM mudpack_test
   !
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
-  ! solution approximative n'est pas illustrée. 
-  mudphi(:,:) = 0.
+  ! solution approximative n'est pas illustrée.
+  CALL RANDOM_NUMBER(noise)
+  DO i=1,nx
+     DO j=1,ny
+        mudphi(i,j) = 1 - 0.5*noise(i,j)
+        !mudphi(i,j) = phi(i,j)
+     ENDDO
+  ENDDO
+  mudphi(1,1:nx) = phi(1,1:nx)
+  mudphi(nx,1:nx) = phi(nx,1:nx)
+  mudphi(1:nx,1) = phi(1:nx,1)
+  mudphi(1:nx,ny) = phi(1:nx,ny)
+
 
   ! mgopt
   !           an integer vector of length 4 which allows the user to select
@@ -196,26 +221,61 @@ PROGRAM mudpack_test
   
   ierror = 0 ! No error = 0 
 
+  WRITE (*,*) "Shape iparm  :" ,SHAPE(iparm)
+  WRITE (*,*) "Shape fmarp  :" ,SHAPE(fparm)
+  WRITE (*,*) "Shape work   :" ,SHAPE(work)
+  WRITE (*,*) "Shape rhs    :" ,SHAPE(rhs)
+  WRITE (*,*) "Shape mudphi :" ,SHAPE(mudphi)
+  WRITE (*,*) "Shape mgopt  :" ,SHAPE(mgopt)
   
-  PRINT *, " > 8. Appel initial de MUD2 (iparm(1)=0)"
-  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
-  PRINT *, "ERROR =",ierror
 
-  PRINT *, " > 8. Appel initial de MUD2 (iparm(1)=0)"
-  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
-  PRINT *, "ERROR =",ierror
 
-  
   ! Writing outputs
-  open(unit=101,file='data/solution',access='DIRECT',&
-       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(101,REC=1) ((mudphi(i,j),i=1,nx),j=1,ny)
-  close(101)
+  !open(unit=103,file='data/rhs',access='DIRECT',&
+  !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  !write(103,REC=1) ((rhs(i,j),i=1,nx),j=1,ny)
+  !close(103)
 
-  open(unit=102,file='data/true_solution',access='DIRECT',&
+  
+  PRINT *, " > 8. Appel initial de MUD2 (iparm(1)=0)"
+  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
+  PRINT *, "ERROR =",ierror
+  
+  PRINT *, " > 8. Appel secondaire de MUD2 (iparm(1)=1)"
+  iparm(1) = 1
+  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
+  PRINT *, "ERROR =",ierror
+  PRINT *, "Number of multigrid cycles =",iparm(17)
+  PRINT *, "max difference =",fparm(6)
+
+    ! Writing outputs
+  !open(unit=101,file='data/true_solution',access='DIRECT',&
+  !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  !write(101,REC=1) ((phi(i,j),i=1,nx),j=1,ny)
+  !close(101)
+
+  !open(unit=102,file='data/mud_sol',access='DIRECT',&
+  !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  !write(102,REC=1) ((mudphi(i,j),i=1,nx),j=1,ny)
+  !close(102)
+
+  open(unit=104,file='data/true_error',access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(102,REC=1) ((phi(i,j),i=1,nx),j=1,ny)
-  close(102)
+  write(104,REC=1) ((mudphi(i,j)-phi(i,j),i=1,nx),j=1,ny)
+  close(104)
+
+  ! Derivative
+
+  call MEAN_DERIVATIVE(phi,nx,ny,dx,dy,mean_phix,mean_phiy)  
+  open(unit=105,file='data/yderviative',access='DIRECT',&
+       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  write(105,REC=1) ((mean_phiy(i,j),i=1,nx),j=1,ny)
+  close(105)
+
+  open(unit=105,file='data/xderviative',access='DIRECT',&
+       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  write(105,REC=1) ((mean_phix(i,j),i=1,nx),j=1,ny)
+  close(105)
 
   
 END PROGRAM mudpack_test
@@ -224,47 +284,83 @@ END PROGRAM mudpack_test
 !
 !
 !
+!
 ! >>>> Sous-routine conditions frontières >>>>
 SUBROUTINE bndyc(kbdy,xory,alfa,gbdy)
   !
+  !    Fonction qui définit les frontières.
   !
-  !    Définition des frontières.
-  !
-  !
+  ! --- PRÉAMBULE :
   implicit none
-  INTEGER, PARAMETER :: nx  = 2**8+1, ny=2**8+1
-  integer            :: kbdy
-  real               :: xory,alfa,gbdy
-  integer            :: ix,iy
-  real               :: mean_phix(nx,ny), mean_phiy(nx,ny)
-  COMMON/boundaries/mean_phix,mean_phiy
-  !
+  INTEGER            :: nx,ny, nn(2)
+  REAL               :: xa,xb,yc,yd,dx,dy
+  INTEGER            :: kbdy
+  REAL               :: xory,alfa,gbdy
+  INTEGER            :: i,j,ix,jy
+  REAL, ALLOCATABLE  :: phi(:,:)
+  REAL, ALLOCATABLE  :: mean_phix(:,:), mean_phiy(:,:), array(:,:)
+  REAL               :: true_solution, dims(6)
+  ! --- COMMON
+  COMMON/boundaries/nn,dims
+  ! --- FUNCTIONS
+  EXTERNAL mean_derivative
+  ! --- INITIALISATION :
+  nx = nn(1)
+  ny = nn(2)
+  dx = dims(1)
+  dy = dims(2)
+  xa = dims(3)
+  xb = dims(4)
+  yc = dims(5)
+  yd = dims(6)
+
+  ALLOCATE(mean_phix(nx,ny))
+  ALLOCATE(mean_phiy(nx,ny))
+  ALLOCATE(phi(0:nx+1,0:ny+1))
+  ALLOCATE(array(0:nx+1,0:ny+1))
+  
+  ! --- SOUS-ROUTINE : 
+
+  ! On trouvre la dérivée.
+  DO i = 0,nx+1
+     DO j = 0,ny+1
+        phi(i,j) = true_solution(i,j)
+     END DO
+  END DO
+
+  ! not necessary
+  array = phi
+  INCLUDE "bndy.f90"
+  phi = array
+
+  call MEAN_DERIVATIVE(phi,nx,ny,dx,dy,mean_phix,mean_phiy)  
+
   if (kbdy.eq.1) then  ! x=xa boundary
      alfa = 0
-     ix = 0
-     iy = xory
-     gbdy = mean_phix(ix,iy)
+     ix = 1
+     jy = 1+NINT(xory/dy)
+     gbdy = mean_phix(ix,jy)
      return
   end if
   if (kbdy.eq.2) then  ! x=xb boundary
      alfa = 0
      ix = nx
-     iy = xory
-     gbdy = mean_phix(ix,iy)
+     jy = 1+NINT(xory/dy)
+     gbdy = mean_phix(ix,jy)
      return
   end if
   if (kbdy.eq.3) then  ! y=yc boundary
      alfa = 0
-     ix = xory
-     iy = 0
-     gbdy = mean_phiy(ix,iy)
+     ix = 1+NINT(xory/dx)
+     jy = 1
+     gbdy = mean_phiy(ix,jy)
      return
   end if
   if (kbdy.eq.4) then  ! y=yd boundary
      alfa = 0
-     ix = xory
-     iy = ny
-     gbdy = mean_phiy(ix,iy)
+     ix = 1+NINT(xory/dx)
+     jy = ny
+     gbdy = mean_phiy(ix,jy)
      return
   end if
 end SUBROUTINE bndyc
@@ -284,7 +380,7 @@ subroutine coef(x,y,cxx,cyy,cx,cy,ce)
   !          ce(x,y)*p(x,y) = r(x,y).
   !
   implicit none
-  real x,y,cxx,cyy,cx,cy,ce
+  REAL x,y,cxx,cyy,cx,cy,ce
   cxx = 1.
   cyy = 1.
   cx  = 0.
@@ -310,27 +406,21 @@ FUNCTION true_solution(i,j)
   !IMPLICIT NONE
   INTEGER, INTENT(IN)  :: i,j
   REAL,    PARAMETER   :: pi  = 3.14159265358979323846
-  INTEGER, PARAMETER   :: nx=2**8+1, ny=2**8+1
-  REAL                 :: true_solution
+  INTEGER              :: nn(2), nx, ny
+  REAL                 :: true_solution, dims(6)
+  COMMON/boundaries/nn,dims
 
-  
+  nx = nn(1)
+  ny = nn(2)
   ! On invente une solution. 
   ! On assume que la solution est périodique :
   ! (Même si le modèle va solver comme si elle ne l'était pas)
-  true_solution = 10.*SIN( 4.*pi*i/nx + 10.*pi*j/ny )
+  true_solution = 1.*SIN( 4.*pi*i/nx + 2.*pi*j/ny )
   
 END FUNCTION true_solution
 ! <<<< Solution réelle
 !
 !
-!
-!
-FUNCTION testing(nx)
-  INTEGER, INTENT(IN) :: nx
-  REAL                :: testing
-  testing = nx**3
-  
-END FUNCTION testing
 !
 !
 ! >>>> derivative subroutine
@@ -348,9 +438,9 @@ SUBROUTINE mean_derivative(solution,nx,ny,dx,dy,mean_pdx,mean_pdy)
   DO i = 1,nx
      DO j = 1,ny
         ip = i+1
-        jp = i+1
-        pdx(i,j) = (solution(ip,j) - solution(i,j))/dx
-        pdy(i,j) = (solution(i,jp) - solution(i,j))/dy
+        jp = j+1
+        pdx(i,j) = ( solution(ip,j) - solution(i,j) )/dx
+        pdy(i,j) = ( solution(i,jp) - solution(i,j) )/dy
      ENDDO
   ENDDO
 
@@ -365,8 +455,8 @@ SUBROUTINE mean_derivative(solution,nx,ny,dx,dy,mean_pdx,mean_pdy)
   ! On recentre la dérivée première sur les points "zeta"
   DO i = 1,nx
      DO j = 1,ny
-        mean_pdx(i,j) = (pdx(i,j) + pdx(i-1,j) + pdx(i,j-1) + pdx(i-1,j-1))/4
-        mean_pdy(i,j) = (pdy(i,j) + pdy(i-1,j) + pdy(i,j-1) + pdy(i-1,j-1))/4
-     enddo
-  enddo  
+        mean_pdx(i,j) = (pdx(i,j) + pdx(i-1,j))/2
+        mean_pdy(i,j) = (pdy(i,j) + pdy(i,j-1))/2
+     ENDDO
+  ENDDO  
 END SUBROUTINE

@@ -259,7 +259,16 @@ c
 c     intiialization call
 c
       write(*,104) intl
-  104 format(/' discretization call to mud2', ' intl = ', i2)
+ 104  format(/' discretization call to mud2', ' intl = ', i2)
+
+      WRITE (*,*) "Shape iparm  :" ,SHAPE(iprm)
+      WRITE (*,*) "Shape fmarp  :" ,SHAPE(fprm)
+      WRITE (*,*) "Shape work   :" ,SHAPE(work)
+      WRITE (*,*) "Shape rhs    :" ,SHAPE(rhs)
+      WRITE (*,*) "Shape mudphi :" ,SHAPE(phi)
+      WRITE (*,*) "Shape mgopt  :" ,SHAPE(mgopt)
+
+      
       call mud2(iprm,fprm,work,cof,bndc,rhs,phi,mgopt,ierror)
 c
 c     print error parameter and minimum work space requirement
