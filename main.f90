@@ -67,7 +67,10 @@
       REAL L2M(1:nz,1:nz),M2L(1:nz,1:nz)
       INTEGER WORK(1:4*nz), INFO
       CHARACTER(8) :: ministr
-      
+      ! MUDPACK solver 
+      REAL :: zeta_BT(0:nnx,0:nny), u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny)
+
+      ! Physical qty
       real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
       real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
       real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
@@ -336,7 +339,7 @@
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
 
       ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
-      array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = /Delta \eta_{k+1}
+      array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = \Delta \eta_{k+1}
       eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
       do k = nz-1, 2, -1
          array(:,:)   = rhs_eta(:,:,k) + array(:,:)
@@ -513,7 +516,7 @@
                !  include 'subs/calc_q.f90'
                include 'subs/diags.f90'
             end if
-
+p
             ! Printing/saving fields in /data/. 
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1

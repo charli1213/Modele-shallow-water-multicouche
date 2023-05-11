@@ -42,14 +42,14 @@
         include 'subs/bndy.f90'
         zeta = array
 
-        ! Quasi-Geostrophic Potential vorticity (where beta = 0)
+        ! q : Quasi-Geostrophic Potential vorticity (where beta = 0)
         ! This is the definition, works for any number of layers
         do j = 1, ny
         do i = 1, nx
-           q(i,j,k) = zeta(i,j) -0.25*f(j)*(thickness(i,j)   +    &
-                &                       thickness(i-1,j) +    &
-                &                       thickness(i,j-1) +    &
-                &                       thickness(i-1,j-1) )
+           q(i,j,k) = zeta(i,j) -0.25*f(j)*(thickness(i,j)     +    &
+                &                           thickness(i-1,j)   +    &
+                &                           thickness(i,j-1)   +    &
+                &                           thickness(i-1,j-1) )
         enddo
         enddo
 
