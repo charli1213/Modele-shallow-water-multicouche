@@ -1,8 +1,9 @@
 #!/bin/bash
 #mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
 #lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+lapack_path=/usr/lib64
 testfile=mudpack-test.f90
 #testfile=tmud2.f
 #gfortran -o  poisson-exec $testfile -L$mudpack_path -lmudpack -L$lapack_path -llapack
-gfortran -o  poisson-exec $testfile -lmudpack -llapack
+gfortran -o  poisson-exec $testfile -lmudpack -L$lapack_path -llapack
 

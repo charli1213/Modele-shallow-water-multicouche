@@ -516,7 +516,7 @@
                !  include 'subs/calc_q.f90'
                include 'subs/diags.f90'
             end if
-p
+
             ! Printing/saving fields in /data/. 
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1
