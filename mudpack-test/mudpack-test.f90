@@ -8,11 +8,12 @@ PROGRAM mudpack_test
   INTEGER, PARAMETER :: nx  = ixp*2**(iex-1)+1
   INTEGER, PARAMETER :: ny  = jyq*2**(jey-1)+1
   INTEGER, PARAMETER :: nnx = nx+1,         nny = ny+1
-  REAL,    PARAMETER :: xa  = 0.,       xb  = 10.
-  REAL,    PARAMETER :: yc  = 0.,       yd  = 10.
-  REAL,    PARAMETER :: dx  = (xb-xa)/(nx-1),   dy  = (yd-yc)/(ny-1)
+  REAL,    PARAMETER :: xa  = 0.,        xb  = 10.
+  REAL,    PARAMETER :: yc  = 0.,        yd  = 10.
+  REAL,    PARAMETER :: lx  = xb-xa,     ly  = yd-yc
+  REAL,    PARAMETER :: dx  = lx/(nx-1), dy  = ly/(ny-1)
   INTEGER            :: i,j,k,ip,jp,ierror
-  REAL               :: phi(0:nnx,0:nny), array(0:nnx,0:nny)
+  REAL               :: phi(0:nnx,0:nny), array(0:nnx,0:nny), errorphi(0:nnx,0:nny)
   REAL               :: RHS(1:nx,1:ny), mean_phix(1:nx,1:ny) ,mean_phiy(1:nx,1:ny)
   REAL               :: mudphi(1:nx,1:ny), noise(1:nx,1:ny)
   ! FUNCTIONS
@@ -59,8 +60,9 @@ PROGRAM mudpack_test
   PRINT *, "> 3. On trouve le laplacien de la fonction (RHS)"
   DO i = 1,nx
      DO j = 1,ny
-        RHS(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
-             &   + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy   
+        !RHS(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
+        !     &   + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
+        RHS(i,j) = -phi(i,j)*(4*pi/lx)**2 -phi(i,j)*(2*pi/lx)**2
      ENDDO
   ENDDO
   
@@ -79,10 +81,10 @@ PROGRAM mudpack_test
   ! >>> INITIALISATION >>>
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}.
-  iparm(2)  = 2    ! nxa  : Flag for boundary conditions.
-  iparm(3)  = 2    ! nxb
-  iparm(4)  = 2    ! nyc
-  iparm(5)  = 2    ! nyd  ! {2}=mixed boundary condition (Neumann)
+  iparm(2)  = 1    ! nxa  : Flag for boundary conditions.
+  iparm(3)  = 1    ! nxb  ! {0}=periodic boundaries
+  iparm(4)  = 1    ! nyc  ! {1}=Dirichlet boundary
+  iparm(5)  = 1    ! nyd  ! {2}=mixed boundary condition (Neumann)
 
   iparm(6)  = ixp ! ixp
   iparm(7)  = jyq ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
@@ -113,7 +115,7 @@ PROGRAM mudpack_test
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 5  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 10  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
@@ -192,10 +194,11 @@ PROGRAM mudpack_test
   CALL RANDOM_NUMBER(noise)
   DO i=1,nx
      DO j=1,ny
-        mudphi(i,j) = 1 - 0.5*noise(i,j)
+        mudphi(i,j) = 1 - 0.01*noise(i,j)
         !mudphi(i,j) = phi(i,j)
      ENDDO
   ENDDO
+  ! Conditions Dirichlet
   mudphi(1,1:nx) = phi(1,1:nx)
   mudphi(nx,1:nx) = phi(nx,1:nx)
   mudphi(1:nx,1) = phi(1:nx,1)
@@ -205,7 +208,7 @@ PROGRAM mudpack_test
   ! mgopt
   !           an integer vector of length 4 which allows the user to select
   !           among various multigrid options. 
-  mgopt(1) = 2 ! kcycle (Default)
+  mgopt(1) = 0 ! kcycle (Default)
   mgopt(2) = 2 ! iprer (Default)
   mgopt(3) = 1 ! ipost (Default)
   mgopt(4) = 3 ! intpol (Default)
@@ -241,7 +244,7 @@ PROGRAM mudpack_test
   call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
   PRINT *, "ERROR =",ierror
   
-  PRINT *, " > 8. Appel secondaire de MUD2 (iparm(1)=1)"
+  PRINT *, " > 9. Appel secondaire de MUD2 (iparm(1)=1)"
   iparm(1) = 1
   call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
   PRINT *, "ERROR =",ierror
@@ -258,12 +261,23 @@ PROGRAM mudpack_test
   !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
   !write(102,REC=1) ((mudphi(i,j),i=1,nx),j=1,ny)
   !close(102)
+  errorphi(:,:)=0.
+  DO i=1,nx
+     DO j=1,ny
+        errorphi(i,j) = mudphi(i,j) - phi(i,j)
+     ENDDO
+  ENDDO
+  
 
   open(unit=104,file='data/true_error',access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(104,REC=1) ((mudphi(i,j)-phi(i,j),i=1,nx),j=1,ny)
+  write(104,REC=1) ((errorphi(i,j),i=1,nx),j=1,ny)
   close(104)
 
+  WRITE (*,'(e10.3)') MAXVAL(errorphi(:,:))
+  !MAXVAL(errorphi)
+
+  
   ! Derivative
 
   call MEAN_DERIVATIVE(phi,nx,ny,dx,dy,mean_phix,mean_phiy)  
