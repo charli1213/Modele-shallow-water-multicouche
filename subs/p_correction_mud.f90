@@ -22,7 +22,7 @@
           uu(:,:) = u(:,:,k,ilevel)
           vv(:,:) = v(:,:,k,ilevel)
           include 'subs/zetaBT.f90' ! array = curl(u*h) or barotropic vorticity.
-          zeta_BT(:,:) = zeta_BT(:,:) + array(:,:)
+          zeta_BT(:,:) = zeta_BT(:,:) + array(1:nx,1:ny)
           u_BT(:,:)    = u_BT(:,:)    + uh(:,:)
           v_BT(:,:)    = v_BT(:,:)    + vh(:,:)
           ! (***) Don't we also put Stokes transport (Ust) here too? 
@@ -45,18 +45,15 @@
     ! ######################################################## !
        
        ! MUDPACK call  (periodic boundaries)
-       IF (its .eq. 1) THEN
-          include '/subs/init_mudpack.f90'
-          PRINT *, " > Appel initial MUDPACK"
-          fparm(1)=0
-          CALL mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
-          PRINT *, "ERROR MUDPACK =",ierror
-          fparm(1)=0
-       ENDIF
-
-       PRINT *, " > Appel de MUDPACK"
-       call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
-       PRINT *, "ERROR MUDPACK =",ierror
+       PRINT *, " > Solving psi_BT with MUDPACK"
+       rhs_mud = zeta_BT
+       call mud2(iparm,fparm,work,coef,bndyc,rhs_mud,solution,mgopt,ierror)
+       PRINT *, "     ERROR MUDPACK =",ierror
+       
+       ! Removing integration constant when periodic. 
+       ! (***) (WHEN DIRICHLET : REMOVE THIS)
+       int_cte = SUM(solution)/nx/ny 
+       psi_BT(1:nx,1:ny) = solution(:,:) - int_cte
 
        ! Boundaries
        array = psi_BT
@@ -71,7 +68,8 @@
        
        ! Finding updated velocities
        !
-       !     u = u_BT + u_BC = psi_y + (\tilde{u} - \tilde{u}_BT)
+       !     u = u_BT         + u_BC
+       !       = d(psi_BT)/dy + (\tilde{u} - \tilde{u}_BT)
        !
        do j = 1,ny
        do i = 1,nx

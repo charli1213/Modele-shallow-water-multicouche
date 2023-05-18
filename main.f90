@@ -2,6 +2,7 @@
       integer exec_loc
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
+      integer ixp, jyq, iex, jey
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3
       real f0, beta, r_drag, Ah, r_invLap, rf, g
@@ -65,10 +66,8 @@
       REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
       REAL WI(1:nz), VL(1:nz,1:nz)
       REAL L2M(1:nz,1:nz),M2L(1:nz,1:nz)
-      INTEGER WORK(1:4*nz), INFO
+      INTEGER WORKL(1:4*nz), INFO
       CHARACTER(8) :: ministr
-      ! MUDPACK solver 
-      REAL :: zeta_BT(0:nnx,0:nny), u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny)
 
       ! Physical qty
       real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
@@ -97,6 +96,7 @@
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
+
       ! >>> Coupling quantities >>>
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
       REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2)
@@ -173,6 +173,20 @@
       character(88) string51, string52, string53, string54, string55
       character(88) string56, string57, string58, string59, string60
       character(88) string99,string98,fmtstr,fmtstr1
+
+      ! p_correction_mud
+      REAL :: zeta_BT(1:nx,1:ny), int_cte
+      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny)
+      
+
+      ! MUDPACK solver
+      INTEGER            :: iparm(17), mgopt(4), length
+      REAL               :: fparm(6)
+      REAL,ALLOCATABLE   :: workm(:)
+      CHARACTER(LEN=80)  :: myformat
+      REAL               :: RHS_MUD(1:nx,1:ny), solution(1:nx,1:ny)
+      ! SUBROUTINES CALLS
+      external coef,bndyc
 
 
       include 'fftw_stuff/fft_params.f90'
@@ -770,3 +784,48 @@ FUNCTION gasdev(idum)
    matout=array2
 
  END SUBROUTINE interp_matrix
+
+
+
+
+
+
+
+
+
+
+
+!!! --- SOUS-ROUTINES POUR MUDPACK --- 
+
+ SUBROUTINE bndyc(kbdy,xory,alfa,gbdy)
+  ! ***************************************************************** !
+  !                                                                   ! 
+  !   >>> Dummy function to define mixed boundary conditions (NONE)   !
+  !                                                                   !
+  ! ***************************************************************** !
+  implicit none
+  INTEGER            :: kbdy
+  REAL               :: xory,alfa,gbdy
+  return
+end SUBROUTINE bndyc
+
+
+SUBROUTINE coef(x,y,cxx,cyy,cx,cy,ce)
+  ! ********************************************************************** !
+  !                                                                        !
+  !   >>> Sous-routine des coefficients :                                  ! 
+  !                                                                        !
+  !          cxx(x,y)*pxx + cyy(x,y)*pyy + cx(x,y)*px + cy(x,y)*py +       !
+  !                                                                        !
+  !          ce(x,y)*p(x,y) = r(x,y).                                      ! 
+  !                                                                        ! 
+  ! ********************************************************************** !
+  implicit none
+  REAL x,y,cxx,cyy,cx,cy,ce
+  cxx = 1.
+  cyy = 1.
+  cx  = 0.
+  cy  = 0.
+  ce  = 0.
+  return
+end SUBROUTINE coef

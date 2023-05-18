@@ -15,17 +15,16 @@ PROGRAM mudpack_test
   INTEGER            :: i,j,ierror
   ! Intermediate arrays and prints : 
   REAL               :: phi(0:nnx,0:nny), errorphi(0:nnx,0:nny)
-  REAL               :: mudphi(1:nx,1:ny), noise(1:nx,1:ny)
+  REAL               :: noise(1:nx,1:ny)
   REAL               :: int_cte
   ! functions
   REAL               :: true_solution
   ! MUDPACK INPUT (Main.f90)
   INTEGER            :: iparm(17), mgopt(4), length
   REAL               :: fparm(6)
-  REAL,ALLOCATABLE   :: work(:)
-  integer            :: kbdy
+  REAL,ALLOCATABLE   :: workm(:)
   CHARACTER(LEN=80)  :: myformat
-  REAL               :: RHS(1:nx,1:ny)
+  REAL               :: RHS_MUD(1:nx,1:ny), solution(1:nx,1:ny)
   ! SUBROUTINES CALLS
   external coef,bndyc
 
@@ -43,21 +42,20 @@ PROGRAM mudpack_test
 
   ! On trouve le laplacien du champ phi (le RHS de la fonction)
   ! -- Définit sur le champ, lui-même (Aux coins)
-  PRINT *, "> 2. On trouve le laplacien de la fonction (RHS)"
+  PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
   DO i = 1,nx
      DO j = 1,ny
-        RHS(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
+        RHS_MUD(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
              &   + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
      ENDDO
   ENDDO
+    
   
   
-  ! Calling MUDPACK, solving equation
-  PRINT *, "> 3. Initialisation des INPUTS (iparm) de MUD2"
 
 
   ! La solution de phi existe au milieu du grillage. 
-  ! P
+  ! 
   !          cxx(x,y)*pxx + cyy(x,y)*pyy + cx(x,y)*px + cy(x,y)*py +
   ! 
   !          ce(x,y)*p(x,y) = r(x,y).
@@ -68,7 +66,7 @@ PROGRAM mudpack_test
   !                    Init mudpack                    !
   !                                                    !
   ! ************************************************** !
-
+  PRINT *, " > Initialising MUDPACK parameters"
   
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}={Yes,No}.
@@ -106,14 +104,14 @@ PROGRAM mudpack_test
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 5  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 10  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
 
   
   write (*,100) (iparm(i),i=1,15)
-  100 format(' > 4. integer input arguments ',/'      intl = ',I2,       &
+  100 format(' > Integer input arguments ',/'      intl = ',I2,       &
            /'      nxa = ',I4,' nxb = ', I4,' nyc = ',I4, ' nyd = ',I4,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
            /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
@@ -122,21 +120,21 @@ PROGRAM mudpack_test
 
   
   ! fparm : float point vector of length 6
-  fparm(1) = xa
-  fparm(2) = xb
-  fparm(3) = yc
-  fparm(4) = yd
+  fparm(1) = 0.
+  fparm(2) = Lx
+  fparm(3) = 0.
+  fparm(4) = Ly
   fparm(5) = 0.0 ! tolmax : Tolérance maximum.
                  ! Ils conseillent de mettre 0.0 et de passer à travers tous les cycles (maxcy)
   write(*,103) (fparm(i), i=1,5)
-  103 format(/' > 5. Floating point input parameters ',              &
+  103 format(/' > Floating point input parameters ',              &
      /'      xa = ',f7.1,' xb = ',f7.1,' yc = ',f7.1,' yd = ',f7.1,  &
      /'      tolerance (error control) =   ',e10.3)
 
   
-  ! work : one dimensionnal real save work space.
-  ALLOCATE(work(length))
-  work(:) = 0.0
+  ! workm : one dimensionnal real save work space.
+  ALLOCATE(workm(length))
+  workm(:) = 0.0
 
   ! bndyc : Boundary conditions (Voir plus bas) :
   !
@@ -167,7 +165,7 @@ PROGRAM mudpack_test
   ! 
   !          ce(x,y)*p(x,y) = r(x,y).
   
-  ! rhs : Vecteur nx par ny qui représente le RHS. 
+  ! RHS_mud : Vecteur nx par ny qui représente le RHS. 
   ! (Calculé plus haut)
   !
 
@@ -185,14 +183,14 @@ PROGRAM mudpack_test
   CALL RANDOM_NUMBER(noise)
   DO i=1,nx
      DO j=1,ny
-        mudphi(i,j) = 1 - 0.01*noise(i,j)
+        solution(i,j) = 1 - 0.01*noise(i,j)
      ENDDO
   ENDDO
   ! Conditions Dirichlet
-  !mudphi(1,1:nx) = phi(1,1:nx)
-  !mudphi(nx,1:nx) = phi(nx,1:nx)
-  !mudphi(1:nx,1) = phi(1:nx,1)
-  !mudphi(1:nx,ny) = phi(1:nx,ny)
+  !solution(1,1:nx) = phi(1,1:nx)
+  !solution(nx,1:nx) = phi(nx,1:nx)
+  !solution(1:nx,1) = phi(1:nx,1)
+  !solution(1:nx,ny) = phi(1:nx,ny)
 
 
   ! mgopt
@@ -204,7 +202,7 @@ PROGRAM mudpack_test
   mgopt(4) = 3 ! intpol (Default)
 
   write (*,102) (mgopt(i),i=1,4)
-  102 format(/' > 6. Multigrid option arguments ', &
+  102 format(/' > Multigrid option arguments ', &
            /'      kcycle = ',i2, &
            /'      iprer = ',i2, &
            /'      ipost = ',i2, &
@@ -213,14 +211,26 @@ PROGRAM mudpack_test
   
   
   ierror = 0 ! No error = 0 
-  WRITE (*,*) " > 7. Checking shapes :"
-  WRITE (*,*) "     Shape iparm  =" ,SHAPE(iparm)
-  WRITE (*,*) "     Shape fmarp  =" ,SHAPE(fparm)
-  WRITE (*,*) "     Shape work   =" ,SHAPE(work)
-  WRITE (*,*) "     Shape rhs    =" ,SHAPE(rhs)
-  WRITE (*,*) "     Shape mudphi =" ,SHAPE(mudphi)
-  WRITE (*,*) "     Shape mgopt  =" ,SHAPE(mgopt)
-  
+  WRITE (*,*) " > Checking shapes :"
+  WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
+  WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
+  WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(RHS_mud)
+  WRITE (*,*) "     Shape solution =" ,SHAPE(solution)
+  WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
+  WRITE (*,*) " "
+
+  ! initialising MUD2 function
+  PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
+  call mud2(iparm,fparm,workm,coef,bndyc,RHS_mud,solution,mgopt,ierror)
+  PRINT *, "     ERROR =",ierror
+  PRINT *, " "
+  IF (ierror .gt. 0) THEN
+     print *, "     Severe MUDPACK error, check documentation"
+     stop
+  ENDIF
+  iparm(1) = 1 ! for subsequent calls
+
 
   ! ************************************************** !
   !                                                    !
@@ -240,36 +250,34 @@ PROGRAM mudpack_test
 
   
   
-  PRINT *, " > 7. Appel initial de MUD2 (iparm(1)=0)"
-  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
-  PRINT *, "ERROR =",ierror
+
   
   PRINT *, " > 8. Appel secondaire de MUD2 (iparm(1)=1)"
   iparm(1) = 1
-  call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,RHS_mud,solution,mgopt,ierror)
   PRINT *, "ERROR =",ierror
   PRINT *, "Number of multigrid cycles =",iparm(17)
   PRINT *, "max difference =",fparm(6)
 
   ! On retire la constante d'intégration pour que la fctn soit en moyenne 0.
-  int_cte = SUM(mudphi)/nx/ny
-  mudphi(:,:) = mudphi(:,:) - int_cte
+  int_cte = SUM(solution)/nx/ny
+  solution(:,:) = solution(:,:) - int_cte
   
   ! >>> Writing outputs
   open(unit=101,file='data/rhs',access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(101,REC=1) ((rhs(i,j),i=1,nx),j=1,ny)
+  write(101,REC=1) ((RHS_mud(i,j),i=1,nx),j=1,ny)
   close(101)
   
   open(unit=102,file='data/mud_sol',access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(102,REC=1) ((mudphi(i,j),i=1,nx),j=1,ny)
+  write(102,REC=1) ((solution(i,j),i=1,nx),j=1,ny)
   close(102)
 
   errorphi(:,:)=0.
   DO i=1,nx
      DO j=1,ny
-        errorphi(i,j) = mudphi(i,j) - phi(i,j)
+        errorphi(i,j) = solution(i,j) - phi(i,j)
      ENDDO
   ENDDO
 

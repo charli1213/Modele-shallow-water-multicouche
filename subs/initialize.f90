@@ -109,7 +109,7 @@
        ! > Solving Eigenvalues problem : A.psi = lambda.psi
        ! > N.B. Fmodes = eigenvalues of "mode" system of equation :
        !        q_mode = laplacian(psi_mode)+F*psi_mode
-       CALL SGEEV('N','V', nz,A,nz, Fmodes,WI, VL,nz, L2M,nz, WORK, size(work,1), INFO )
+       CALL SGEEV('N','V', nz,A,nz, Fmodes,WI, VL,nz, L2M,nz, WORKL, size(workl,1), INFO )
 
        ! LAPACK eigenvalues
        PRINT *, '> LAPACK Eigenvalues : '
