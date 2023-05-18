@@ -1,7 +1,7 @@
 !
 !     need to correct u,v for surface pressure 
 !
-       ! Restarting qties.
+       ! Re-initialising qties.
        zeta_BT(:,:) = 0.
        u_BT(:,:)    = 0.
        v_BT(:,:)    = 0.
@@ -34,18 +34,41 @@
        u_BT    = u_BT/Htot
        v_BT    = v_BT/Htot
        
-!
-!      zeta_BT is RHS of Poisson equation 
-!
-!          nabla^2 psi_BT = zeta_BT
-!
-!      we solve for psi_BT
-!
-       include 'subs/mudpack_solver.f90'
+    ! ######################################################## !
+    !                                                          !
+    !      zeta_BT is RHS of the Poisson equation :            !
+    !                                                          !
+    !               nabla^2(psi_BT) = zeta_BT                  !
+    !                                                          !
+    !      we solve for psi_BT instead of pressure gradient    !
+    !                                                          !
+    ! ######################################################## !
+       
+       ! MUDPACK call  (periodic boundaries)
+       IF (its .eq. 1) THEN
+          include '/subs/init_mudpack.f90'
+          PRINT *, " > Appel initial MUDPACK"
+          fparm(1)=0
+          CALL mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
+          PRINT *, "ERROR MUDPACK =",ierror
+          fparm(1)=0
+       ENDIF
+
+       PRINT *, " > Appel de MUDPACK"
+       call mud2(iparm,fparm,work,coef,bndyc,rhs,mudphi,mgopt,ierror)
+       PRINT *, "ERROR MUDPACK =",ierror
+
+       ! Boundaries
        array = psi_BT
        include 'subs/bndy.f90'
        psi_BT = array
- 
+
+    ! ######################################################## !
+    !                                                          !
+    !                     -- PSI SOLVED --                     !
+    !                                                          !   
+    ! ######################################################## !
+       
        ! Finding updated velocities
        !
        !     u = u_BT + u_BC = psi_y + (\tilde{u} - \tilde{u}_BT)

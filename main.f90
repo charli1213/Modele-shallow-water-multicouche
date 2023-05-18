@@ -593,7 +593,7 @@
       !===== time loop ends here
 
       include 'fftw_stuff/fft_destroy.f90'
-      end program main
+    end program main
 
 function ran2(idum)
    use data_initial
