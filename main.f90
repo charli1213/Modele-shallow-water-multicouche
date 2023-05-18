@@ -720,53 +720,53 @@ FUNCTION gasdev(idum)
       iset=0 
    endif
    return 
-   END FUNCTION gasdev
+ END FUNCTION gasdev
 
-   subroutine get_taux(taux_steady_in,amp_in,taux_out)
-      use data_initial
-      implicit none
-      real,intent(in):: taux_steady_in(0:nnx,0:nny),amp_in
-      real,intent(out)::taux_out(0:nnx,0:nny)
-      if (forcingtype==0) then
-         taux_out(:,:) = taux_steady_in(:,:) +  c_tauvar*tau0*amp_in
-      else if(forcingtype==1) then
-         taux_out(:,:) = taux_steady_in(:,:)*(1.+amp_in)
-      endif
-   end subroutine
+ SUBROUTINE get_taux(taux_steady_in,amp_in,taux_out)
+   use data_initial
+   implicit none
+   real,intent(in):: taux_steady_in(0:nnx,0:nny),amp_in
+   real,intent(out)::taux_out(0:nnx,0:nny)
+   if (forcingtype==0) then
+      taux_out(:,:) = taux_steady_in(:,:) +  c_tauvar*tau0*amp_in
+   else if(forcingtype==1) then
+      taux_out(:,:) = taux_steady_in(:,:)*(1.+amp_in)
+   endif
+ END SUBROUTINE get_taux
+    
+ SUBROUTINE interp_matrix(matin,matout,dirx,diry,irrt)
+   use data_initial
+   real,dimension(0:nnx,0:nny),intent(in) :: matin
+   real,dimension(0:nnx,0:nny),intent(out) :: matout
+   integer,intent(in) :: irrt,dirx,diry
+   real array(0:nnx,0:nny),array1(0:nnx,0:nny),array2(0:nnx,0:nny)
+   integer ii,i,j,ip,jp
+   if (abs(dirx)<=1.and.abs(diry)<=1) then
+      array1=matin
+      array2=0.
+      do ii=1,irrt
+         if(dirx*diry.eq.0) then ! 1-D interpolate
+            array(1:nx,1:ny)= 0.5*(array1(1:nx,1:ny)+array1(1+dirx:nx+dirx,1+diry:ny+diry))
+            include 'subs/bndy.f90'
+            array2=array2+array
+            ! inferred v at eta-grid from v-grid (going upward)
+            array(1:nx,1:ny)= 0.5*(array1(1:nx,1:ny)+array1(1-dirx:nx-dirx,1-diry:ny-diry))
+            include 'subs/bndy.f90'
+         else if (dirx*diry.ne.0) then
+            array(1:nx,1:ny)= 0.25*(array1(1:nx,1:ny)+array1(1+dirx:nx+dirx,1:ny)+ &
+                 &              array1(1:nx,1+diry:ny+diry)+array1(1+dirx:nx+dirx,1+diry:ny+diry))
+            include 'subs/bndy.f90'
+            array2=array2+array
+            array(1:nx,1:ny)= 0.25*(array1(1:nx,1:ny)+array1(1-dirx:nx-dirx,1:ny)+ &
+                 &              array1(1:nx,1-diry:ny-diry)+array1(1-dirx:nx-dirx,1-diry:ny-diry))
+            include 'subs/bndy.f90'
+         end if
+         ! get the residual
+         array1 = matin - array
+      end do
+   else
+      write(*,*) 'Interpolation is set wrong'
+   end if
+   matout=array2
 
-   subroutine interp_matrix(matin,matout,dirx,diry,irrt)
-      use data_initial
-      real,dimension(0:nnx,0:nny),intent(in) :: matin
-      real,dimension(0:nnx,0:nny),intent(out) :: matout
-      integer,intent(in) :: irrt,dirx,diry
-      real array(0:nnx,0:nny),array1(0:nnx,0:nny),array2(0:nnx,0:nny)
-      integer ii,i,j,ip,jp
-      if (abs(dirx)<=1.and.abs(diry)<=1) then
-         array1=matin
-         array2=0.
-         do ii=1,irrt
-            if(dirx*diry.eq.0) then ! 1-D interpolate
-               array(1:nx,1:ny)= 0.5*(array1(1:nx,1:ny)+array1(1+dirx:nx+dirx,1+diry:ny+diry))
-               include 'subs/bndy.f90'
-               array2=array2+array
-               ! inferred v at eta-grid from v-grid (going upward)
-               array(1:nx,1:ny)= 0.5*(array1(1:nx,1:ny)+array1(1-dirx:nx-dirx,1-diry:ny-diry))
-               include 'subs/bndy.f90'
-            else if (dirx*diry.ne.0) then
-               array(1:nx,1:ny)= 0.25*(array1(1:nx,1:ny)+array1(1+dirx:nx+dirx,1:ny)+ &
-               &              array1(1:nx,1+diry:ny+diry)+array1(1+dirx:nx+dirx,1+diry:ny+diry))
-               include 'subs/bndy.f90'
-               array2=array2+array
-               array(1:nx,1:ny)= 0.25*(array1(1:nx,1:ny)+array1(1-dirx:nx-dirx,1:ny)+ &
-               &              array1(1:nx,1-diry:ny-diry)+array1(1-dirx:nx-dirx,1-diry:ny-diry))
-               include 'subs/bndy.f90'
-            end if 
-            ! get the residual
-            array1 = matin - array
-         end do
-      else
-         write(*,*) 'Interpolation is set wrong'
-      end if
-      matout=array2
-      
-   end subroutine
+ END SUBROUTINE interp_matrix
