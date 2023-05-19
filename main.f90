@@ -175,8 +175,8 @@
       character(88) string99,string98,fmtstr,fmtstr1
 
       ! p_correction_mud
-      REAL :: zeta_BT(1:nx,1:ny), int_cte
-      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny)
+      REAL :: zeta_BT(1:nx,1:ny,2), int_cte
+      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny,2)
       
 
       ! MUDPACK solver
@@ -188,10 +188,9 @@
       ! SUBROUTINES CALLS
       external coef,bndyc
 
-
       include 'fftw_stuff/fft_params.f90'
       include 'fftw_stuff/fft_init.f90'
-
+      
       ! >>> Modification CEL >>>
       !IF (cou) THEN
          ! --- Creating zonal alpha window (North/South continuity) --- !
@@ -265,13 +264,15 @@
       write(*,*) 'Spectrum time series has', ntsrow, 'lines'
       write(*,*) 'dx = ', dx
 
+      ! --- Initializing mudpack
+      include 'subs/init_mudpack.f90'
 
-      !! --- Initialization !!
+      ! --- Initializing fields and rossby radii
       include 'subs/initialize.f90'
       wfits = 1
       its=1
       itlocal=1
-      include 'subs/initialize_forcing.f90'
+      !include 'subs/initialize_forcing.f90'
 
 
       if(restart .eqv. .false.)   nspecfile=0
@@ -373,15 +374,16 @@
       !
       ilevel = 2
       p_out(:,:) = 0.
-      include 'subs/p_correction.f90'
-      include 'subs/p_correction.f90'
+      include 'subs/p_correction_mud.f90'
+      !include 'subs/p_correction.f90'
+      !include 'subs/p_correction.f90'
       do k = 1,nz ! ? if we really need this
          array = eta(:,:,k,2)
          include 'subs/bndy.f90'
          eta(:,:,k,2) = array
       end do      
          
-         include 'subs/IOheader.f90' 
+         !include 'subs/IOheader.f90' 
       !==============================================================
       !
       !      subsequent time steps
@@ -478,11 +480,12 @@
          !
          ilevel = 3
          p_out(:,:) = 0.
-         include 'subs/p_correction.f90'
+         include 'subs/p_correction_mud.f90'
+         !include 'subs/p_correction.f90'
          ! Psurf  = Psurf/dt   (here, not after the next line
          ! see in p_correction for the /dt
          ! see also lines 264 265 for 1st time step
-         include 'subs/p_correction.f90'
+         !include 'subs/p_correction.f90'
 
          do k = 1,nz
             array = eta(:,:,k,3)

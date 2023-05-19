@@ -2,7 +2,10 @@
 !     need to correct u,v for surface pressure 
 !
        ! Re-initialising qties.
-       zeta_BT(:,:) = 0.
+       zeta_BT(:,:,1) = zeta_BT(:,:,2)
+       zeta_BT(:,:,2) = 0.
+       psi_BT(:,:,1) = psi_BT(:,:,2)
+       psi_BT(:,:,2) = 0.
        u_BT(:,:)    = 0.
        v_BT(:,:)    = 0.
        
@@ -22,15 +25,15 @@
           uu(:,:) = u(:,:,k,ilevel)
           vv(:,:) = v(:,:,k,ilevel)
           include 'subs/zetaBT.f90' ! array = curl(u*h) or barotropic vorticity.
-          zeta_BT(:,:) = zeta_BT(:,:) + array(1:nx,1:ny)
-          u_BT(:,:)    = u_BT(:,:)    + uh(:,:)
-          v_BT(:,:)    = v_BT(:,:)    + vh(:,:)
+          zeta_BT(:,:,2) = zeta_BT(:,:,2) + array(1:nx,1:ny)
+          u_BT(:,:)      = u_BT(:,:)      + uh(:,:)
+          v_BT(:,:)      = v_BT(:,:)      + vh(:,:)
           ! (***) Don't we also put Stokes transport (Ust) here too? 
           
        enddo !end k-loop
        
        ! barotropic qty : 
-       zeta_BT = zeta_BT/Htot
+       zeta_BT(:,:,2) = zeta_BT(:,:,2)/Htot
        u_BT    = u_BT/Htot
        v_BT    = v_BT/Htot
        
@@ -45,20 +48,19 @@
     ! ######################################################## !
        
        ! MUDPACK call  (periodic boundaries)
-       PRINT *, " > Solving psi_BT with MUDPACK"
-       rhs_mud = zeta_BT
-       call mud2(iparm,fparm,work,coef,bndyc,rhs_mud,solution,mgopt,ierror)
-       PRINT *, "     ERROR MUDPACK =",ierror
-       
+       rhs_mud = zeta_BT(:,:,2) - zeta_BT(:,:,1)
+       call mud2(iparm,fparm,workm,coef,bndyc,rhs_mud,solution,mgopt,ierror)
+              
        ! Removing integration constant when periodic. 
        ! (***) (WHEN DIRICHLET : REMOVE THIS)
-       int_cte = SUM(solution)/nx/ny 
-       psi_BT(1:nx,1:ny) = solution(:,:) - int_cte
+       int_cte = SUM(solution)/nx/ny  
+       psi_BT(1:nx,1:ny,2) = psi_BT(1:nx,1:ny,1) +  solution(:,:) - int_cte
 
        ! Boundaries
-       array = psi_BT
+       array = psi_BT(:,:,2)
        include 'subs/bndy.f90'
-       psi_BT = array
+       psi_BT(:,:,2) = array
+
 
     ! ######################################################## !
     !                                                          !
@@ -74,10 +76,10 @@
        do j = 1,ny
        do i = 1,nx
           u(i,j,:,ilevel) = u(i,j,:,ilevel)                    &     ! \tilde{u(k)}
-               &          + (psi_BT(i,j+1) - psi_BT(i,j))/dy   &     ! mudpack psi_y
+               &          + (psi_BT(i,j+1,2) - psi_BT(i,j,2))/dy   &     ! mudpack psi_y
                &          - u_BT(i,j)                                ! \tilde{u}_BT
           v(i,j,:,ilevel) = v(i,j,:,ilevel)                    &     ! \tilde{v(k)}
-               &          - (psi_BT(i+1,j) - psi_BT(i,j))/dx   &     ! mudpack -psi_x
+               &          - (psi_BT(i+1,j,2) - psi_BT(i,j,2))/dx   &     ! mudpack -psi_x
                &          - v_BT(i,j)                                ! \tilde{v}_BT
        enddo
        enddo

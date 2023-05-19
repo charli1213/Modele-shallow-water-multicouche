@@ -1,10 +1,13 @@
-
+  
+  zeta_BT(:,:,:) = 0.
+  psi_BT(:,:,:)  = 0.
+  
   ! ************************************************** !
   !                                                    !
   !                    Init mudpack                    !
   !                                                    !
   ! ************************************************** !
-  PRINT *, " > Initialising MUDPACK parameters"
+  WRITE (*,*) " >>> Initialising MUDPACK parameters/inputs"
   
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}={Yes,No}.
@@ -42,15 +45,15 @@
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 10  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 4  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
 
   
   write (*,100) (iparm(i),i=1,15)
-  100 format(' > Integer input arguments ',/'      intl = ',I2,       &
-           /'      nxa = ',I4,' nxb = ', I4,' nyc = ',I4, ' nyd = ',I4,  &
+  100 format('> Integer input arguments ',/'      intl = ',I2,       &
+           /'      nxa = ',I2,' nxb = ', I2,' nyc = ',I2, ' nyd = ',I2,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
            /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
            /'      method = ',I2, ' work space estimate = ',I7)
@@ -66,8 +69,9 @@
                  ! Ils conseillent de mettre 0.0 et de passer à travers tous les cycles (maxcy)
   write(*,103) (fparm(i), i=1,5)
   103 format(/' > Floating point input parameters ',              &
-     /'      xa = ',f7.1,' xb = ',f7.1,' yc = ',f7.1,' yd = ',f7.1,  &
-     /'      tolerance (error control) =   ',e10.3)
+           /'      xa = ',f9.1,' xb = ',f9.1,                     &
+           /'      yc = ',f9.1,' yd = ',f9.1,                     &
+           /'      tolerance (error control) =   ',e10.3)
 
   
   ! workm : one dimensionnal real save work space.
@@ -118,12 +122,7 @@
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(noise)
-  DO i=1,nx
-     DO j=1,ny
-        solution(i,j) = 1 - 0.01*noise(i,j)
-     ENDDO
-  ENDDO
+  CALL RANDOM_NUMBER(solution)
   ! Conditions Dirichlet
   !solution(1,1:nx) = phi(1,1:nx)
   !solution(nx,1:nx) = phi(nx,1:nx)

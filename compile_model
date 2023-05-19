@@ -38,6 +38,7 @@ then
     machine_name=Turbule
     fftw_path=/aos/home/celizotte/libfftw3
     lapack_path=/usr/lib64/
+    mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
     # Which case :
     case=~/Desktop/Modele-shallow-water-multicouches/testcase
@@ -52,7 +53,7 @@ cp "${model_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${model_path} to ${case}"
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
 #gfortran -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3 -lblas -L$lapack_path -llapack
-gfortran -o  $case/exec $model_path/main.f90 -L$fftw_path -lfftw3 -lblas -llapack --verbose
+gfortran -o  $case/exec $model_path/main.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
 #cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled

@@ -12,7 +12,8 @@
    parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
    
    parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
-
+   !parameter (nx = 512, ny = 512)
+   
    parameter ( nz = 3 )
  
    parameter ( dx = Lx/nx, dy = Ly/ny )
@@ -41,7 +42,7 @@
   
    parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) !4
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 96) !4
 
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )

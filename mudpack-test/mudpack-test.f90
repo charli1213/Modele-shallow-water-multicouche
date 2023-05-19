@@ -15,7 +15,6 @@ PROGRAM mudpack_test
   INTEGER            :: i,j,ierror
   ! Intermediate arrays and prints : 
   REAL               :: phi(0:nnx,0:nny), errorphi(0:nnx,0:nny)
-  REAL               :: noise(1:nx,1:ny)
   REAL               :: int_cte
   ! functions
   REAL               :: true_solution
@@ -112,7 +111,7 @@ PROGRAM mudpack_test
   
   write (*,100) (iparm(i),i=1,15)
   100 format(' > Integer input arguments ',/'      intl = ',I2,       &
-           /'      nxa = ',I4,' nxb = ', I4,' nyc = ',I4, ' nyd = ',I4,  &
+           /'      nxa = ',I6,' nxb = ', I6,' nyc = ',I6, ' nyd = ',I6,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
            /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
            /'      method = ',I2, ' work space estimate = ',I7)
@@ -180,12 +179,8 @@ PROGRAM mudpack_test
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(noise)
-  DO i=1,nx
-     DO j=1,ny
-        solution(i,j) = 1 - 0.01*noise(i,j)
-     ENDDO
-  ENDDO
+
+  CALL RANDOM_NUMBER(solution)
   ! Conditions Dirichlet
   !solution(1,1:nx) = phi(1,1:nx)
   !solution(nx,1:nx) = phi(nx,1:nx)

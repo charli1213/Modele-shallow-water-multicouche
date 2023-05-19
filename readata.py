@@ -8,7 +8,7 @@ from os import listdir
 
 # ---- parametres ----
 data_path = './testcase/data'
-data_path = './testcase_3couche/data'
+#data_path = './testcase_3couche/data'
 #data_path = './testgprime/data'
 
 data_filenames = listdir(data_path) # On liste tous les fichiers
@@ -18,32 +18,37 @@ nz             = max(set([int(name[-1:]) for name in data_names])) # layer numbe
 nb_of_files    = max_filenumber%100000
 recentrage     = True
 
-nx   = 256 # Output resolution
-dt   = 0.5 # days
+nx = ny = 257 # Output resolution
+dt   = 1/96 #0.5 # days
 outt = 5 # Dénominateur du ratio de fichiers qu'on prend ratio = 1/outt
 xx   = np.linspace(-2000,2000,nx)
 tt   = np.arange(0,nb_of_files*dt,outt*dt) # Le vecteur temps [jours]
 ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
 
+# Which layer to observe
+which_layer  = str(int(input("quelle couche?")))
 
 # ---- Opening files - Creating dataset ----
+
+
 for name in data_names :
-    
-    data = np.zeros((len(tt), nx, nx)) # Création matrice données vide
-    for it, time in enumerate(tt) : 
-        f = open( data_path + '/{}_{}'.format(name,100001+(it*outt)), 'rb' )        
-        data[it,:,:] = np.fromfile(f,dtype='float32').reshape((256,256)).transpose()
-        f.close()
+    if (which_layer in name) :
+        data = np.zeros((len(tt), nx, nx)) # Création matrice données vide
+        for it, time in enumerate(tt) : 
+            f = open( data_path + '/{}_{}'.format(name,100001+(it*outt)), 'rb' )        
+            data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,ny)).transpose()
+            f.close()
         
-    # coords/data = form (dims, data[, attrs, encoding])
-    if recentrage : data = np.roll(data, int(nx/4), axis = 2)
-    ds[name] = xr.DataArray(data,
-                            coords = dict(time=('time',tt,{'units':'days'}),
-                                          x=('x',xx,{'units':'km','name':'x'}),
-                                          y=('y',xx,{'units':'km','name':'y'}),
-                                          ),
-                            )
-for i in range(1,nz+1) : ds['unorm'+str(i)] = np.sqrt(ds['u'+str(i)]**2 + ds['v'+str(i)]**2)
+        # coords/data = form (dims, data[, attrs, encoding])
+        if recentrage : data = np.roll(data, int(nx/4), axis = 2)
+        ds[name] = xr.DataArray(data,
+                                coords = dict(time=('time',tt,{'units':'days'}),
+                                              x=('x',xx,{'units':'km','name':'x'}),
+                                              y=('y',xx,{'units':'km','name':'y'}),
+                                              ),
+                                )
+i = which_layer
+ds['unorm'+str(i)] = np.sqrt(ds['u'+str(i)]**2 + ds['v'+str(i)]**2)
     
 # ---- Figures ----
 if __name__ == "__main__" :
@@ -67,9 +72,8 @@ if __name__ == "__main__" :
     # ---- Hovmoler and snapshot of 3 field ----
     if figures[0] :
         # > Params : 
-        which_layer  = 3
         
-        maxday       = 1400
+        maxday       = nb_of_files*dt
         which_fields = ['zeta','div','eta','unorm']
 
         # > Figure :
