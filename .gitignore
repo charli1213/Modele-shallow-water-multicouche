@@ -4,3 +4,4 @@ mudpack-test/poisson-exec
 udpack-test/data/
 udpack-test/data/*
 testfft/*
+parameters.f90_last_compiled
