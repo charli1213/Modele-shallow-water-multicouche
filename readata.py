@@ -3,24 +3,29 @@ import matplotlib.pyplot as plt
 import cmocean.cm as cmo
 import xarray as xr
 from os import listdir
+from datetime import date
 
+today = date.today()
 
 
 # ---- parametres ----
-data_path = './testcase/data'
-#data_path = './testcase_3couche/data'
-#data_path = './testgprime/data'
+casepath = './testcase/'
+#casepath = './testfft/'
+datapath = casepath + 'data/'
+figpath  = casepath + 'figures/'
+#datapath = './testcase_3couche/data'
+#datapath = './testgprime/data'
 
-data_filenames = listdir(data_path) # On liste tous les fichiers
+data_filenames = listdir(datapath) # On liste tous les fichiers
 data_names     = list(set([name[:-7] for name in data_filenames])) # string
 max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) -1 # Indicateur 
 nz             = max(set([int(name[-1:]) for name in data_names])) # layer number
-nb_of_files    = max_filenumber%100000
+nb_of_files    = max_filenumber%100000 -1
 recentrage     = True
 
-nx = ny = 257 # Output resolution
-dt   = 1/96 #0.5 # days
-outt = 5 # Dénominateur du ratio de fichiers qu'on prend ratio = 1/outt
+nx = ny = 256 # Output resolution
+dt   = 1/4#0.5 # days
+outt = 1 # Dénominateur du ratio de fichiers qu'on prend ratio = 1/outt
 xx   = np.linspace(-2000,2000,nx)
 tt   = np.arange(0,nb_of_files*dt,outt*dt) # Le vecteur temps [jours]
 ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
@@ -34,8 +39,9 @@ which_layer  = str(int(input("quelle couche?")))
 for name in data_names :
     if (which_layer in name) :
         data = np.zeros((len(tt), nx, nx)) # Création matrice données vide
-        for it, time in enumerate(tt) : 
-            f = open( data_path + '/{}_{}'.format(name,100001+(it*outt)), 'rb' )        
+        #for it, time in enumerate(tt) :
+        for it in range(1,len(tt)) : 
+            f = open( datapath + '/{}_{}'.format(name,100001+it*outt), 'rb' )        
             data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,ny)).transpose()
             f.close()
         
@@ -62,7 +68,7 @@ if __name__ == "__main__" :
                   'u' :'bwr',
                   'v' :'bwr',
                   'unorm':cmo.ice_r}
-    saturation = dict(eta = 0.9,
+    saturation = dict(eta = 1.,
                       zeta  = 0.9,
                       div   = 0.4,
                       u     = 0.9,
@@ -72,41 +78,48 @@ if __name__ == "__main__" :
     # ---- Hovmoler and snapshot of 3 field ----
     if figures[0] :
         # > Params : 
-        
-        maxday       = nb_of_files*dt
-        which_fields = ['zeta','div','eta','unorm']
+        #maxfiles = 6237
+        maxfile = nb_of_files
+        maxday  = maxfile*dt
+        maxday       =  50
+        for maxday in [50,200,1000] : 
+            which_fields = ['zeta','div','eta','unorm']
 
-        # > Figure :
-        fig, axes = plt.subplots(nrows = 4, ncols = 2,
-                                 figsize = (10.5,4*8.5/3),
-                                 sharey = True, sharex=False,
-                                 width_ratios = [0.75,0.28],
-                                 )
-
-        for i,name in enumerate([field+str(which_layer) for field in which_fields]) :
-            # Right panel
-            vmax = saturation[name[:-1]]*ds[name].sel(time=maxday, method = 'nearest').max()
-            vmin = min(0,ds[name].sel(time=maxday, method = 'nearest').min())
-            if vmin != 0 : vmin =-vmax 
-            ds[name].sel(time=maxday,
-                         method = 'nearest').transpose().plot(ax = axes[i,1],
-                                                              cmap = colorchart[name[:-1]],
-                                                              vmin = vmin,
-                                                              vmax = vmax,
-                                                              add_colorbar = True)
-            #ds.zeta1.isel(time=-1).transpose().plot(cmap=colorchart['zeta'])
-            # Left panel
-            ds[name].sel(x=0.0,
-                         method = 'nearest').transpose().plot(ax=axes[i,0], cmap = colorchart[name[:-1]],
-                                               vmin = vmin,
-                                               vmax = vmax,
-                                               add_colorbar = False)
-            axes[i,1].set_ylabel('')
-            axes[i,0].set_xlim([0,maxday])
-        [axe.set_xticklabels([]) for axe in axes[:-1,0]]
-        [axe.set_xticklabels([]) for axe in axes[:-1,1]]
-        plt.tight_layout()
-        plt.show()
+            # > Figure :
+            fig, axes = plt.subplots(nrows = 4, ncols = 2,
+                                     figsize = (10.5,4*8.5/3),
+                                     sharey = True, sharex=False,
+                                     width_ratios = [0.75,0.28],
+                                     )
+            
+            for i,name in enumerate([field+str(which_layer) for field in which_fields]) :
+                # Right panel
+                vmax = saturation[name[:-1]]*ds[name].sel(time=maxday, method = 'nearest').max()
+                vmin = min(0,ds[name].sel(time=maxday, method = 'nearest').min())
+                if (vmin < 0) and (vmax>0) : vmin =-vmax
+                ds[name].sel(time=maxday,
+                             method = 'nearest').transpose().plot(ax = axes[i,1],
+                                                                  cmap = colorchart[name[:-1]],
+                                                                  vmin = vmin,
+                                                                  vmax = vmax,
+                                                                  add_colorbar = True)
+                #ds.zeta1.isel(time=-1).transpose().plot(cmap=colorchart['zeta'])
+                # Left panel
+                ds[name].sel(x=0.0,
+                             method = 'nearest').transpose().plot(ax=axes[i,0], cmap = colorchart[name[:-1]],
+                                                                  vmin = vmin,
+                                                                  vmax = vmax,
+                                                                  add_colorbar = False)
+                axes[i,1].set_ylabel('')
+                axes[i,0].set_xlim([0,maxday])
+                axes[i,0].set_title('')
+                #axes[i,1].set_title('')
+            [axe.set_xticklabels([]) for axe in axes[:-1,0]]
+            [axe.set_xticklabels([]) for axe in axes[:-1,1]]
+            plt.tight_layout()
+            print(' > Saving data at {}'.format(figpath))
+            fig.savefig(figpath + str(today) + '_t={}days_hovmoller{}.png'.format(maxday,which_layer))
+            plt.show()
 
 
 
@@ -134,6 +147,6 @@ if __name__ == "__main__" :
         plt.tight_layout()
         plt.show()
 
-    
+        
 
     del ds 

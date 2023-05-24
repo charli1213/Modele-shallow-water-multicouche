@@ -1,13 +1,12 @@
 !
-!     need to correct u,v for surface pressure 
+!     need to correct u,v with barotropic streamfunction found with MUDPACK. 
 !
+  
        ! Re-initialising qties.
-       zeta_BT(:,:,1) = zeta_BT(:,:,2)
-       zeta_BT(:,:,2) = 0.
-       psi_BT(:,:,1) = psi_BT(:,:,2)
-       psi_BT(:,:,2) = 0.
-       u_BT(:,:)    = 0.
-       v_BT(:,:)    = 0.
+       zeta_BT(:,:)  = 0.
+       u_BT(:,:)       = 0.
+       v_BT(:,:)       = 0.
+       ! psi_BT(:,:)   = 0.
        
        ! Calculating thickness
        do k = 1, nz
@@ -25,17 +24,24 @@
           uu(:,:) = u(:,:,k,ilevel)
           vv(:,:) = v(:,:,k,ilevel)
           include 'subs/zetaBT.f90' ! array = curl(u*h) or barotropic vorticity.
-          zeta_BT(:,:,2) = zeta_BT(:,:,2) + array(1:nx,1:ny)
+          zeta_BT(:,:)   = zeta_BT(:,:)   + array(:,:)
           u_BT(:,:)      = u_BT(:,:)      + uh(:,:)
           v_BT(:,:)      = v_BT(:,:)      + vh(:,:)
           ! (***) Don't we also put Stokes transport (Ust) here too? 
           
        enddo !end k-loop
        
-       ! barotropic qty : 
-       zeta_BT(:,:,2) = zeta_BT(:,:,2)/Htot
+       ! barotropic quantities ( zeta_BT = curl(uh)/Htot ) :
+       zeta_BT(:,:) = zeta_BT(:,:)/Htot
        u_BT    = u_BT/Htot
        v_BT    = v_BT/Htot
+
+       ! Note : Periodic boundaries are set at points ix=1 and ix=nnx such that
+       !        zeta_BT(1,:) = zeta_BT(nnx,:) and zeta_BT(:,1) = zeta_BT(:,nny)
+       array = zeta_BT
+       include '/subs/bndy.f90'
+       zeta_BT = array
+
        
     ! ######################################################## !
     !                                                          !
@@ -47,26 +53,27 @@
     !                                                          !
     ! ######################################################## !
        
-       ! MUDPACK call  (periodic boundaries)
-       rhs_mud = zeta_BT(:,:,2) - zeta_BT(:,:,1)
-       call mud2(iparm,fparm,workm,coef,bndyc,rhs_mud,solution,mgopt,ierror)
+       ! MUDPACK call  (for periodic boundaries)
+       call mud2(iparm,fparm,workm,coef,bndyc,zeta_BT(1:nnx,1:nny),psi_BT(1:nnx,1:nny),mgopt,ierror)
               
-       ! Removing integration constant when periodic. 
-       ! (***) (WHEN DIRICHLET : REMOVE THIS)
-       int_cte = SUM(solution)/nx/ny  
-       psi_BT(1:nx,1:ny,2) = psi_BT(1:nx,1:ny,1) +  solution(:,:) - int_cte
-
-       ! Boundaries
-       array = psi_BT(:,:,2)
-       include 'subs/bndy.f90'
-       psi_BT(:,:,2) = array
-
-
+       ! Removing integration constant is NOT NECESSARY since we differentiate to get u,v.
+       ! But we do it for diagnostics : 
+       dummy = 0.
+       DO j=1,ny
+          dummy = dummy + SUM(psi_BT(1:nx,j))/nx/ny
+       ENDDO
+       psi_BT = psi_BT - dummy
+       
     ! ######################################################## !
     !                                                          !
-    !                     -- PSI SOLVED --                     !
+    !                   -- PSI_BT SOLVED --                    !
     !                                                          !   
     ! ######################################################## !
+
+       ! Periodic boundaries to get psi_BT(0,:) and psi_BT(:,0).
+       array = psi_BT(:,:)
+       include 'subs/bndy.f90'
+       psi_BT(:,:) = array
        
        ! Finding updated velocities
        !
@@ -75,12 +82,12 @@
        !
        do j = 1,ny
        do i = 1,nx
-          u(i,j,:,ilevel) = u(i,j,:,ilevel)                    &     ! \tilde{u(k)}
-               &          + (psi_BT(i,j+1,2) - psi_BT(i,j,2))/dy   &     ! mudpack psi_y
-               &          - u_BT(i,j)                                ! \tilde{u}_BT
-          v(i,j,:,ilevel) = v(i,j,:,ilevel)                    &     ! \tilde{v(k)}
-               &          - (psi_BT(i+1,j,2) - psi_BT(i,j,2))/dx   &     ! mudpack -psi_x
-               &          - v_BT(i,j)                                ! \tilde{v}_BT
+          u(i,j,:,ilevel) = u(i,j,:,ilevel)                        &     ! \tilde{u(k)}
+               &          + (psi_BT(i,j+1) - psi_BT(i,j))/dy       &     ! mudpack psi_y
+               &          - u_BT(i,j)                                    ! \tilde{u}_BT
+          v(i,j,:,ilevel) = v(i,j,:,ilevel)                        &     ! \tilde{v(k)}
+               &          - (psi_BT(i+1,j) - psi_BT(i,j))/dx       &     ! mudpack -psi_x
+               &          - v_BT(i,j)                                    ! \tilde{v}_BT
        enddo
        enddo
 
@@ -93,4 +100,27 @@
        v(:,:,k,ilevel) = array(:,:)
        enddo ! end k-loop
 
-       ! Velocities are now updated! (Cheers)
+       ! Velocities are now updated! (Cheers!)
+
+
+
+       
+       ! Diagnostics : 
+       IF (MOD(its,10*iout).eq.0) THEN
+          ! Printing max correction for error control.
+          WRITE (*,*) " > Erreur mudpack :", ierror
+          WRITE (*,*) " > Maximum RHS MUDPACK      :: ", MAXVAL(zeta_BT)
+
+          dummy = 0.
+          DO j=1,nx
+             dummy = dummy + SUM(psi_BT(1:nx,j))/nx/ny
+          ENDDO           
+          WRITE (*,*) " > Mean psi_BT              :: ", dummy
+
+          dummy = 0.
+          DO j=1,nx
+             dummy = dummy + SUM(zeta_BT(1:nx,j))/nx/ny
+          ENDDO           
+          WRITE (*,*) " > Mean RHS MUDPACK         :: ", dummy
+          PRINT *, " > Max Mud cycle difference    :: ",fparm(6)
+       ENDIF

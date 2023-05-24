@@ -65,15 +65,15 @@
        rho(3) = 2*rho(2) - rho(1)
 
        !!! >>> Printing Diagnostics
-       print *, ">>> Diagno for initialize.f90 sub-routine : "
+       print *, " >>> Diagnostics for initialize.f90 sub-routine : "
 
        ! gprime
        gprime(1) = g
-       print *, 'gprime(1) = ', gprime(1)
+       print *, '     gprime(1) = ', gprime(1)
        do k = 2,nz
           WRITE (k_str,'(I0)') k
           gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
-          print *, 'gprime(',TRIM(k_str),') = ', gprime(k)
+          print *, '     gprime(',TRIM(k_str),') = ', gprime(k)
        enddo
 
        
@@ -101,9 +101,9 @@
        A(nz,nz)   =   F_layer(nz,nz)
 
        ! Printing diagnostic :
-       print *, '> A matrix'
+       print *, ' > A matrix'
        do k = 1,nz
-          print *, '[', A(k,:),']'
+          print *, '     [', A(k,:),']'
        end do
 
        ! > Solving Eigenvalues problem : A.psi = lambda.psi
@@ -112,27 +112,27 @@
        CALL SGEEV('N','V', nz,A,nz, Fmodes,WI, VL,nz, L2M,nz, WORKL, size(workl,1), INFO )
 
        ! LAPACK eigenvalues
-       PRINT *, '> LAPACK Eigenvalues : '
+       PRINT *, ' > LAPACK Eigenvalues : '
        do k=1,nz
           WRITE (k_str,'(I0)') k
           IF (Fmodes(k) .lt. 1e-15) THEN
              Fmodes(k) = 0.
           ENDIF
-          print *, 'lambda_',TRIM(k_str),' =', Fmodes(k)
+          print *, '     lambda_',TRIM(k_str),' =', Fmodes(k)
        end do
 
        ! Analytic equal 3-layers eigenvalues (test)
-       print *, '> Analytic Eigenvalues (3 equal layer, linear density): '
-       print *, 'lambda_1 =', 1*f0**2/gprime(2)/H(1)
-       print *, 'lambda_2 =', 3*f0**2/gprime(2)/H(1)
-       print *, 'lambda_3 =', 0.                    
+       print *, ' > Analytic Eigenvalues (3 equal layer, linear density): '
+       print *, '     lambda_1 =', 1*f0**2/gprime(2)/H(1)
+       print *, '     lambda_2 =', 3*f0**2/gprime(2)/H(1)
+       print *, '     lambda_3 =', 0.                    
        
        ! Deformation radii
-       print *, '> Deformation Radii :'
+       print *, ' > Deformation Radii :'
        do k=1,nz
           WRITE (k_str,  '(I0)'  ) k
           WRITE (ministr,'(F8.2)') 1/SQRT(Fmodes(k))
-          PRINT *, 'Ld(', TRIM(k_str), ') = ', ministr, ' [m]'
+          PRINT *, '     Ld(', TRIM(k_str), ') = ', ministr, ' [m]'
        end do
        
 

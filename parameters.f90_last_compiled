@@ -11,15 +11,16 @@
 
    parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
    
-   parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
-   !parameter (nx = 512, ny = 512)
+   !parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
+   parameter (nx = 512, ny = 512)
    
    parameter ( nz = 3 )
  
    parameter ( dx = Lx/nx, dy = Ly/ny )
    
-   parameter ( nnx = nx+1, nny = ny+1 )
- 
+   !parameter ( nnx = nx+1, nny = ny+1 )
+   parameter ( nnx = ixp*2**(iex-1)+1,  nny = jyq*2**(jey-1)+1 ) ! 513
+   
   ! --- Paraterers ---
  
    parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
@@ -42,7 +43,7 @@
   
    parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 96) !4
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) !8 est intéressant aussi, mais manque de memory.
 
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )

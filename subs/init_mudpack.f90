@@ -1,13 +1,14 @@
-  
-  zeta_BT(:,:,:) = 0.
-  psi_BT(:,:,:)  = 0.
+   
+  zeta_BT(:,:) = 0.
+  psi_BT(:,:)  = 0.
+
   
   ! ************************************************** !
   !                                                    !
   !                    Init mudpack                    !
   !                                                    !
   ! ************************************************** !
-  WRITE (*,*) " >>> Initialising MUDPACK parameters/inputs"
+  PRINT *, ">>> Initialising MUDPACK parameters/inputs"
   
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}={Yes,No}.
@@ -20,9 +21,9 @@
   iparm(7)  = jyq ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
   iparm(8)  = iex
   iparm(9)  = jey ! 2^[8] = nx = ny  >>>>  iparm(8 ou 9) = log2(nx ou ny)
-  iparm(10) = nx          ! nx : # de points dans l'intervalle [xa,xb] (incluant la frontière)
+  iparm(10) = nnx          ! nx : # de points dans l'intervalle [xa,xb] (incluant la frontière)
                           ! nx = ixp*(2**(iex-1)) + 1
-  iparm(11) = ny          ! ny
+  iparm(11) = nny          ! ny
   iparm(12) = 0           ! iguess : Prendre un guess (0=False)
   
   !     DOCUMENTATION :
@@ -45,17 +46,17 @@
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 4  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 2  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
-  length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
+  length = int(4*(nnx*nny*(10+0+0)+8*(nnx+nny+2))/3)
   iparm(15) = length ! Conseillé.
 
   
   write (*,100) (iparm(i),i=1,15)
-  100 format('> Integer input arguments ',/'      intl = ',I2,       &
+  100 format(' > Integer input arguments ',/'      intl = ',I2,       &
            /'      nxa = ',I2,' nxb = ', I2,' nyc = ',I2, ' nyd = ',I2,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
-           /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
+           /'      nnx = ',I3,' nny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
            /'      method = ',I2, ' work space estimate = ',I7)
   PRINT *, "     Calculated nx = ", iparm(6)*(2**(iparm(8)-1)) + 1  
 
@@ -122,12 +123,13 @@
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(solution)
+  CALL RANDOM_NUMBER(psi_BT)
+  psi_BT = psi_BT/10
   ! Conditions Dirichlet
-  !solution(1,1:nx) = phi(1,1:nx)
-  !solution(nx,1:nx) = phi(nx,1:nx)
-  !solution(1:nx,1) = phi(1:nx,1)
-  !solution(1:nx,ny) = phi(1:nx,ny)
+  !psi_BT(1,1:nx) = phi(1,1:nx)
+  !psi_BT(nx,1:nx) = phi(nx,1:nx)
+  !psi_BT(1:nx,1) = phi(1:nx,1)
+  !psi_BT(1:nx,ny) = phi(1:nx,ny)
 
 
   ! mgopt
@@ -152,14 +154,14 @@
   WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
   WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
   WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
-  WRITE (*,*) "     Shape rhs      =" ,SHAPE(RHS_mud)
-  WRITE (*,*) "     Shape solution =" ,SHAPE(solution)
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(zeta_BT(1:nnx,1:nny))
+  WRITE (*,*) "     Shape solution =" ,SHAPE(psi_BT(1:nnx,1:nny))
   WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
   WRITE (*,*) " "
 
   ! initialising MUD2 function
   PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
-  call mud2(iparm,fparm,workm,coef,bndyc,RHS_mud,solution,mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,zeta_BT(1:nnx,1:nny),psi_BT(1:nnx,1:nny),mgopt,ierror)
   PRINT *, "     ERROR =",ierror
   PRINT *, " "
   IF (ierror .gt. 0) THEN

@@ -62,7 +62,6 @@
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-
       ! Baroclinic/Barotropic modes with LAPACK ; 
       REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
       REAL WI(1:nz), VL(1:nz,1:nz)
@@ -70,7 +69,7 @@
       INTEGER WORKL(1:4*nz), INFO
       CHARACTER(8) :: ministr
 
-      ! Physical quantities :
+      ! Physical qty
       real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
       real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
       real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
@@ -175,16 +174,17 @@
       character(88) string56, string57, string58, string59, string60
       character(88) string99,string98,fmtstr,fmtstr1
 
-      ! Psi correction with MUDPACK
-      REAL :: zeta_BT(0:nnx,0:nny)
-      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny)      
-      REAL :: dummy !Use this for anything
+      ! p_correction_mud
+      REAL :: zeta_BT(1:nx,1:ny,2), integration_cte
+      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny,2)
       
+
       ! MUDPACK solver
       INTEGER            :: iparm(17), mgopt(4), length
       REAL               :: fparm(6)
       REAL,ALLOCATABLE   :: workm(:)
       CHARACTER(LEN=80)  :: myformat
+      REAL               :: RHS_MUD(0:nnx,0:nny), psi_correction(1:nnx,1:nny)
       ! SUBROUTINES CALLS
       external coef,bndyc
 
@@ -375,9 +375,9 @@
       !
       ilevel = 2
       p_out(:,:) = 0.
-      include 'subs/p_correction_mud.f90'
-      !include 'subs/p_correction.f90'
-      !include 'subs/p_correction.f90'
+      !include 'subs/p_correction_mud.f90'
+      include 'subs/p_correction.f90'
+      include 'subs/p_correction.f90'
       do k = 1,nz ! ? if we really need this
          array = eta(:,:,k,2)
          include 'subs/bndy.f90'
@@ -481,12 +481,12 @@
          !
          ilevel = 3
          p_out(:,:) = 0.
-         include 'subs/p_correction_mud.f90'
-         !include 'subs/p_correction.f90'
+         !include 'subs/p_correction_mud.f90'
+         include 'subs/p_correction.f90'
          ! Psurf  = Psurf/dt   (here, not after the next line
          ! see in p_correction for the /dt
          ! see also lines 264 265 for 1st time step
-         !include 'subs/p_correction.f90'
+         include 'subs/p_correction.f90'
 
          do k = 1,nz
             array = eta(:,:,k,3)
@@ -539,13 +539,9 @@
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1
 
-               eta(:,:,1,3) = psi_BT(:,:)
-               !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
-               array = eta(:,:,1,3)
-               include 'subs/bndy.f90'
-               eta(:,:,1,3) = array
+               eta(:,:,1,3) = Psurf(:,:)
                include 'subs/dump_bin.f90'
-
+               
                if(mod(its,iout).eq.0)write(*,*) 'current its',its
                print*, 'writing data No.', icount
             end if

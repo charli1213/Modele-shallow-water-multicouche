@@ -1,5 +1,4 @@
 
-  eta(:,:,1,3) = Psurf(:,:)
   
   WRITE(which,'(I6)') 100000 + icount
      
