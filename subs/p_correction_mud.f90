@@ -122,5 +122,4 @@
              dummy = dummy + SUM(zeta_BT(1:nx,j))/nx/ny
           ENDDO           
           WRITE (*,*) " > Mean RHS MUDPACK         :: ", dummy
-          PRINT *, " > Max Mud cycle difference    :: ",fparm(6)
        ENDIF
