@@ -144,6 +144,7 @@
       double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
       integer i, j, k, ii, jj, kk, ip, im, jp, jm, kp, km
       integer ilevel, itt,  it, its, imode, ntimes, inkrow, wfits
+      CHARACTER(80) :: datapath
       
       !subsampling arrays
       integer,allocatable:: isubx(:),isuby(:),iftsubkl(:,:)
@@ -176,8 +177,10 @@
       character(88) string99,string98,fmtstr,fmtstr1
 
       ! Psi correction with MUDPACK
-      REAL :: zeta_BT(0:nnx,0:nny)
-      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny)      
+      REAL :: rhs_u_BT(0:nnx,0:nny), rhs_v_BT(0:nnx,0:nny)
+      REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
+      REAL :: curl_of_RHS_u_BT(0:nnx,0:nny)
+      REAL :: delta_psi_BT(0:nnx,0:nny)
       REAL :: dummy !Use this for anything
       
       ! MUDPACK solver
@@ -324,9 +327,9 @@
          ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/100.
+            uu(:,:) = uu(:,:)/1000.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/100.
+            vv(:,:) = vv(:,:)/1000.
          endif
          !
 
@@ -346,6 +349,21 @@
 
       enddo  ! end of the do k = 1,nz loop
 
+
+      write(*,*) 'First surface pressure correction'
+      !
+      !     need to correct RHS_u,v for surface pressure 
+      !
+      ilevel = 1      
+      p_out(:,:) = 0.
+      include 'subs/p_correction_mud2.f90'
+
+      do k = 1,nz ! ? if we really need this
+         array = eta(:,:,k,1)
+         include 'subs/bndy.f90'
+         eta(:,:,k,1) = array
+      end do      
+      
       
       !
       ! ---- RHS (begining) ----
@@ -368,21 +386,6 @@
       its = its + 1
       call get_taux(taux_steady,amp_matrix(its),taux)
 
-
-      write(*,*) 'First surface pressure correction'
-      !
-      !     need to correct u,v for surface pressure 
-      !
-      ilevel = 2
-      p_out(:,:) = 0.
-      include 'subs/p_correction_mud.f90'
-      !include 'subs/p_correction.f90'
-      !include 'subs/p_correction.f90'
-      do k = 1,nz ! ? if we really need this
-         array = eta(:,:,k,2)
-         include 'subs/bndy.f90'
-         eta(:,:,k,2) = array
-      end do      
          
       !FFTW   !include 'subs/IOheader.f90' 
       !==============================================================
@@ -452,6 +455,27 @@
          enddo  ! k
 
          !
+         !     stuff for surface pressure correction
+         !
+         ilevel = 2
+         p_out(:,:) = 0.
+         include 'subs/p_correction_mud2.f90'
+         !include 'subs/p_correction.f90'
+         ! Psurf  = Psurf/dt   (here, not after the next line
+         ! see in p_correction for the /dt
+         ! see also lines 264 265 for 1st time step
+         !include 'subs/p_correction.f90'
+
+         ! This may be useless...
+         do k = 1,nz
+            array = eta(:,:,k,2)
+            include 'subs/bndy.f90'
+            eta(:,:,k,2) = array
+         enddo
+
+
+         
+         !
          ! ---- RHS (begining) ---- !
          !
          ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)
@@ -476,24 +500,7 @@
          today = time/86400
          call get_taux(taux_steady,amp_matrix(its),taux)
 
-         !
-         !     stuff for surface pressure correction
-         !
-         ilevel = 3
-         p_out(:,:) = 0.
-         include 'subs/p_correction_mud.f90'
-         !include 'subs/p_correction.f90'
-         ! Psurf  = Psurf/dt   (here, not after the next line
-         ! see in p_correction for the /dt
-         ! see also lines 264 265 for 1st time step
-         !include 'subs/p_correction.f90'
-
-         do k = 1,nz
-            array = eta(:,:,k,3)
-            include 'subs/bndy.f90'
-            eta(:,:,k,3) = array
-         enddo
-
+         
          u(:,:,:,2) = u(:,:,:,2) + rf*(u(:,:,:,1)+u(:,:,:,3)-2*u(:,:,:,2))
          v(:,:,:,2) = v(:,:,:,2) + rf*(v(:,:,:,1)+v(:,:,:,3)-2*v(:,:,:,2))
          eta(:,:,:,2) = eta(:,:,:,2)   &
@@ -539,7 +546,7 @@
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1
 
-               eta(:,:,1,3) = psi_BT(:,:)
+               eta(:,:,1,3) = p_out(:,:)
                !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
                array = eta(:,:,1,3)
                include 'subs/bndy.f90'

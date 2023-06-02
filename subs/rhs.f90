@@ -1,7 +1,7 @@
 
        tmp(1) = minval(thickness)/H(k)
        if(tmp(1).le.0.02) then
-          print*, 'it',it
+          print*, 'its',its
           print*, k,'thickness too small'
        stop
        endif

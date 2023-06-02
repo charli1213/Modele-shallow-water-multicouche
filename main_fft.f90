@@ -265,7 +265,7 @@
       write(*,*) 'dx = ', dx
 
       ! --- Initializing mudpack
-      include 'subs/init_mudpack.f90'
+      !include 'subs/init_mudpack.f90'
 
       ! --- Initializing fields and rossby radii
       include 'subs/initialize.f90'

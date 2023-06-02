@@ -103,6 +103,8 @@
        ! Velocities are now updated! (Cheers!)
 
 
+       ! In case we reapply the p_correction_mud.
+       p_out(:,:) = p_out(:,:) + psi_BT(:,:)
 
        
        ! Diagnostics : 
@@ -123,3 +125,4 @@
           ENDDO           
           WRITE (*,*) " > Mean RHS MUDPACK         :: ", dummy
        ENDIF
+       

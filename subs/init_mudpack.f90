@@ -1,6 +1,6 @@
    
-  zeta_BT(:,:) = 0.
-  psi_BT(:,:)  = 0.
+  curl_of_RHS_u_BT(:,:) = 0.
+  delta_psi_BT(:,:)  = 0.
 
   
   ! ************************************************** !
@@ -123,13 +123,13 @@
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(psi_BT)
-  psi_BT = psi_BT/10
+  CALL RANDOM_NUMBER(delta_psi_BT)
+  delta_psi_BT = delta_psi_BT/10
   ! Conditions Dirichlet
-  !psi_BT(1,1:nx) = phi(1,1:nx)
-  !psi_BT(nx,1:nx) = phi(nx,1:nx)
-  !psi_BT(1:nx,1) = phi(1:nx,1)
-  !psi_BT(1:nx,ny) = phi(1:nx,ny)
+  !delta_psi_BT(1,1:nx) = phi(1,1:nx)
+  !delta_psi_BT(nx,1:nx) = phi(nx,1:nx)
+  !delta_psi_BT(1:nx,1) = phi(1:nx,1)
+  !delta_psi_BT(1:nx,ny) = phi(1:nx,ny)
 
 
   ! mgopt
@@ -154,14 +154,14 @@
   WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
   WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
   WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
-  WRITE (*,*) "     Shape rhs      =" ,SHAPE(zeta_BT(1:nnx,1:nny))
-  WRITE (*,*) "     Shape solution =" ,SHAPE(psi_BT(1:nnx,1:nny))
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(curl_of_RHS_u_BT(1:nnx,1:nny))
+  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psi_BT(1:nnx,1:nny))
   WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
   WRITE (*,*) " "
 
   ! initialising MUD2 function
   PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
-  call mud2(iparm,fparm,workm,coef,bndyc,zeta_BT(1:nnx,1:nny),psi_BT(1:nnx,1:nny),mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nnx,1:nny),delta_psi_BT(1:nnx,1:nny),mgopt,ierror)
   PRINT *, "     ERROR =",ierror
   PRINT *, " "
   IF (ierror .gt. 0) THEN
