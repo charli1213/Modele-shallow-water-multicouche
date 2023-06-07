@@ -2,29 +2,9 @@
 #read -p "Enter case folder name:  " ${case}
 # "case" is the place workdir directory in a sence.
 
-read -p "!! Enter machine: 0) Oxygen with scratch; 1) local mac with scratch; 2) ptz-poisson; 3) mac_solo; 4) mingan; 5) My computer" pcid
+read -p "!! Enter machine: 0) mingan 1) Turbule (McGill computer); computer " pcid
 #read pcid
-if [ "${pcid}" == "0" ]
-then 
-    machine_name=Oxygen
-    fftw_path=/share/apps/fftw/3.3.4
-    model_path=/scratch/tpeng/
-elif [ "${pcid}" == "1" ] 
-then
-    machine_name=mac_scratch_mounted
-    fftw_path=/share/apps/fftw/3.3.4
-    model_path=/Volumes/scratch/
-elif [ "${pcid}" == "2" ] 
-then
-    machine_name=ptz-poisson
-    fftw_path=/usr/include
-    model_path=./
-elif [ "${pcid}" == "3" ] 
-then
-    machine_name=mac_solo
-    fftw_path=/usr/local/include
-    model_path=./
-elif [ "${pcid}" == "4" ] 
+if [ "${pcid}" == "0" ] 
 then
     machine_name=mingan
     fftw_path=/share/apps/fftw/3.3.4
@@ -33,7 +13,7 @@ then
     case=/share/work/celiz2/MPI_learning/CLASSIQUE_2pi_init
     #case=/share/work/celiz2/MPI_learning/SW_after
     #case=/share/work/celiz2/MPI_learning/COU_2pi_init
-elif [ "${pcid}" == "5" ] 
+elif [ "${pcid}" == "1" ] 
 then
     machine_name=Turbule
     fftw_path=/aos/home/celizotte/libfftw3
@@ -41,20 +21,33 @@ then
     mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
     # Which case :
-    case=~/Desktop/Modele-shallow-water-multicouches/testcase
+    mudpack_case=~/Desktop/Modele-shallow-water-multicouches/testcase
     #case=~/Desktop/Modele-shallow-water-multicouches/testfft
+    fftw_case=~/Desktop/Modele-shallow-water-multicouches/reference_fftw
     #case=/share/work/celiz2/MPI_learning/SW_after
     #case=/share/work/celiz2/MPI_learning/COU_2pi_init
 
 fi
+# >>> Preparing before compilation ::
 echo "!! ${pcid} was selected"
 echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
-cp "${model_path}/parameters.f90" "${case}/."
-echo "!! Parameters file copied from ${model_path} to ${case}"
+cp "${model_path}/parameters.f90" "${mudpack_case}/."
+cp "${model_path}/parameters.f90" "${fftw_case}/."
+echo "!! Parameters file copied from ${model_path} to ${mudpack_case}"
+echo "!! Parameters file copied from ${model_path} to ${fftw_case}"
+
+# >>> Compilation :: 
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-gfortran -o  $case/exec $model_path/main.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
-#gfortran -o  $case/exec $model_path/main_fft.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
-#cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
-cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
+gfortran -o  $mudpack_case/exec $model_path/main.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
+gfortran -o  $fftw_case/exec $model_path/main_fft.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
+
+# >>> Parameter last compiled in model directory ::
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
-echo "!! Compilation of $case completed on the computer $machine_name "
+
+# >>> Parameter last compiled in compiled directories :: 
+#cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
+cp ${model_path}/parameters.f90 ${mudpack_case}/parameters.f90_last_compiled
+cp ${model_path}/parameters.f90 ${fftw_case}/parameters.f90_last_compiled
+
+# >>> Ending ::
+echo "!! Compilation of $mudpack_case completed on the computer $machine_name "

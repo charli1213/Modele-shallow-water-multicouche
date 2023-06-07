@@ -11,7 +11,9 @@ today = date.today()
 
 # ---- Chemins ----
 #casepath = './testcase/'
-casepath = '/storage/celizotte/test_3couche_mudpack/'
+#casepath = '/storage/celizotte/test_3couche_mudpack/'
+#casepath = './reference_fftw/'
+casepath = './'
 #casepath = './testfft/'
 figpath  = casepath + 'figures/'
 #datapath = './testcase_3couche/data'
@@ -21,8 +23,6 @@ figpath  = casepath + 'figures/'
 dt   = 0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
 
-# Which layer to observe
-klayer  = str(int(input("quelle couche?")))
 
 
 
@@ -49,7 +49,11 @@ if __name__ == "__main__" :
     #                                                                   #
     # ================================================================= #    
 
-    if True : 
+    if True :
+
+        # Which layer to observe
+        klayer  = str(int(input("quelle couche?")))
+
         # > Params : 
         for maxday,outt in zip([50,250,1000,2000], [1,5,10,15]) :
             print('\n >>> Figure {} jours'.format(maxday))
@@ -114,8 +118,6 @@ if __name__ == "__main__" :
             fig.savefig(figpath + str(today) + '_hovmoller{}_t={}days.png'.format(klayer,maxday))
             #plt.show()
             plt.close()
-            del ds
-
 
 
     # ================================================================= #
@@ -124,31 +126,45 @@ if __name__ == "__main__" :
     #                                                                   #
     # ================================================================= #
 
-    debug = input('débogage? [Y/n]')
+    #if True :
+    debug = input('Débugger début?? [Y/n] ')
     if 'Y' in debug :
-    #if False : 
+        try : del ds
+        except : pass 
+            
         ds = tls.create_ds_from_binary(casepath = casepath,
-                                       maxday   = 50,
+                                       maxday   = 2,
                                        outt     = 1,
-                                       klayer   = klayer,
-                                       dt=dt)
+                                       klayer   = 1,
+                                       dt=1/192)
 
-        debug = input('Début? [Y/n]')
-        if 'Y' in debug :
-            for keys in ds.keys() :
-                print('Champs : {}'.format(keys))
-                ds[keys].isel(time=slice(0,12)).transpose().plot(col='time', col_wrap = 4)
-            
-                plt.show()
-        debug = input('Fin? [Y/n]')
-        if 'Y' in debug :
-            for keys in ds.keys() :
-                print('Champs : {}'.format(keys))
-                ds[keys].isel(time=slice(-13,-1)).transpose().plot(col='time', col_wrap = 4)
-            
-                plt.show()
+        for keys in ds.keys() :
+            print('Champs : {}'.format(keys))
+            ds[keys].isel(time=slice(1,13)).transpose().plot(col='time', col_wrap = 4)
+            plt.savefig(figpath+'Debog_Début_{}.png'.format(keys))
+            #plt.show()
+            plt.close()
 
-        #del ds
+    #if True :      
+    debug = input('Voir la fin? [Y/n] ')
+    if 'Y' in debug :
+        try : del ds
+        except : pass 
+
+        ds = tls.create_ds_from_binary(casepath = casepath,
+                                       minday   = 4,
+                                       maxday   = 5,
+                                       outt     = 1,
+                                       klayer   = 1,
+                                       dt=1/192)
+        
+        for keys in ds.keys() :
+            print('Champs : {}'.format(keys))
+            ds[keys].isel(time=slice(-13,-1)).transpose().plot(col='time', col_wrap = 4)
+            plt.savefig(figpath+'Debog_Fin_{}.png'.format(keys))
+            #plt.show()
+            plt.close()
+
     # Nettoyage (Mr. Clean)
     else :     
         pass
@@ -164,7 +180,7 @@ if __name__ == "__main__" :
                                    minday   = 800,
                                    maxday   = 1000,
                                    outt     = 1,
-                                   klayer   = klayer,
+                                   klayer   = 1,
                                    dt=dt)
 
     

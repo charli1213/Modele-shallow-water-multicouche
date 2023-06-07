@@ -41,9 +41,9 @@
  
    parameter ( dt = 300. )
   
-   parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
+   parameter ( ndays= 5, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 192
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 192) ! Generaly fileperday = 4. 192
 
    parameter ( datapath = '/storage/celizotte/test_3couche_mudpack/') ! output where?
    !parameter ( datapath = './') ! output where?

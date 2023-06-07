@@ -20,7 +20,7 @@
       !
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
-      logical  IO_psivort, IO_coupling
+      logical  IO_psivort, IO_coupling, IO_RHS_uv
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
       integer nghost, ng2
@@ -31,6 +31,7 @@
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
+      CHARACTER(80) :: datapath
       include 'parameters.f90'
       parameter( ntsrow=itape/ispechst  )! how many lines for a time series table (e.g. spectrum)   
       !random number
@@ -51,6 +52,7 @@
       implicit none
       !
       REAL :: sl, ed
+      INTEGER :: dummy_int
       real ran2
       real u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3), eta(0:nnx,0:nny,nz,3)
       real u_ag(0:nnx,0:nny,nz), v_ag(0:nnx,0:nny,nz)
@@ -92,6 +94,8 @@
       real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsu_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsv_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))

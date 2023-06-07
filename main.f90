@@ -20,7 +20,7 @@
       !
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
-      logical  IO_psivort, IO_coupling
+      logical  IO_psivort, IO_coupling, IO_RHS_uv
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
       integer nghost, ng2
@@ -31,6 +31,7 @@
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
+      CHARACTER(80) :: datapath
       include 'parameters.f90'
       parameter( ntsrow=itape/ispechst  )! how many lines for a time series table (e.g. spectrum)   
       !random number
@@ -93,6 +94,8 @@
       real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsu_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsv_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
@@ -144,7 +147,6 @@
       double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
       integer i, j, k, ii, jj, kk, ip, im, jp, jm, kp, km
       integer ilevel, itt,  it, its, imode, ntimes, inkrow, wfits
-      CHARACTER(80) :: datapath
       
       !subsampling arrays
       integer,allocatable:: isubx(:),isuby(:),iftsubkl(:,:)
@@ -181,6 +183,7 @@
       REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
       REAL :: curl_of_RHS_u_BT(0:nnx,0:nny)
       REAL :: delta_psi_BT(0:nnx,0:nny)
+      INTEGER :: dummy_int
       REAL :: dummy !Use this for anything
       
       ! MUDPACK solver
@@ -327,9 +330,9 @@
          ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/1000.
+            uu(:,:) = uu(:,:)/100.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/1000.
+            vv(:,:) = vv(:,:)/100.
          endif
          !
 
@@ -350,43 +353,49 @@
       enddo  ! end of the do k = 1,nz loop
 
 
-      write(*,*) 'First surface pressure correction'
-      !
-      !     need to correct RHS_u,v for surface pressure 
-      !
-      ilevel = 1      
-      p_out(:,:) = 0.
-      include 'subs/p_correction_mud2.f90'
-
-      do k = 1,nz ! ? if we really need this
-         array = eta(:,:,k,1)
-         include 'subs/bndy.f90'
-         eta(:,:,k,1) = array
-      end do      
       
-      
-      !
-      ! ---- RHS (begining) ----
-      !
-      rhs_eta(:,:,1) = 0. ! First
-      u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
-      v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
+      ! ================================================== !
+      !                  RHS (begining)                    !
+      ! ================================================== !
 
       ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+      rhs_eta(:,:,1) = 0. ! First layer is a rigid lid.
       array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = \Delta \eta_{k+1}
       eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
       do k = nz-1, 2, -1
          array(:,:)   = rhs_eta(:,:,k) + array(:,:)
          eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
       end do ! end k-loop
+
+      ! >>> barotropic psi-correction
+      write(*,*) 'First barotropic psi-correction'
       !
-      ! ---- RHS (end) ----
+      !     need to correct RHS_u,v for surface pressure 
       !
+      ilevel = 2      
+      p_out(:,:) = 0.
+      include 'subs/p_correction_mud2.f90'
+      ! <<< barotropic correction (End)
+      
+      u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
+      v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
+
+
+      ! ================================================== !
+      !                      RHS (END)                     !
+      ! ================================================== !
+
+      
       time = dt
       its = its + 1
       call get_taux(taux_steady,amp_matrix(its),taux)
 
-         
+
+
+
+
+
+      
       !FFTW   !include 'subs/IOheader.f90' 
       !==============================================================
       !
@@ -453,48 +462,42 @@
             end if
             include 'subs/rhs.f90' 
          enddo  ! k
-
-         !
-         !     stuff for surface pressure correction
-         !
-         ilevel = 2
-         p_out(:,:) = 0.
-         include 'subs/p_correction_mud2.f90'
-         !include 'subs/p_correction.f90'
-         ! Psurf  = Psurf/dt   (here, not after the next line
-         ! see in p_correction for the /dt
-         ! see also lines 264 265 for 1st time step
-         !include 'subs/p_correction.f90'
-
-         ! This may be useless...
-         do k = 1,nz
-            array = eta(:,:,k,2)
-            include 'subs/bndy.f90'
-            eta(:,:,k,2) = array
-         enddo
-
+         
 
          
-         !
-         ! ---- RHS (begining) ---- !
-         !
+      ! ================================================== !
+      !                  RHS (begining)                    !
+      ! ================================================== !
+         
          ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)
-         rhs_eta(:,:,1) = 0.
-         u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
-         v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
 
          ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+         rhs_eta(:,:,1) = 0. ! Rigid lid
          array(:,:) = rhs_eta(:,:,nz)
          eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
          do k = nz-1, 2, -1
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
             eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop
+
+         ! >>> Barotropic psi-correction
          !
-         ! ---- RHS (end) ----
+         !     stuff for barotropic psi-correction
          !
+         
+         ilevel = 3
+         p_out(:,:) = 0.
+         include 'subs/p_correction_mud2.f90'
+         ! <<< Barotropic psi-correction (End)
+         
+         u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
+         v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
+      ! ================================================== !
+      !                      RHS (End)                     !
+      ! ================================================== !
 
 
+         
          ! --- Updating time ---
          time = time + dt
          today = time/86400

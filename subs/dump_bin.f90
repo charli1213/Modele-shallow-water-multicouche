@@ -1,13 +1,13 @@
 
   
   WRITE(which,'(I6)') 100000 + icount
-  datapath = '/storage/celizotte/test_3couche_mudpack/'
+  dummy_int = 1
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
     ! U and V field
     
-    do k = 1,nz
+    do k = 1,dummy_int
       u_out(:,:,k)   = u(isubx,isuby,k,3)
       v_out(:,:,k)   = v(isubx,isuby,k,3)
       eta_out(:,:,k) = eta(isubx,isuby,k,3)
@@ -15,7 +15,7 @@
 
 
     ! Velocity/Curl/Divergence :
-    do k = 1,nz
+    do k = 1,dummy_int
        ! >>> velocities and eta
        
        WRITE (k_str,'(I0)') k
@@ -68,6 +68,38 @@
 
     
   end if !IO_field
+
+  if (IO_RHS_uv) then
+     do k = 1,dummy_int
+        rhsu_out(:,:,k)   = rhs_u(isubx,isuby,k)
+        rhsv_out(:,:,k)   = rhs_v(isubx,isuby,k)
+     enddo
+
+
+     do k = 1,dummy_int
+        WRITE (k_str,'(I0)') k
+        string4 = trim(datapath) // 'data/rhsu' // trim(k_str) // '_' // trim(which)
+        string5 = trim(datapath) // 'data/rhsv' // trim(k_str) // '_' // trim(which)       
+
+        ! U Stokes
+
+        open(unit=104,file=string4,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(104,REC=1) ((rhsu_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        close(104)
+
+
+        open(unit=105,file=string5,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(105,REC=1) ((rhsv_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        close(105)
+        
+        
+     enddo
+
+     
+  endif
+
   
   if (IO_coupling) then
 
@@ -138,7 +170,7 @@
 
       string12 = trim(datapath) // 'data/taux'  // '_' // trim(which)
       open(unit=112,file=string12,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
+      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
       write(112,REC=1) ((taux(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
       close(112)
   end if !IO_forcing
@@ -154,7 +186,7 @@
     ! ETA-G
       string17 = trim(datapath) // 'data/eta_qg'  // '_' // trim(which)
       open(unit=117,file=string17,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
+      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
       write(117,REC=1) ((eta_qg(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
       close(117)
 
@@ -163,23 +195,23 @@
     ! ZETA-G
     string20 = trim(datapath) // 'data/zeta_G' // '_' // trim(which)
     open(unit=120,file=string20,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
-    write(120,REC=1) (((zeta_G(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
+    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+    write(120,REC=1) (((zeta_G(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
     close(120)
 
     ! ZETA-AG
     string21 = trim(datapath) // 'data/zeta_AG' // '_' // trim(which)
     open(unit=121,file=string21,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
-    write(121,REC=1) (((zeta_AG(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
+    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+    write(121,REC=1) (((zeta_AG(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
     close(121)
 
     
     ! PSI
     string22 = trim(datapath) // 'data/PSImode' // '_' // trim(which)
     open(unit=122,file=string22,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*nz))
-    write(122,REC=1) (((psimode(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,nz)
+    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+    write(122,REC=1) (((psimode(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
     close(122)
   end if !IO_psivort
 

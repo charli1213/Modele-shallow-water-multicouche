@@ -2,6 +2,7 @@
 !     need to correct u,v with barotropic streamfunction found with MUDPACK. 
 !
 
+  
   ! On a rhs_u(:,:,:) et rhs_v(:,:,:)
   
        ! Re-initialising qties.
@@ -11,9 +12,23 @@
        rhs_v_BC(:,:,:) = 0.
        
        ! delta_psi_BT(:,:)   = 0.
-       
-       ! Calculating thickness
+
        do k = 1, nz
+          ! Finding tilde{u}
+          IF (its .eq. 1) THEN
+             ! u2 = u1 + (\delta t)*RHS1
+             uu(:,:) = u(:,:,k,ilevel-1) + dt*rhs_u(i,j,k)
+             vv(:,:) = v(:,:,k,ilevel-1) + dt*rhs_v(i,j,k)
+          ELSE
+             ! u3 = u1 + 2*(\delta t)*RHS2
+             uu(:,:) = u(:,:,k,ilevel-2) + 2*dt*rhs_u(i,j,k)
+             vv(:,:) = v(:,:,k,ilevel-2) + 2*dt*rhs_v(i,j,k)
+          ENDIF
+
+          ! (***) Just testing :
+          !uu(:,:) = u(:,:,k,ilevel)
+          !vv(:,:) = v(:,:,k,ilevel)
+          
           if (k.eq.1) then
              thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
           elseif(k.eq.nz) then
@@ -22,10 +37,26 @@
              thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
               &             -  eta(:,:,k+1,ilevel)
           endif
-          ! Finding barotropic RHS of u and v. 
-          rhs_u_BT(:,:) = rhs_u_BT(:,:) + rhs_u(:,:,k)*thickness(:,:)/Htot
-          rhs_v_BT(:,:) = rhs_v_BT(:,:) + rhs_v(:,:,k)*thickness(:,:)/Htot
-          
+
+          array = thickness(:,:)
+          include 'subs/bndy.f90'
+          thickness(:,:) = array
+          array = rhs_eta(:,:,k)
+          include 'subs/bndy.f90'
+          rhs_eta(:,:,k) = array
+
+          ! Finding barotropic RHS of u and v. du_bt/dt = sum_k[(du/dt)*\tilde{h} + \tilde{u}*(dh/dt)]/H
+          ! where uu = \tilde{u} = old_u + rhs.
+          do i=1,nx
+             do j=1,ny
+                rhs_u_BT(i,j) = rhs_u_BT(i,j)                                             & 
+                     &        + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2   &
+                     &          +    uu(i,j)*(rhs_eta(i,j,k) + rhs_eta(i-1,j,k))/Htot/2
+                rhs_v_BT(i,j) = rhs_v_BT(i,j)                                             &
+                     &        + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2   &
+                     &          +    vv(i,j)*(rhs_eta(i,j,k) + rhs_eta(i,j-1,k))/Htot/2
+             enddo
+          enddo
        enddo !end k-loop
        
        ! baroclinic RHS_u,v
@@ -43,12 +74,10 @@
        
        ! finding curl of rhs_u_BT
        do i = 1,nx
-          im = i-1
-          do j = 1,ny
-             jm = j-1
-             curl_of_RHS_u_BT(i,j) =  (rhs_v_BT(i,j)-rhs_v_BT(im,j))/dx    &
-                  &                -  (rhs_u_BT(i,j)-rhs_u_BT(i,jm))/dy
-          enddo
+       do j = 1,ny
+          curl_of_RHS_u_BT(i,j) =  (rhs_v_BT(i,j)-rhs_v_BT(i-1,j))/dx    &
+               &                -  (rhs_u_BT(i,j)-rhs_u_BT(i,j-1))/dy
+       enddo
        enddo
               
        array = curl_of_RHS_u_BT
