@@ -12,7 +12,7 @@ from datetime import date
 
 
 nx     = 256 # Output spatial resolution.
-Lx     = 2000 # Largeur du domaine-x.
+Lx     = 2e6 # Largeur du domaine-x.
 xx     = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
 klayer = 1   # Couche à l'étude
 dt     = 0.5 # Spatial discretisation (1/fileperday)
@@ -61,7 +61,7 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
             data = np.zeros((len(tt), nx, nx)) # Création matrice données vide.
             print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
             for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
-                f = open( casepath + 'data/{}_{}'.format(name,100001+it*outt+int(minday/dt)), 'rb' )
+                f = open( casepath + 'data/{}_{}'.format(name,100000+it*outt+int(minday/dt)), 'rb' )
                 data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose() # Overwrites data
                 f.close()
         
@@ -69,8 +69,8 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
             data = np.roll(data, int(nx/4), axis = 2)
             ds[name] = xr.DataArray(data,
                                     coords = dict(time=('time',tt,{'units':'days'}),
-                                                  x=('x',xx,{'units':'km','name':'x'}),
-                                                  y=('y',xx,{'units':'km','name':'y'}),
+                                                  x=('x',xx,{'units':'m','name':'x'}),
+                                                  y=('y',xx,{'units':'m','name':'y'}),
                                                   ),
                                     )
             del data
@@ -79,5 +79,6 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
         
     # création finale du Xarray.Dataset
     ds['unorm'+str(klayer)] = np.sqrt(ds['u'+str(klayer)]**2 + ds['v'+str(klayer)]**2)
+    ds['rhsu' +str(klayer)] = (ds['rhsuBC'+str(klayer)] + ds.rhsuBT1)
     return ds
 

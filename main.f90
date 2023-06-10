@@ -94,8 +94,10 @@
       real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsu_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsv_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
@@ -179,7 +181,7 @@
       character(88) string99,string98,fmtstr,fmtstr1
 
       ! Psi correction with MUDPACK
-      REAL :: rhs_u_BT(0:nnx,0:nny), rhs_v_BT(0:nnx,0:nny)
+      REAL :: rhs_u_BT(0:nnx,0:nny),    rhs_v_BT(0:nnx,0:nny)
       REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
       REAL :: curl_of_RHS_u_BT(0:nnx,0:nny)
       REAL :: delta_psi_BT(0:nnx,0:nny)
@@ -352,6 +354,16 @@
 
       enddo  ! end of the do k = 1,nz loop
 
+      ! >>> barotropic psi-correction
+      write(*,*) 'First barotropic psi-correction'
+      !
+      !     need to correct RHS_u,v for surface pressure 
+      !
+      ilevel = 1      
+      p_out(:,:) = 0.
+      include 'subs/p_correction_mud2.f90'
+      ! <<< barotropic correction (End)
+
 
       
       ! ================================================== !
@@ -366,16 +378,6 @@
          array(:,:)   = rhs_eta(:,:,k) + array(:,:)
          eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
       end do ! end k-loop
-
-      ! >>> barotropic psi-correction
-      write(*,*) 'First barotropic psi-correction'
-      !
-      !     need to correct RHS_u,v for surface pressure 
-      !
-      ilevel = 2      
-      p_out(:,:) = 0.
-      include 'subs/p_correction_mud2.f90'
-      ! <<< barotropic correction (End)
       
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
@@ -392,7 +394,15 @@
 
 
 
-
+      ! >>> First OUTPUT (Timestep =1)
+      ! For dump_bin.f90
+      u(:,:,:,3) = u(:,:,:,2)
+      v(:,:,:,3) = v(:,:,:,2)
+      eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
+      eta(:,:,1,3) = p_out(:,:)
+      !
+      include 'subs/dump_bin.f90'
+      !
 
 
       
@@ -463,6 +473,14 @@
             include 'subs/rhs.f90' 
          enddo  ! k
          
+         ! >>> Barotropic psi-correction
+         !
+         !     stuff for barotropic psi-correction
+         !
+         ilevel = 2
+         p_out(:,:) = 0.
+         include 'subs/p_correction_mud2.f90'
+         ! <<< Barotropic psi-correction (End)
 
          
       ! ================================================== !
@@ -479,16 +497,6 @@
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
             eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop
-
-         ! >>> Barotropic psi-correction
-         !
-         !     stuff for barotropic psi-correction
-         !
-         
-         ilevel = 3
-         p_out(:,:) = 0.
-         include 'subs/p_correction_mud2.f90'
-         ! <<< Barotropic psi-correction (End)
          
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)

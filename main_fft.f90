@@ -94,8 +94,10 @@
       real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsu_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsv_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      real rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
@@ -178,17 +180,10 @@
       character(88) string56, string57, string58, string59, string60
       character(88) string99,string98,fmtstr,fmtstr1
 
-      ! p_correction_mud
-      REAL :: zeta_BT(1:nx,1:ny,2), integration_cte
-      REAL :: u_BT(0:nnx,0:nny), v_BT(0:nnx,0:nny), psi_BT(0:nnx,0:nny,2)
-      
+                  
+      REAL :: rhs_u_BT(0:nnx,0:nny),    rhs_v_BT(0:nnx,0:nny)
+      REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
 
-      ! MUDPACK solver
-      INTEGER            :: iparm(17), mgopt(4), length
-      REAL               :: fparm(6)
-      REAL,ALLOCATABLE   :: workm(:)
-      CHARACTER(LEN=80)  :: myformat
-      REAL               :: RHS_MUD(0:nnx,0:nny), psi_correction(1:nnx,1:nny)
       ! SUBROUTINES CALLS
       external coef,bndyc
 
@@ -350,21 +345,25 @@
 
       enddo  ! end of the do k = 1,nz loop
 
+   ! ================================================== !
+   !                  RHS (begining)                    !
+   ! ================================================== !
       
-      !
-      ! ---- RHS (begining) ----
-      !
-      rhs_eta(:,:,1) = 0. ! First
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
 
       ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+      rhs_eta(:,:,1) = 0. ! First
       array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = \Delta \eta_{k+1}
       eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
       do k = nz-1, 2, -1
          array(:,:)   = rhs_eta(:,:,k) + array(:,:)
          eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
       end do ! end k-loop
+   ! ================================================== !
+   !                      RHS (End)                     !
+   ! ================================================== !
+
       !
       ! ---- RHS (end) ----
       !
@@ -387,7 +386,63 @@
          include 'subs/bndy.f90'
          eta(:,:,k,2) = array
       end do      
+
+
+
+      ! >>> First OUTPUT (Timestep =1)
+      ! For dump_bin.f90 (First timestep only)
+      u(:,:,:,3) = u(:,:,:,2)
+      v(:,:,:,3) = v(:,:,:,2)
+      eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
+
+
+      ! >>> Finding BT and BC (for Outputs only)
+      rhs_u_BT(:,:) = 0.
+      rhs_v_BT(:,:) = 0.
+      do k = 1, nz
          
+         if (k.eq.1) then
+            thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
+         elseif(k.eq.nz) then
+            thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
+         else
+            thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
+                 &             -  eta(:,:,k+1,ilevel)
+         endif
+
+         array = thickness(:,:)
+         include 'subs/bndy.f90'
+         thickness(:,:) = array
+
+         do i=1,nx
+         do j=1,ny
+            rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2
+            rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2
+         enddo
+         enddo
+      enddo
+
+      do i=1,nx
+      do j=1,ny
+         rhs_u_BT(i,j) = rhs_u_BT(i,j) - (p_out(i,j) - p_out(i-1,j))/dx/dt
+         rhs_v_BT(i,j) = rhs_v_BT(i,j) - (p_out(i,j) - p_out(i,j-1))/dy/dt
+      enddo
+      enddo
+   
+      do k=1,nz
+         rhs_u_BC(:,:,k) = rhs_u(:,:,k) - rhs_u_BT(:,:)
+         rhs_v_BC(:,:,k) = rhs_v(:,:,k) - rhs_v_BT(:,:)
+      enddo
+      ! <<<
+
+      WRITE (*,*) 'Writing first output'
+      ! >>> OUTPUTS
+      eta(:,:,1,3) = p_out(:,:)
+      include 'subs/dump_bin.f90'
+      ! <<<
+
+
+      
       !FFTW   !include 'subs/IOheader.f90' 
       !==============================================================
       !
@@ -455,26 +510,30 @@
             include 'subs/rhs.f90' 
          enddo  ! k
 
-         !
-         ! ---- RHS (begining) ---- !
-         !
+      ! ================================================== !
+      !                  RHS (begining)                    !
+      ! ================================================== !
+
+         
          ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)
-         rhs_eta(:,:,1) = 0.
+
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
 
          ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
+         rhs_eta(:,:,1) = 0.
          array(:,:) = rhs_eta(:,:,nz)
          eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
          do k = nz-1, 2, -1
             array(:,:) = rhs_eta(:,:,k) + array(:,:)
             eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
          end do ! end k-loop
-         !
-         ! ---- RHS (end) ----
-         !
 
+      ! ================================================== !
+      !                      RHS (End)                     !
+      ! ================================================== !
 
+         
          ! --- Updating time ---
          time = time + dt
          today = time/86400
@@ -543,8 +602,52 @@
             if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
                icount = icount + 1
 
-               eta(:,:,1,3) = Psurf(:,:)
+
+               ! >>> Finding BT and BC (for Outputs only)
+               rhs_u_BT(:,:) = 0.
+               rhs_v_BT(:,:) = 0.
+               do k = 1, nz
+                  
+                  if (k.eq.1) then
+                     thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
+                  elseif(k.eq.nz) then
+                     thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
+                  else
+                     thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
+                          &             -  eta(:,:,k+1,ilevel)
+                  endif
+                  
+                  array = thickness(:,:)
+                  include 'subs/bndy.f90'
+                  thickness(:,:) = array
+
+                  do i=1,nx
+                  do j=1,ny
+                     rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2
+                     rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2
+                  enddo
+                  enddo
+               
+               enddo
+
+               do i=1,nx
+               do j=1,ny
+                  rhs_u_BT(i,j) = rhs_u_BT(i,j) - (p_out(i,j) - p_out(i-1,j))/dx/dt
+                  rhs_v_BT(i,j) = rhs_v_BT(i,j) - (p_out(i,j) - p_out(i,j-1))/dy/dt
+               enddo
+               enddo
+               
+               do k=1,nz
+                  rhs_u_BC(:,:,k) = rhs_u(:,:,k) - rhs_u_BT(:,:)
+                  rhs_v_BC(:,:,k) = rhs_v(:,:,k) - rhs_v_BT(:,:)
+               enddo
+               ! <<<
+
+               eta(:,:,1,3) = p_out(:,:)               
+
+               ! >>> OUTPUTS
                include 'subs/dump_bin.f90'
+               ! <<< 
                
                if(mod(its,iout).eq.0)write(*,*) 'current its',its
                print*, 'writing data No.', icount

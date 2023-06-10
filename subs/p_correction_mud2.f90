@@ -12,18 +12,16 @@
        rhs_v_BC(:,:,:) = 0.
        
        ! delta_psi_BT(:,:)   = 0.
-
+       ! Finding dh/dt foreach layer. First layer must fit with dh1 + dh2 + dh3 ... = 0, cause dH=0
+       ! This is the derivative of thickness.
+       rhs_eta(:,:,1) = 0.
+       do k = 2, nz
+          rhs_eta(:,:,1) =  rhs_eta(:,:,1) - rhs_eta(:,:,k)
+       enddo
+       
        do k = 1, nz
-          ! Finding tilde{u}
-          IF (its .eq. 1) THEN
-             ! u2 = u1 + (\delta t)*RHS1
-             uu(:,:) = u(:,:,k,ilevel-1) + dt*rhs_u(i,j,k)
-             vv(:,:) = v(:,:,k,ilevel-1) + dt*rhs_v(i,j,k)
-          ELSE
-             ! u3 = u1 + 2*(\delta t)*RHS2
-             uu(:,:) = u(:,:,k,ilevel-2) + 2*dt*rhs_u(i,j,k)
-             vv(:,:) = v(:,:,k,ilevel-2) + 2*dt*rhs_v(i,j,k)
-          ENDIF
+          uu(:,:) = u(:,:,k,ilevel)
+          vv(:,:) = v(:,:,k,ilevel)
 
           ! (***) Just testing :
           !uu(:,:) = u(:,:,k,ilevel)
@@ -117,22 +115,24 @@
        include 'subs/bndy.f90'
        delta_psi_BT(:,:) = array
        
-       ! Finding updated velocities
+       ! Finding updated velocities (With TRUE barotropic RHS now)
        !
        !     rhs_u = rhs_u_BT + rhs_u_BC
        !
        ! Note : u = - \curl(\psi \kvec) = k \times \gradient(\psi)
-       do k = 1,nz
+
        do j = 1,ny
        do i = 1,nx
-          rhs_u(i,j,k) =  - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy     &     ! barotropic part-x
-               &          + rhs_u_BC(i,j,k)                                        ! baroclinic part-x
-          rhs_v(i,j,k) =    (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx     &     ! barotropic part-y
-               &          + rhs_v_BC(i,j,k)                                        ! baroclinic part-y
+            rhs_u_BT(i,j) = - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy  ! barotropic part-x
+            rhs_v_BT(i,j) =   (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx  ! barotropic part-y
        enddo
        enddo
+       
+       do k = 1,nz
+          rhs_u(:,:,k) = rhs_u_BC(:,:,k) + rhs_u_BT(:,:)
+          rhs_v(:,:,k) = rhs_v_BC(:,:,k) + rhs_v_BT(:,:)
        enddo
-
+       
        do k = 1,nz
        array(:,:) = rhs_u(:,:,k)
        include 'subs/bndy.f90'
@@ -153,6 +153,7 @@
        IF (MOD(its,10*iout).eq.0) THEN
           ! Printing max correction for error control.
           WRITE (*,*) " > Erreur mudpack :", ierror
+          WRITE (*,*) " > Integration cte :", dummy
           WRITE (*,*) " > Maximum RHS MUDPACK      :: ", MAXVAL(curl_of_RHS_u_BT)
 
           dummy = 0.

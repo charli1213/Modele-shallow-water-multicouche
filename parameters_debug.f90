@@ -45,8 +45,8 @@
  
    parameter ( nsteps = totaltime/dt+1 ,fileperday= 192) ! Generaly fileperday = 4. 192
 
-   parameter ( datapath = '/storage/celizotte/test_3couche_mudpack/') ! output where?
-   !parameter ( datapath = './') ! output where?
+   !parameter ( datapath = '/storage/celizotte/test_3couche_mudpack/') ! output where?
+   parameter ( datapath = './') ! output where?
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))

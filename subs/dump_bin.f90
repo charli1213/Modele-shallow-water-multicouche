@@ -70,30 +70,47 @@
   end if !IO_field
 
   if (IO_RHS_uv) then
-     do k = 1,dummy_int
-        rhsu_out(:,:,k)   = rhs_u(isubx,isuby,k)
-        rhsv_out(:,:,k)   = rhs_v(isubx,isuby,k)
-     enddo
 
+     ! Barotropic RHS
+     rhsuBT_out(:,:) = rhs_u_BT(isubx,isuby)
+     rhsvBT_out(:,:) = rhs_v_BT(isubx,isuby)
+
+     string4 = trim(datapath) // 'data/rhsuBT' // '1' // '_' // trim(which)
+     string5 = trim(datapath) // 'data/rhsvBT' // '1' // '_' // trim(which)       
+     
+     open(unit=104,file=string4,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(104,REC=1) ((rhsuBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(104)
+
+     open(unit=105,file=string5,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(105,REC=1) ((rhsvBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(105)
+
+     ! Baroclinic RHS
+     do k = 1,dummy_int
+        rhsuBC_out(:,:,k) = rhs_u_BC(isubx,isuby,k)
+        rhsvBC_out(:,:,k) = rhs_v_BC(isubx,isuby,k)
+     enddo
 
      do k = 1,dummy_int
         WRITE (k_str,'(I0)') k
-        string4 = trim(datapath) // 'data/rhsu' // trim(k_str) // '_' // trim(which)
-        string5 = trim(datapath) // 'data/rhsv' // trim(k_str) // '_' // trim(which)       
+        string6 = trim(datapath) // 'data/rhsuBC' // trim(k_str) // '_' // trim(which)
+        string7 = trim(datapath) // 'data/rhsvBC' // trim(k_str) // '_' // trim(which)       
 
         ! U Stokes
-
-        open(unit=104,file=string4,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(104,REC=1) ((rhsu_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
-        close(104)
-
-
-        open(unit=105,file=string5,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(105,REC=1) ((rhsv_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
-        close(105)
         
+        open(unit=106,file=string6,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        close(106)
+
+
+        open(unit=107,file=string7,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        close(107)
         
      enddo
 
