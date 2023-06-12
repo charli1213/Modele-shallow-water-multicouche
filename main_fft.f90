@@ -380,7 +380,7 @@
       p_out(:,:) = 0.
       !include 'subs/p_correction_mud.f90'
       include 'subs/p_correction.f90'
-      include 'subs/p_correction.f90'
+      !include 'subs/p_correction.f90'
       do k = 1,nz ! ? if we really need this
          array = eta(:,:,k,2)
          include 'subs/bndy.f90'
@@ -549,7 +549,7 @@
          ! Psurf  = Psurf/dt   (here, not after the next line
          ! see in p_correction for the /dt
          ! see also lines 264 265 for 1st time step
-         include 'subs/p_correction.f90'
+         !include 'subs/p_correction.f90'
 
          do k = 1,nz
             array = eta(:,:,k,3)

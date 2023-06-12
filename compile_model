@@ -23,7 +23,8 @@ then
     # Which case :
     mudpack_case=~/Desktop/Modele-shallow-water-multicouches/testcase
     #case=~/Desktop/Modele-shallow-water-multicouches/testfft
-    fftw_case=~/Desktop/Modele-shallow-water-multicouches/reference_fftw
+    fftw_case1=~/Desktop/Modele-shallow-water-multicouches/reference_fftw
+    fftw_case2=~/Desktop/Modele-shallow-water-multicouches/testfft
     #case=/share/work/celiz2/MPI_learning/SW_after
     #case=/share/work/celiz2/MPI_learning/COU_2pi_init
 
@@ -32,14 +33,15 @@ fi
 echo "!! ${pcid} was selected"
 echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
 cp "${model_path}/parameters.f90" "${mudpack_case}/."
-cp "${model_path}/parameters.f90" "${fftw_case}/."
+cp "${model_path}/parameters.f90" "${fftw_case1}/."
 echo "!! Parameters file copied from ${model_path} to ${mudpack_case}"
-echo "!! Parameters file copied from ${model_path} to ${fftw_case}"
+echo "!! Parameters file copied from ${model_path} to ${fftw_case1}"
 
 # >>> Compilation :: 
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
 gfortran -o  $mudpack_case/exec $model_path/main.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
-gfortran -o  $fftw_case/exec $model_path/main_fft.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
+gfortran -o  $fftw_case1/exec $model_path/main_fft.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
+gfortran -o  $fftw_case2/exec $model_path/main_fft.f90 -lfftw3 -lblas -llapack -L$mudpack_path -lmudpack
 
 # >>> Parameter last compiled in model directory ::
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
@@ -47,7 +49,7 @@ cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
 # >>> Parameter last compiled in compiled directories :: 
 #cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${mudpack_case}/parameters.f90_last_compiled
-cp ${model_path}/parameters.f90 ${fftw_case}/parameters.f90_last_compiled
-
+cp ${model_path}/parameters.f90 ${fftw_case1}/parameters.f90_last_compiled
+cp ${model_path}/parameters.f90 ${fftw_case2}/parameters.f90_last_compiled
 # >>> Ending ::
 echo "!! Compilation of $mudpack_case completed on the computer $machine_name "

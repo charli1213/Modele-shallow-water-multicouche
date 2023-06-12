@@ -67,7 +67,7 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true., IO_RHS_uv =.true.,  IO_forcing =.false.)
+   parameter ( IO_field=.true., IO_RHS_uv =.false.,  IO_forcing =.false.)
    parameter ( IO_QGAG=.false., IO_psivort=.false., IO_coupling=.false.)
 
  ! --- Slab model/coupling switches --- 

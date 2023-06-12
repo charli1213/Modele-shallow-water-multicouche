@@ -47,22 +47,24 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
     data_filenames = listdir(casepath + 'data/') # On liste les noms entiers de tous les fichiers
     data_names     = list(set([name[:-7] for name in data_filenames])) # On liste les quantités
     max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) -1 # Indicateur numérique
+    min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
     nb_of_files    = max_filenumber%100000
     
     # > Vecteurs des coordonnées et paramètres
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
-    tt   = np.arange(minday,min(maxday+step,nb_of_files*dt),step) # Le vecteur temps [jours]
+    tt   = np.arange(min(minday,min_filenumber%100000),
+                     min(maxday+step,nb_of_files*dt),step) # Le vecteur temps [jours]
 
     # > Boucle sur les noms des output
     for name in data_names :
         if (str(klayer) in name) :
             # On recrée data, car problème de np.roll.
-            data = np.zeros((len(tt), nx, nx)) # Création matrice données vide.
+            data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
             print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
             for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
-                f = open( casepath + 'data/{}_{}'.format(name,100000+it*outt+int(minday/dt)), 'rb' )
-                data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose() # Overwrites data
+                f = open( casepath + 'data/{}_{}'.format(name,min_filenumber+it*outt+int(minday/dt)), 'rb' )
+                data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
                 f.close()
         
             # coords/data = form (dims, data[, attrs, encoding])
@@ -79,6 +81,9 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
         
     # création finale du Xarray.Dataset
     ds['unorm'+str(klayer)] = np.sqrt(ds['u'+str(klayer)]**2 + ds['v'+str(klayer)]**2)
-    ds['rhsu' +str(klayer)] = (ds['rhsuBC'+str(klayer)] + ds.rhsuBT1)
+    try :
+        ds['rhsu' +str(klayer)] = (ds['rhsuBC'+str(klayer)] + ds.rhsuBT1)
+    except :
+        pass
     return ds
 
