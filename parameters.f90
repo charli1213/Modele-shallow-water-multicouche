@@ -21,7 +21,7 @@
    !parameter ( nnx = nx+1, nny = ny+1 )
    parameter ( nnx = ixp*2**(iex-1)+1,  nny = jyq*2**(jey-1)+1 ) ! 513
    
-  ! --- Paraterers ---
+  ! --- Physical Parameters ---
  
    parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
  
@@ -45,8 +45,8 @@
  
    parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 192
 
-   parameter ( datapath = '/storage/celizotte/test_3couche_mudpack/') ! output where?
-   !parameter ( datapath = './') ! output where?
+   !parameter ( datapath = './datafilepath/') ! output where?
+   parameter ( datapath = './') ! output where?
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -67,7 +67,7 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true., IO_RHS_uv =.false.,  IO_forcing =.false.)
+   parameter ( IO_field=.true., IO_RHS_uv =.true.,  IO_forcing =.false.)
    parameter ( IO_QGAG=.false., IO_psivort=.false., IO_coupling=.false.)
 
  ! --- Slab model/coupling switches --- 

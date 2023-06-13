@@ -385,7 +385,7 @@
          array = eta(:,:,k,2)
          include 'subs/bndy.f90'
          eta(:,:,k,2) = array
-      end do      
+      end do
 
 
 
