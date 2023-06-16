@@ -41,12 +41,12 @@
  
    parameter ( dt = 300. )
   
-   parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
+   parameter ( ndays= 5, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 192
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 192) ! Generaly fileperday = 4. 192
 
-   parameter ( datapath = './datafilepath/') ! output where?
-   !parameter ( datapath = './') ! output where?
+   !parameter ( datapath = './datafilepath/') ! output where?
+   parameter ( datapath = './') ! output where?
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -67,7 +67,7 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true., IO_RHS_uv =.false.,  IO_forcing =.false.)
+   parameter ( IO_field=.true., IO_RHS_uv =.true.,  IO_forcing =.false.)
    parameter ( IO_QGAG=.false., IO_psivort=.false., IO_coupling=.false.)
 
  ! --- Slab model/coupling switches --- 

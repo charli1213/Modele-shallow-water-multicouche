@@ -380,7 +380,7 @@
       p_out(:,:) = 0.
       !include 'subs/p_correction_mud.f90'
       include 'subs/p_correction.f90'
-      !include 'subs/p_correction.f90'
+      include 'subs/p_correction.f90'
       do k = 1,nz ! ? if we really need this
          array = eta(:,:,k,2)
          include 'subs/bndy.f90'
@@ -416,8 +416,10 @@
 
          do i=1,nx
          do j=1,ny
-            rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2
-            rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2
+            rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2 &
+                 &                        + u(i,j,k,1) *(rhs_eta(i,j,k) + rhs_eta(i-1,j,k))/Htot/2
+            rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2 &
+                 &                        + v(i,j,k,1) *(rhs_eta(i,j,k) + rhs_eta(i,j-1,k))/Htot/2
          enddo
          enddo
       enddo
@@ -549,7 +551,7 @@
          ! Psurf  = Psurf/dt   (here, not after the next line
          ! see in p_correction for the /dt
          ! see also lines 264 265 for 1st time step
-         !include 'subs/p_correction.f90'
+         include 'subs/p_correction.f90'
 
          do k = 1,nz
             array = eta(:,:,k,3)
@@ -623,8 +625,10 @@
 
                   do i=1,nx
                   do j=1,ny
-                     rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2
-                     rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2
+                     rhs_u_BT(i,j) = rhs_u_BT(i,j) + rhs_u(i,j,k)*(thickness(i,j) + thickness(i-1,j))/Htot/2 &
+                          &                        + u(i,j,k,1) *(rhs_eta(i,j,k) + rhs_eta(i-1,j,k))/Htot/2
+                     rhs_v_BT(i,j) = rhs_v_BT(i,j) + rhs_v(i,j,k)*(thickness(i,j) + thickness(i,j-1))/Htot/2 &
+                          &                        + v(i,j,k,1) *(rhs_eta(i,j,k) + rhs_eta(i,j-1,k))/Htot/2
                   enddo
                   enddo
                

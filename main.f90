@@ -96,6 +96,7 @@
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real mean_rhsuBT, mean_rhsvBT
       real rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)

@@ -21,9 +21,9 @@ then
     mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
     # Which case :
-    mudpack_case=~/Desktop/Modele-shallow-water-multicouches/testcase
-    #case=~/Desktop/Modele-shallow-water-multicouches/testfft
+    mudpack_case=~/Desktop/Modele-shallow-water-multicouches/testmud
     fftw_case=~/Desktop/Modele-shallow-water-multicouches/testfft
+    #fftw_case=~/Desktop/Modele-shallow-water-multicouches/tmpcasefft
     #case=/share/work/celiz2/MPI_learning/SW_after
     #case=/share/work/celiz2/MPI_learning/COU_2pi_init
 

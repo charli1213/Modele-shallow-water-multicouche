@@ -56,7 +56,17 @@
              enddo
           enddo
        enddo !end k-loop
-       
+
+
+       ! Finding mean barotropic RHS_u,v 
+       mean_rhsuBT = 0.
+       mean_rhsvBT = 0.
+       DO j=1,ny
+          mean_rhsuBT = mean_rhsuBT + SUM(rhs_u_BT(1:nx,j))/nx/ny
+          mean_rhsvBT = mean_rhsvBT + SUM(rhs_v_BT(1:nx,j))/nx/ny
+       ENDDO
+
+
        ! baroclinic RHS_u,v
        do k = 1, nz
           rhs_u_BC(:,:,k) = rhs_u(:,:,k) - rhs_u_BT(:,:)
@@ -123,8 +133,8 @@
 
        do j = 1,ny
        do i = 1,nx
-            rhs_u_BT(i,j) = - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy  ! barotropic part-x
-            rhs_v_BT(i,j) =   (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx  ! barotropic part-y
+            rhs_u_BT(i,j) = mean_rhsuBT - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy  ! barotropic part-x
+            rhs_v_BT(i,j) = mean_rhsvBT + (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx  ! barotropic part-y
        enddo
        enddo
        
