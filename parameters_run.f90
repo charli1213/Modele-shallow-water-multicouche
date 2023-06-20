@@ -45,8 +45,8 @@
  
    parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 192
 
-   parameter ( datapath = './datafilepath/') ! output where?
-   !parameter ( datapath = './') ! output where?
+   !parameter ( datapath = './datafilepath/') ! output where?
+   parameter ( datapath = './') ! output where?
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))

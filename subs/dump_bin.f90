@@ -1,7 +1,7 @@
 
   
   WRITE(which,'(I6)') 100000 + icount
-  dummy_int = 1
+  dummy_int = nz
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then

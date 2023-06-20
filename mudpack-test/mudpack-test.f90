@@ -45,7 +45,7 @@ PROGRAM mudpack_test
   DO i = 1,nx
      DO j = 1,ny
         RHS_MUD(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
-             &   + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
+             &       + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
      ENDDO
   ENDDO
     
@@ -345,6 +345,6 @@ FUNCTION true_solution(i,j,dx,dy,Lx,Ly)
   ! On invente une solution. 
   ! On assume que la solution est périodique :
   ! (Même si le modèle va solver comme si elle ne l'était pas)
-  true_solution = 1.*SIN( 2.*pi* ( (i-1)*dx/Lx + 2*(j-1)*dy/Ly ) )  
+  true_solution = 1.*COS( 2*pi*(0.*(i-1)*(dx/Lx) + 1.*(j-1)*dy/Ly ) )
 END FUNCTION true_solution
 

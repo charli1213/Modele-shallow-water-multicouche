@@ -55,7 +55,7 @@ if __name__ == "__main__" :
         klayer  = str(int(input("quelle couche?")))
 
         # > Params : 
-        for maxday,outt in zip([50,250,750,950,1000,1500], [1,5,8,10,15]) :
+        for maxday,outt in zip([50,250,750,850,950,1000,1500,1800], [1,5,8,10,10,10,10,10]) :
             print('\n >>> Figure {} jours'.format(maxday))
         #for maxday,outt in zip([50,200,1000,1500],[1,1,1,1]) :
             ### (***) On ouvre les données ici pour sauver de la mémoire vive, car on
@@ -126,6 +126,11 @@ if __name__ == "__main__" :
     #                        4-PANNELS ANIMATION                        #
     #                                                                   # 
     # ================================================================= #
+
+
+
+
+
     """
     ds = tls.create_ds_from_binary(casepath = casepath,
                                    minday   = 800,
