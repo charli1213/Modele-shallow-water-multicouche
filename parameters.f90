@@ -23,7 +23,7 @@
    
    ! --- Physical parameters ---
  
-   parameter ( tau0 = 5.e-5, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
+   parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
  
    parameter ( f0 = 7.e-5, beta = 0) ! 1.e-11 )
  

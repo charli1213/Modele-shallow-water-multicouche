@@ -21,8 +21,9 @@ then
     mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
     # Which case :
-    mudpack_case=/storage/celizotte/test_3c_mudpack_0.5tau
-    fftw_case=~/Desktop/Modele-shallow-water-multicouches/testfft
+    #mudpack_case=/storage/celizotte/test_3c_mudpack_0.5tau
+    mudpack_case=testmud
+    fftw_case=/storage/celizotte/test_3couches_fftw
     #fftw_case=~/Desktop/Modele-shallow-water-multicouches/tmpcasefft
     #case=/share/work/celiz2/MPI_learning/SW_after
     #case=/share/work/celiz2/MPI_learning/COU_2pi_init
@@ -34,7 +35,7 @@ echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
 cp "${model_path}/parameters.f90" "${mudpack_case}/."
 cp "${model_path}/parameters.f90" "${fftw_case}/."
 echo "!! Parameters file copied from ${model_path} to ${mudpack_case}"
-echo "!! Parameters file copied from ${model_path} to ${fftw_case1}"
+echo "!! Parameters file copied from ${model_path} to ${fftw_case}"
 
 # >>> Compilation :: 
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3

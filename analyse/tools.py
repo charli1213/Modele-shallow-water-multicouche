@@ -24,7 +24,7 @@ dt     = 0.5 # Spatial discretisation (1/fileperday)
 #                                                                   # 
 # ================================================================= #
 
-def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,minday=0) : 
+def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,minday=0,fields=None) : 
     """
     La fonction 'create_ds_from_binary' ouvre un nombre nday/dt/outt de
     binaires pour créer une base de données de type XArray.Dataset .
@@ -39,16 +39,21 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
                               Par exemple : outt = 4 : on ouvre 1 fichier sur 4.    
      - klayer (int)        :: Indicateur de la couche à observer.
      - dt (float)          :: Intervalle de temps entre les output [en jours].
+     - fields(list)        :: Liste de str du genre ['u1','v1',...]. Si None, tous les champs sont ouverts.
     RETURNS :
        ds (xarray.dataset) :: La base de données créée à partir des fichiers binaires.
     """
 
-    # > Diagnostique du dossier 'data'
+    # > On fetch les champs dans le dossier 'data'
     data_filenames = listdir(casepath + 'data/') # On liste les noms entiers de tous les fichiers
-    data_names     = list(set([name[:-7] for name in data_filenames])) # On liste les quantités
     max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) -1 # Indicateur numérique
     min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
     nb_of_files    = max_filenumber%100000
+
+    if fields is not None :
+        data_names = fields
+    else :
+        data_names = list(set([name[:-7] for name in data_filenames])) # On liste les quantités
     
     # > Vecteurs des coordonnées et paramètres
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.

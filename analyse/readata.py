@@ -48,7 +48,7 @@ if __name__ == "__main__" :
     #                Hovmoller of curl, zeta, eta, unorm                #
     #                                                                   #
     # ================================================================= #    
-    debug = input('Sortir Hovmoller? [Y/n]')
+    debug = input('Sortir Hovmoller? [Y/n] \n')
     if 'Y' in debug :
 
         # Which layer to observe
@@ -118,8 +118,66 @@ if __name__ == "__main__" :
             fig.savefig(figpath + str(today) + '_hovmoller{}_t={}days.png'.format(klayer,maxday))
             #plt.show()
             plt.close()
+    else :
+        print('Sure! .... \n ')
+    # ================================================================= #
+    #                                                                   #
+    #                   Checking barotropic transport                   #
+    #                                                                   #
+    # ================================================================= #    
+
+    debug = input('Checking barotropic transport? [Y/n] \n')
+    if 'Y' in debug :
+        dx = 2000000/256
+        Htot = 3000
+        ds = xr.Dataset()
+        nz = 3 
+        layers_list = np.arange(1,nz+1)
+        fields_list = []
+        for klayer in layers_list :
+            fields_list += ['u{}'.format(klayer),'v{}'.format(klayer),'eta{}'.format(klayer)]
+
+        for klayer in layers_list : 
+            ds = ds.merge(tls.create_ds_from_binary(casepath = casepath,
+                                                    maxday   = 1500,
+                                                    outt     = 20,
+                                                    klayer   = klayer,
+                                                    fields   = fields_list,
+                                                    dt       = 0.25) )
+
+        # Finding thickness 
+        for klayer in layers_list :
+            if klayer == 1 :
+                ds['h{}'.format(klayer)] = 1000 - ds['eta{}'.format(klayer+1)]
+            if klayer == nz :
+                ds['h{}'.format(klayer)] = 1000 + ds['eta{}'.format(klayer)]
+            else :    
+                ds['h{}'.format(klayer)] = 1000 + (ds['eta{}'.format(klayer)] - ds['eta{}'.format(klayer+1)])
+
+        # Finding divergence of barotropic current : 
+        ds['Ubt'] = ds.u1.copy()*0.
+        ds['Vbt'] = ds.u1.copy()*0.
+        
+        for klayer in layers_list :
+            ds['Ubt'] += ds['u{}'.format(klayer)] * 0.5*(ds['h{}'.format(klayer)].roll(y=-1) + ds['h{}'.format(klayer)])/Htot
+            ds['Vbt'] += ds['v{}'.format(klayer)] * 0.5*(ds['h{}'.format(klayer)].roll(x=-1) + ds['h{}'.format(klayer)])/Htot
+
+        # Finding barotropic divergence
+        ds['divBT'] = (ds['Ubt'].roll(x=-1) - ds['Ubt'])/dx + (ds['Vbt'].roll(y=-1) - ds['Vbt'])/dx
 
 
+        imax = ds.divBT.isel(time=slice(1,122,60)).max()
+        ds.divBT.isel(time=slice(1,122,60)).plot(col='time',x='x',y='y',col_wrap=3, vmin =-0.3*imax,vmax=0.3*imax,cmap='RdBu')
+        plt.show()
+        imax = ds.divBT.isel(time=slice(180,360,60)).max()
+        ds.divBT.isel(time=slice(180,360,60)).plot(col='time',x='x',y='y',col_wrap=3,vmin = -0.3*imax,vmax = 0.3*imax,cmap='RdBu')
+        plt.show()
+
+        
+    else :
+        print('Alright!!!!!!!!!!!!!!!!!!!!! You do you!\n ')
+
+        
 
     # ================================================================= #
     #                                                                   #
