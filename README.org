@@ -24,14 +24,14 @@ Grid parameters can be found in the table [[tab:grid-param]].
 |-----------+--------------------------+---------+---------------+-------|
 | Parameter | Name                     | Type    | Default value | Units |
 |-----------+--------------------------+---------+---------------+-------|
-| Lx,Ly     | Domain size              | REAL    |          2.e6 | m     |
+| Lx/Ly     | Domain size              | REAL    |          2.e6 | m     |
 | H1        | First layer thickness    | REAL    |          1.e3 | m     |
 | H2        | Second layer thickness   | REAL    |          1.e3 | m     |
 | H3        | Third layer thickness    | REAL    |          1.e3 | m     |
-| nx,ny     | Number of grid points    | INTEGER |           512 | -     |
+| nx/ny     | Number of grid points    | INTEGER |           512 | -     |
 | nz        | Number of layers         | INTEGER |             3 | -     |
-| dx,dy     | Grid resolution          | REAL    |  Lx/nx, Ly/ny | m     |
-| nnx,nny   | Ghost points domain size | INTEGER |    nx+1, ny+1 | -     |
+| dx/dy     | Grid resolution          | REAL    |  Lx/nx, Ly/ny | m     |
+| nnx/nny   | Ghost points domain size | INTEGER |    nx+1, ny+1 | -     |
 |-----------+--------------------------+---------+---------------+-------|
 
 *** Physical parameters 
@@ -42,7 +42,7 @@ Physical parameters describe physical forces applied onto and into the ocean.
 |-----------+---------------------------------------+------+---------------+-------------------|
 | Parameter | Name                                  | Type | Default value | Units             |
 |-----------+---------------------------------------+------+---------------+-------------------|
-| tau0      | Amplitude of wind stress              | REAL |         1.e-4 | ?                 |
+| tau0      | Amplitude of wind stress              | REAL |         1.e-4 | m\cdot s^{-2}     |
 | tau1      | Stochastic amplitude of wind stress   | REAL |         1.e-5 | ?                 |
 | f0        | Coriolis parameter                    | REAL |         1.e-7 | rad*s^{-1}        |
 | beta      | Beta plane parameter                  | REAL |            0. | rad*s^{-1}*m^{-1} |
