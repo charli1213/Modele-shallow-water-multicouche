@@ -48,7 +48,7 @@ Physical parameters describe physical forces applied onto and into the ocean.
 | beta      | Beta plane parameter                     | REAL |                0. | rad \cdot s^{-1}m^{-1} |
 | r_drag    | Bottom drag                              | REAL |             1.e-7 | s^{-1}                 |
 | r_invLap  | Inverse Laplacian coefficient            | REAL |             1.e-6 | ?                      |
-| Ah        | Friction coefficient                     | REAL | 1.e-5\times dx**4 | ?                      |
+| Ah        | Friction coefficient                     | REAL | 1.e-5{\times}dx^4 | ?                      |
 | rf        | Robert filter coefficient                | REAL |             0.001 | -                      |
 | c_bc      | Baroclinic wave speed (soon obsolete)    | REAK |                2. | m/s                    |
 |-----------+------------------------------------------+------+-------------------+------------------------|
