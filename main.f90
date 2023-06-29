@@ -8,7 +8,7 @@
       real f0, beta, r_drag, Ah, r_invLap, rf, g
       real tau0, tau1
       real fileperday, daysperrestart
-      integer nsteps,start_movie,start_spec
+      integer nsteps,start_spec
       real ndays,totaltime,dt
       real restart_from
       integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile
@@ -32,7 +32,6 @@
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
-      CHARACTER(80) :: datapath
       include 'parameters.f90'
       parameter( ntsrow=itape/ispechst  )! how many lines for a time series table (e.g. spectrum)   
       !random number
@@ -539,7 +538,7 @@
          write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
-         !if(nsteps.lt.start_movie.and.save_movie) then
+         !if(nsteps.lt.1.and.save_movie) then
          !   if ( mod(its,iout).eq.0 ) then  ! output 
          !      include 'subs/div_vort.f90'
          !      include 'subs/dump_gnu1a.f90'
@@ -548,80 +547,79 @@
 
 
          !start of diognostics en savefiles.
-         if ( its .gt. min(start_movie,start_spec) ) then
-            ! Calculating diognostic only when outputting physical or Fourier fields
-            if(mod(its,ispechst).eq.0.or.mod(its,iout).eq.0) then 
-               !  include 'subs/div_vort.f90' 
-               !  include 'subs/tmp_complex.f90'
-               !  include 'subs/calc_q.f90'
-               include 'subs/diags.f90'
-            end if
+         
+         ! Calculating diognostic only when outputting physical or Fourier fields
+         if(mod(its,ispechst).eq.0.or.mod(its,iout).eq.0) then 
+            !  include 'subs/div_vort.f90' 
+            !  include 'subs/tmp_complex.f90'
+            !  include 'subs/calc_q.f90'
+            include 'subs/diags.f90'
+         end if
 
-            ! Printing/saving fields in /data/. 
-            if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
-               icount = icount + 1
+         ! Printing/saving fields in /data/. 
+         if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
+            icount = icount + 1
 
-               eta(:,:,1,3) = p_out(:,:)
-               !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
-               array = eta(:,:,1,3)
-               include 'subs/bndy.f90'
-               eta(:,:,1,3) = array
-               include 'subs/dump_bin.f90'
+            eta(:,:,1,3) = p_out(:,:)
+            !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
+            array = eta(:,:,1,3)
+            include 'subs/bndy.f90'
+            eta(:,:,1,3) = array
+            include 'subs/dump_bin.f90'
 
-               if(mod(its,iout).eq.0)write(*,*) 'current its',its
-               print*, 'writing data No.', icount
-            end if
+            if(mod(its,iout).eq.0)write(*,*) 'current its',its
+            print*, 'writing data No.', icount
+         end if
 
-            if ( its.gt.start_spec .and. mod(its,ispechst).eq.0 ) then
-               count_specs_1 = count_specs_1 + 1
-               count_specs_2 = count_specs_2 + 1 
-               count_specs_to = count_specs_to + 1
-               count_specs_ag = count_specs_ag + 1
+         if ( mod(its,ispechst).eq.0 ) then
+            count_specs_1 = count_specs_1 + 1
+            count_specs_2 = count_specs_2 + 1 
+            count_specs_to = count_specs_to + 1
+            count_specs_ag = count_specs_ag + 1
 
-               include 'subs/calc_1Dspec.f90'
-               include 'subs/calc_2Dspec.f90'              
-               
-
+            include 'subs/calc_1Dspec.f90'
+            include 'subs/calc_2Dspec.f90'              
+            
+            
             ! AG+, AG- decomposition
             ! 1. convert eta_A and div to FFT space
-               datr(:,:) = eta_ag(1:nx,1:ny)
-               include 'fftw_stuff/spec1.f90'
-               eta_agfft(:,:)=datc ! BC mode
+            datr(:,:) = eta_ag(1:nx,1:ny)
+            include 'fftw_stuff/spec1.f90'
+            eta_agfft(:,:)=datc ! BC mode
 
-               k=1
-               include 'subs/div_vort.f90'
-               div1 = div
+            k=1
+            include 'subs/div_vort.f90'
+            div1 = div
 
-               k=2
-               include 'subs/div_vort.f90'
-               div2 = div
-               
-               datr(:,:) = div2(1:nx,1:ny)-div1(1:nx,1:ny)
-               include 'fftw_stuff/spec1.f90'
-               div_fft(:,:)=datc ! BC mode
-   
-               ! for each k,l pair, calculate M, then eta_+ and eta_-
-               ! In polarization relations, (2*pi) in FT is vanished
-               kappa_ijsq=nkx**2+nky**2 !nkx,nky defined in fft_params.f90
-               M=eye*sqrt(c_bc**2*kappa_ijsq+f0**2)*gprime(2)/c_bc**2 !only bc mode
-               ! two AG frequencies omega_+ and omega_- (BC only for rigid lid)
-               do imode = 1,2
-                   sgn1=-(-1.)**imode; ! sgn1=1 when imode ==1, sgn1=-1 when imode==2
-                   omega_p(:,:,imode)=sgn1*sqrt(c_bc**2*kappa_ijsq+f0**2)
-                   eta_agfft_p(:,:,imode)=1/(2*M)*(M*eta_agfft+sgn1*div_fft)
-                   u_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nkx+eye*f0*nky)&
-                     /(c_bc**2*kappa_ijsq)
-                   v_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nky-eye*f0*nkx)&
-                     /(c_bc**2*kappa_ijsq)
-               end do ! imode
-               ! AG+-mode decomp finished
+            k=2
+            include 'subs/div_vort.f90'
+            div2 = div
 
-               ! Write 2-D FFT fields
-               if(save2dfft) then
-                  iftcount=iftcount+1
-                  include 'subs/dump_bin_spec2d.f90'
-               endif !itsrow==ntsrow
-            endif
+            datr(:,:) = div2(1:nx,1:ny)-div1(1:nx,1:ny)
+            include 'fftw_stuff/spec1.f90'
+            div_fft(:,:)=datc ! BC mode
+
+            ! for each k,l pair, calculate M, then eta_+ and eta_-
+            ! In polarization relations, (2*pi) in FT is vanished
+            kappa_ijsq=nkx**2+nky**2 !nkx,nky defined in fft_params.f90
+            M=eye*sqrt(c_bc**2*kappa_ijsq+f0**2)*gprime(2)/c_bc**2 !only bc mode
+            ! two AG frequencies omega_+ and omega_- (BC only for rigid lid)
+            do imode = 1,2
+               sgn1=-(-1.)**imode; ! sgn1=1 when imode ==1, sgn1=-1 when imode==2
+               omega_p(:,:,imode)=sgn1*sqrt(c_bc**2*kappa_ijsq+f0**2)
+               eta_agfft_p(:,:,imode)=1/(2*M)*(M*eta_agfft+sgn1*div_fft)
+               u_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nkx+eye*f0*nky)&
+                    /(c_bc**2*kappa_ijsq)
+               v_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nky-eye*f0*nkx)&
+                    /(c_bc**2*kappa_ijsq)
+            end do ! imode
+            ! AG+-mode decomp finished
+
+            ! Write 2-D FFT fields
+            if(save2dfft) then
+               iftcount=iftcount+1
+               include 'subs/dump_bin_spec2d.f90'
+            endif !itsrow==ntsrow
          endif
 
 

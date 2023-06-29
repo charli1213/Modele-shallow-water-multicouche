@@ -21,47 +21,126 @@ Grid parameters can be found in the table [[tab:grid-param]].
 
 #+CAPTION: Grid parameters summary.
 #+NAME: tab:grid-param
-|-----------+--------------------------+---------+---------------+-------|
-| Parameter | Name                     | Type    | Default value | Units |
-|-----------+--------------------------+---------+---------------+-------|
-| Lx, Ly    | Domain size              | REAL    |          2.e6 | m     |
-| H1        | First layer thickness    | REAL    |          1.e3 | m     |
-| H2        | Second layer thickness   | REAL    |          1.e3 | m     |
-| H3        | Third layer thickness    | REAL    |          1.e3 | m     |
-| nx, ny    | Number of grid points    | INTEGER |           512 | -     |
-| nz        | Number of layers         | INTEGER |             3 | -     |
-| dx, dy    | Grid resolution          | REAL    |  Lx/nx, Ly/ny | m     |
-| nnx, nny  | Ghost points domain size | INTEGER |    nx+1, ny+1 | -     |
-|-----------+--------------------------+---------+---------------+-------|
+|-----------+--------------------------+------+---------------+-------|
+| Parameter | Name                     | Type | Default value | Units |
+|-----------+--------------------------+------+---------------+-------|
+| Lx, Ly    | Domain size              | REAL |          2.e6 | m     |
+| H1        | First layer thickness    | REAL |          1.e3 | m     |
+| H2        | Second layer thickness   | REAL |          1.e3 | m     |
+| H3        | Third layer thickness    | REAL |          1.e3 | m     |
+| nx, ny    | Number of grid points    | INT  |           512 | -     |
+| nz        | Number of layers         | INT  |             3 | -     |
+| dx, dy    | Grid resolution          | REAL |  Lx/nx, Ly/ny | m     |
+| nnx, nny  | Ghost points domain size | INT  |    nx+1, ny+1 | -     |
+|-----------+--------------------------+------+---------------+-------|
 
 *** Physical parameters 
 
 Physical parameters describe physical forces applied onto and into the ocean.
 
 #+CAPTION: Physical parameters summary.
-|-----------+---------------------------------------+------+---------------------+------------------------|
-| Parameter | Name                                  | Type |       Default value | Units                  |
-|-----------+---------------------------------------+------+---------------------+------------------------|
-| tau0      | Wind stress $\tau/(\rho h)$           | REAL |               1.e-4 | ms^{-2}                |
-| tau1      | Stochastic amplitude of wind stress   | REAL |               1.e-5 | ms^{-2}                |
-| f0        | Coriolis parameter                    | REAL |               1.e-7 | rad \cdot s^{-1}       |
-| beta      | Beta plane parameter                  | REAL |                  0. | rad \cdot s^{-1}m^{-1} |
-| r_drag    | Bottom drag                           | REAL |               1.e-7 | s^{-1}                 |
-| r_invLap  | Inverse Laplacian coefficient         | REAL |               1.e-6 | ?                      |
-| Ah        | Friction coefficient                  | REAL | 1.e-5 \times dx^{4} | ?                      |
-| rf        | Robert filter coefficient             | REAL |               0.001 | -                      |
-| c_bc      | Baroclinic wave speed (soon obsolete) | REAK |                  2. | m/s                    |
-|-----------+---------------------------------------+------+---------------------+------------------------|
+|-----------+-------------------------------------+------+---------------------+------------------------|
+| Parameter | Name                                | Type |       Default value | Units                  |
+|-----------+-------------------------------------+------+---------------------+------------------------|
+| tau0      | Wind stress $\tau/(\rho h)$         | REAL |               1.e-4 | ms^{-2}                |
+| tau1      | Stochastic amplitude of wind stress | REAL |               1.e-5 | ms^{-2}                |
+| f0        | Coriolis parameter                  | REAL |               1.e-7 | rad \cdot s^{-1}       |
+| beta      | Beta plane parameter                | REAL |                  0. | rad \cdot s^{-1}m^{-1} |
+| r_drag    | Bottom drag                         | REAL |               1.e-7 | s^{-1}                 |
+| r_invLap  | Inverse Laplacian coefficient       | REAL |               1.e-6 | ?                      |
+| Ah        | Friction coefficient                | REAL | 1.e-5 \times dx^{4} | ?                      |
+| rf        | Robert filter coefficient           | REAL |               0.001 | -                      |
+| c_bc      | Baroclinic wave speed (***)         | REAL |                  2. | m/s                    |
+|-----------+-------------------------------------+------+---------------------+------------------------|
 
+(***) means this quantity will (or might be) soon be obsolete.
 
 *** Time parameters 
 
-Time parameters describe the timestep, output and restart files
+Time parameters describe the timestep, runtime and output and restart files related intervals.
 
 #+CAPTION: Physical parameters summary.
-|-----------+-----------------------+------+-------------------+-------|
-| Parameter | Name                  | Type | Default value     | Units |
-|-----------+-----------------------+------+-------------------+-------|
-| dt        | Timestep              | REAL | 300.              | s     |
-| ndays     | Number of days to run | REAL | 5*356.            | -     |
-| totaltime | Runtime in seconds    | REAL | ndays\times86400. |       |
+|-----------+-----------------------+------+---------------------+-------|
+| Parameter | Name                  | Type | Default value       | Units |
+|-----------+-----------------------+------+---------------------+-------|
+| dt        | Timestep              | REAL | 300.                | s     |
+| ndays     | Number of days to run | REAL | 5*356.              | days  |
+| totaltime | Runtime in seconds    | REAL | ndays \times 86400. | s     |
+| nsteps    | Number of steps       | INT  | totaltime/dy+1      | -     |
+|-----------+-----------------------+------+---------------------+-------|
+
+
+*** Output related parameters
+
+Here we have outputs related parameters.
+Most of these might soon be obsoletes, since I am cleaning the FFTW part to use MUDPACK.
+#+CAPTION: Output (I/O) parameters summary.
+|-------------+-----------------------------------------------+------+------------------------+-------|
+| Parameter   | Name                                          | Type | Default value          | Units |
+|-------------+-----------------------------------------------+------+------------------------+-------|
+| fileperday  | Number of output files per day                | INT  | 4                      | -     |
+| iout        | Step interval for outputs                     | INT  | nstep/ndays/fileperday | -     |
+| i_diags     | Step interval for diagnostics (soon obsolete) | INT  | ifix./16/dt            | -     |
+| itape       | Step when to start spectrum outputs (***)     | INT  | 86400 \times 10/dt     | -     |
+| ispechst    | Output one spectra per ispechst (***)         | INT  | 18                     | -     |
+| save2dfft   | Switch to activate fft outputs (***)          | LOGI | .false.                | -     |
+| calc1Dspec  | Switch to calculate 1D spectrums (***)        | LOGI | .false.                | -     |
+| subsmprto   | Output resolution                             | INT  | 2                      | -     |
+| ftsubsmprto | FFTW related output resolution                | INT  | 1                      | -     |
+| save_movie  | Switch to activate output                     | LOGI | .true.                 | -     |
+|-------------+-----------------------------------------------+------+------------------------+-------|
+(***) means this quantity will soon be obsolete.
+
+Finaly, the next table illustrate switches you can use to select which outputs will be created by the model.
+For more information, the user is invited to check the subroutine /subs/dump_bin.f90/.
+
+|-------------+---------------------------------------------+------+---------------+-------|
+| Parameter   | Name                                        | Type | Default value | Units |
+|-------------+---------------------------------------------+------+---------------+-------|
+| IO_fields   | u,v,eta                                     | LOGI | .true.        | -     |
+| IO_RHS_uv   | Baroclinic and barotropic RHS outputs       | LOGI | .false.       | -     |
+| IO_QGAG     | QG u and v                                  | LOGI | .false.       | -     |
+| IO_psivort  | QG qty (see subs/dump_bin.f90)              | LOGI | .false.       | -     |
+| IO_coupling | Coupling quantities (see subs/dump_bin.f90) | LOGI | .false.       | -     |
+| IO_divBT    | Barotropic divergence (for diagno)          | LOGI | .true.        | -     |
+|-------------+---------------------------------------------+------+---------------+-------|
+
+*** Input parameters
+These parameters describe the forcing type and/or if we use a restart file.
+
+|-------------+-----------------------------------+------+---------------+-------|
+| Parameter   | Name                              | Type | Default value | Units |
+|-------------+-----------------------------------+------+---------------+-------|
+| ifsteady    | Steady wind (***)                 | LOGI |       .false. | -     |
+| forcingtype | ? (***)                           | INT  |             0 | -     |
+| iou_method  | ? (***)                           | INT  |             1 | -     |
+| restart     | Use restart file?                 | LOGI |       .false. | -     |
+| use_ramp    | Use ramp?                         | LOGI |       .false. | -     |
+| c_theta     | ?                                 | REAL |    5.\cdot f0 | ?     |
+| c_mu        | ?                                 | REAL |            0. | ?     |
+| c_sigma     | ?                                 | REAL |           0.1 | ?     |
+| c_tauvar    | ?                                 | REAL |          0.45 | ?     |
+| step        | Wind fraction to modulate in time | REAL |           0.0 | -     |
+|-------------+-----------------------------------+------+---------------+-------|
+
+
+*** Wavewatch III coupling switches
+
+Parameters used when coupling to Wavewatch III. Three quantities can be used when coupling :
+- The friction velicity $\tau_{oc}=\rho_{air}|u_*|u_*$ ;
+- The wavefield dissipation $\tau_{oc}=\tau_{dissipation}-\tau_{in}$ ;
+- Finally the Stokes drift through the mass equation.
+  
+Usually, (nx x nghost) ghost points are used to make sure that the "wave generating region" is outside of the shallow water model domain. If you are interested, you may want to read my master thesis at UQAR where I go in length about this method. But basicaly, we used ghost points where we copied the periodic currents on each sides of the wavewatch III model's domain, because our model was periodic but not Wavewatch. And we balanced the mean slope of these quantities to make sur that they were periodic onto our periodic shallow water model. Not the smartest method but it worked.
+
+|-----------+---------------------------------------------------------------+------+---------------+-------|
+| Parameter | Name                                                          | Type | Default value | Units |
+|-----------+---------------------------------------------------------------+------+---------------+-------|
+| cou       | Coupling switch                                               | LOGI | .false.       | -     |
+| ustar     | Coupling with friction velicity $\tau=\rho (u^*)^{2}$         | LOGI | .false.       | -     |
+| waves     | Coupling wave input and dispersion $\tau=\tau_{ds}-\tau_{in}$ | LOGI | .false.       | -     |
+| stokes    | Coupling with Stokes drift                                    | LOGI | .false.       | -     |
+| nghost    | Number of ghost points used by WWIII                          | INT  | 0             | -     |
+| ng2       | Same divided by two                                           | INT  | nghost/2      | -     |
+|-----------+---------------------------------------------------------------+------+---------------+-------|
+

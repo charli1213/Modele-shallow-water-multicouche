@@ -21,8 +21,8 @@ then
     mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
     # Which case :
-    mudpack_case=/storage/celizotte/test_3couche_mudpack2
-    #mudpack_case=testmud
+    #mudpack_case=/storage/celizotte/test_3couche_mudpack2
+    mudpack_case=testmud
     #fftw_case=/storage/celizotte/test_3couches_fftw
     fftw_case=~/Desktop/Modele-shallow-water-multicouches/testfft
     #

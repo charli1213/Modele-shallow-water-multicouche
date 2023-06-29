@@ -59,7 +59,7 @@
        end do
 
        ! On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
-       g = 10.00       
+       g = 10.00
        rho(1) = 1.0000
        rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
        rho(3) = 2*rho(2) - rho(1)
@@ -157,33 +157,12 @@
        iftcount =0
 
        if ( restart .eqv. .false. ) then
-         time = 0.  !in second
-         restart_from=time
-         print*,'Restart from',restart_from, 'day','icount,iftcount',icount,iftcount
-         if (gaussian_bump_eta .eqv. .true.) then
-            
-            ! add seed IC
-            tmp(1) = Lx/8.
-            do j = 1,ny
-               y = (j-1)*dy - Ly/2.
-               y = y/tmp(1)
-               do i = 1,nx
-                  x = (i-1)*dx - Lx/2.
-                  x = x/tmp(1)
-                  tmp(2) = x**2 + y**2
-                  eta(i,j,2,1) =  20.0*exp(-tmp(2))
-                  eta(i,j,1,1) =  0.
-               enddo
-            enddo
-            
-         end if
-         
-         array = eta(:,:,1,1)
-         include 'subs/bndy.f90'
-         eta(:,:,1,1) = array
+          time = 0.  !in second
+          restart_from=time
+          print*,'Restart from',restart_from, 'day','icount,iftcount',icount,iftcount
 
-      else !if restart
-         open(0,file='restart')
+       else !if restart
+          open(0,file='restart')
           do j = 0,nny
           do i = 0,nnx
              read(0,*) u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),       &
