@@ -39,19 +39,19 @@ Grid parameters can be found in the table [[tab:grid-param]].
 Physical parameters describe physical forces applied onto and into the ocean.
 
 #+CAPTION: Physical parameters summary.
-|-----------+------------------------------------------+------+---------------+------------------------|
-| Parameter | Name                                     | Type | Default value | Units                  |
-|-----------+------------------------------------------+------+---------------+------------------------|
-| tau0      | Wind stress $\left(\tau/(\rho h)\right)$ | REAL |         1.e-4 | ms^{-2}                |
-| tau1      | Stochastic amplitude of wind stress      | REAL |         1.e-5 | ms^{-2}                |
-| f0        | Coriolis parameter                       | REAL |         1.e-7 | rad \cdot s^{-1}       |
-| beta      | Beta plane parameter                     | REAL |            0. | rad \cdot s^{-1}m^{-1} |
-| r_drag    | Bottom drag                              | REAL |         1.e-7 | s^{-1}                 |
-| r_invLap  | Inverse Laplacian coefficient            | REAL |         1.e-6 | ?                      |
-| Ah        | Friction coefficient                     | REAL |  1.e-5 * dx^4 | ?                      |
-| rf        | Robert filter coefficient                | REAL |         0.001 | -                      |
-| c_bc      | Baroclinic wave speed (soon obsolete)    | REAK |            2. | m/s                    |
-|-----------+------------------------------------------+------+---------------+------------------------|
+|-----------+---------------------------------------+------+----------------+------------------------|
+| Parameter | Name                                  | Type |  Default value | Units                  |
+|-----------+---------------------------------------+------+----------------+------------------------|
+| tau0      | Wind stress $\tau/(\rho h)$           | REAL |          1.e-4 | ms^{-2}                |
+| tau1      | Stochastic amplitude of wind stress   | REAL |          1.e-5 | ms^{-2}                |
+| f0        | Coriolis parameter                    | REAL |          1.e-7 | rad \cdot s^{-1}       |
+| beta      | Beta plane parameter                  | REAL |             0. | rad \cdot s^{-1}m^{-1} |
+| r_drag    | Bottom drag                           | REAL |          1.e-7 | s^{-1}                 |
+| r_invLap  | Inverse Laplacian coefficient         | REAL |          1.e-6 | ?                      |
+| Ah        | Friction coefficient                  | REAL | 1.e-5 * dx^{4} | ?                      |
+| rf        | Robert filter coefficient             | REAL |          0.001 | -                      |
+| c_bc      | Baroclinic wave speed (soon obsolete) | REAK |             2. | m/s                    |
+|-----------+---------------------------------------+------+----------------+------------------------|
 
 
 *** Time parameters 
