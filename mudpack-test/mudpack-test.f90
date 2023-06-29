@@ -8,10 +8,11 @@ PROGRAM mudpack_test
   INTEGER, PARAMETER :: nx  = ixp*2**(iex-1)+1
   INTEGER, PARAMETER :: ny  = jyq*2**(jey-1)+1
   INTEGER, PARAMETER :: nnx = nx+1,         nny = ny+1
-  REAL,    PARAMETER :: xa  = -10.,        xb  = 10.
-  REAL,    PARAMETER :: yc  = -10.,        yd  = 10.
-  REAL,    PARAMETER :: Lx  = xb-xa,     Ly  = yd-yc
-  REAL,    PARAMETER :: dx  = Lx/(nx-1), dy  = Ly/(ny-1)
+  REAL,    PARAMETER :: xa  = 0.,          xb  = 1000000.
+  REAL,    PARAMETER :: yc  = 0.,          yd  = 1000000.
+  REAL,    PARAMETER :: Lx  = xb-xa,       Ly  = yd-yc
+  REAL,    PARAMETER :: dx  = Lx/(nx-1),   dy  = Ly/(ny-1)
+  REAL,    PARAMETER :: ddx  = Lx/(nx-1),  ddy  = Ly/(ny-1)
   INTEGER            :: i,j,ierror
   ! Intermediate arrays and prints : 
   REAL               :: phi(0:nnx,0:nny), errorphi(0:nnx,0:nny)
@@ -33,20 +34,20 @@ PROGRAM mudpack_test
   
   ! Initalisation du champ à résoudre : 
   PRINT *, "> 1. Initialisation du champ à résoudre à l'aide de la fonction true_solution"
+  DO j = 0,nnx
   DO i = 0,nnx
-     DO j = 0,nnx
-        phi(i,j) = true_solution(i,j,dx,dy,Lx,Ly)
-     END DO
+     phi(i,j) = true_solution(i,j,ddx,ddy,Lx,Ly)
+  END DO
   END DO
 
   ! On trouve le laplacien du champ phi (le RHS de la fonction)
   ! -- Définit sur le champ, lui-même (Aux coins)
   PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
+  DO j = 1,ny
   DO i = 1,nx
-     DO j = 1,ny
-        RHS_MUD(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
-             &       + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
-     ENDDO
+     RHS_MUD(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
+          &       + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
+  ENDDO
   ENDDO
     
   
@@ -119,10 +120,10 @@ PROGRAM mudpack_test
 
   
   ! fparm : float point vector of length 6
-  fparm(1) = 0.
-  fparm(2) = Lx
-  fparm(3) = 0.
-  fparm(4) = Ly
+  fparm(1) = xa
+  fparm(2) = xb
+  fparm(3) = yc
+  fparm(4) = yd
   fparm(5) = 0.0 ! tolmax : Tolérance maximum.
                  ! Ils conseillent de mettre 0.0 et de passer à travers tous les cycles (maxcy)
   write(*,103) (fparm(i), i=1,5)
@@ -191,7 +192,7 @@ PROGRAM mudpack_test
   ! mgopt
   !           an integer vector of length 4 which allows the user to select
   !           among various multigrid options. 
-  mgopt(1) = 0 ! kcycle (Default)
+  mgopt(1) = 2 ! kcycle (Default)
   mgopt(2) = 2 ! iprer (Default)
   mgopt(3) = 1 ! ipost (Default)
   mgopt(4) = 3 ! intpol (Default)
@@ -254,9 +255,19 @@ PROGRAM mudpack_test
   PRINT *, "Number of multigrid cycles =",iparm(17)
   PRINT *, "max difference =",fparm(6)
 
+
+
+
+
+  
   ! On retire la constante d'intégration pour que la fctn soit en moyenne 0.
-  int_cte = SUM(solution)/nx/ny
-  solution(:,:) = solution(:,:) - int_cte
+  int_cte = 0.
+  DO j = 1,ny-1
+  DO i = 1,ny-1
+     int_cte = int_cte +  solution(i,j)
+  ENDDO
+  ENDDO
+  solution(:,:) = solution(:,:) - int_cte/(nx-1)/(ny-1)
   
   ! >>> Writing outputs
   open(unit=101,file='data/rhs',access='DIRECT',&
@@ -272,7 +283,7 @@ PROGRAM mudpack_test
   errorphi(:,:)=0.
   DO i=1,nx
      DO j=1,ny
-        errorphi(i,j) = solution(i,j) - phi(i,j)
+        errorphi(i,j) = abs(phi(i,j) - solution(i,j))
      ENDDO
   ENDDO
 

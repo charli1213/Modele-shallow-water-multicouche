@@ -21,6 +21,7 @@
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
+      logical  IO_divBT
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
       integer nghost, ng2
@@ -62,6 +63,7 @@
       real Psurf(0:nnx,0:nny), rhs_Psurf(0:nnx,0:nny)
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
+      real divBT(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
 
       ! Baroclinic/Barotropic modes with LAPACK ; 
@@ -84,6 +86,7 @@
       real uu(0:nnx,0:nny), vv(0:nnx,0:nny)
       real uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
       real uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
+      real mean_rhsuBT, mean_rhsvBT
       real invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
       real uh(0:nnx,0:nny), vh(0:nnx,0:nny)
       real pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
@@ -96,13 +99,13 @@
       real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real mean_rhsuBT, mean_rhsvBT
       real rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real p_out(0:nnx,0:nny)
       real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
 
       ! >>> Coupling quantities >>>
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)

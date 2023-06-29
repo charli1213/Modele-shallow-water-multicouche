@@ -115,8 +115,45 @@
      enddo
 
      
-  endif
+  endif ! IO_rhsuv
 
+  
+
+  
+  ! IO_divBT
+  if (IO_divBT) then
+     ! Finding thicknesses
+     divBT(:,:) = 0.
+     do k = 1,nz
+        uu(:,:) = u(:,:,k,3) 
+        vv(:,:) = v(:,:,k,3)
+        if (k.eq.1) then
+           thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
+        elseif(k.eq.nz) then
+           thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
+        else
+           thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
+                &             -  eta(:,:,k+1,ilevel)
+        endif
+        ! Finding each divergence of barotropic transport 
+        include 'subs/divBT.f90'
+        ! Summing those to get the divergence of barotropic current
+        divBT(:,:) = divBT(:,:) + array(:,:)/Htot
+     enddo
+     
+     divBT_out (:,:) = divBT(isubx,isuby)
+
+     ! Outputing the divergence of the baroclinic current (Should be zero).
+     string8 = trim(datapath) // 'data/divBT' // '1' // '_' // trim(which)
+     open(unit=108,file=string8,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(108,REC=1) ((divBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(108)
+
+  endif !IO_divBT
+
+
+  
   
   if (IO_coupling) then
 
@@ -161,11 +198,11 @@
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
      write(130,REC=1) ((tauy_ocean_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
      close(130)
-
-
      
   endif ! IO_coupling  
 
+
+  ! IO_forcing
   if (IO_forcing) then
     ! Forcing-AG
       string7 = trim(datapath) // 'data/forci_ag'  // '_' // trim(which)

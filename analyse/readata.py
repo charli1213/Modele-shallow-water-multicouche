@@ -22,7 +22,7 @@ figpath  = casepath + 'figures/'
 # ---- Paramètres ----
 dt   = 0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
-
+nx =  256 #320
 
 
 
@@ -65,7 +65,8 @@ if __name__ == "__main__" :
                                            maxday   = maxday,
                                            outt     = outt,
                                            klayer   = klayer,
-                                           dt=dt)
+                                           dt=dt,
+                                           nx = nx)
             
             which_fields = ['zeta','div','eta','unorm']
             # > Figure :
@@ -128,7 +129,9 @@ if __name__ == "__main__" :
 
     debug = input('Checking barotropic transport? [Y/n] \n')
     if 'Y' in debug :
-        dx = 2000000/256
+        try : del ds
+        except : pass
+        dx = 2000000/nx
         Htot = 3000
         ds = xr.Dataset()
         nz = 3 
@@ -143,37 +146,54 @@ if __name__ == "__main__" :
                                                     outt     = 20,
                                                     klayer   = klayer,
                                                     fields   = fields_list,
-                                                    dt       = 0.25) )
+                                                    dt       = 0.25,
+                                                    nx = nx) )
 
         # Finding thickness 
         for klayer in layers_list :
+            print('Finding thicknesses >> Layer {}'.format(klayer))
             if klayer == 1 :
-                ds['h{}'.format(klayer)] = 1000 - ds['eta{}'.format(klayer+1)]
-            if klayer == nz :
-                ds['h{}'.format(klayer)] = 1000 + ds['eta{}'.format(klayer)]
-            else :    
-                ds['h{}'.format(klayer)] = 1000 + (ds['eta{}'.format(klayer)] - ds['eta{}'.format(klayer+1)])
+                ds['h1'] = (['time','x','y'], \
+                            1000. - ds['eta2'].values)
+            elif klayer == nz :
+                ds['h{}'.format(klayer)] = (['time','x','y'],\
+                                            1000. + ds['eta{}'.format(nz)].values)
+            else :
+                ds['h{}'.format(klayer)] = (['time','x','y'], \
+                                            1000. + (ds['eta{}'.format(klayer  )].values - \
+                                                     ds['eta{}'.format(klayer+1)].values ))
 
-        # Finding divergence of barotropic current : 
-        ds['Ubt'] = ds.u1.copy()*0.
-        ds['Vbt'] = ds.u1.copy()*0.
+        # Finding divergence of barotropic current :
+        dashape = ds.u1.shape
+        ds['uBT'] = (['time','x','y'], np.zeros(dashape))
+        ds['vBT'] = (['time','x','y'], np.zeros(dashape))
         
         for klayer in layers_list :
-            ds['Ubt'] += ds['u{}'.format(klayer)] * 0.5*(ds['h{}'.format(klayer)].roll(y=-1) + ds['h{}'.format(klayer)])/Htot
-            ds['Vbt'] += ds['v{}'.format(klayer)] * 0.5*(ds['h{}'.format(klayer)].roll(x=-1) + ds['h{}'.format(klayer)])/Htot
+            print('Calculating BT currents >> Layer : {}'.format(klayer))
+            ds['uBT']= ds['uBT'] + 0.5*ds['u{}'.format(klayer)] * ( ds['h{}'.format(klayer)] + \
+                                                                    ds['h{}'.format(klayer)].roll(x=1) ) / Htot
+            ds['vBT']= ds['vBT'] + 0.5*ds['v{}'.format(klayer)] * ( ds['h{}'.format(klayer)] + \
+                                                                    ds['h{}'.format(klayer)].roll(y=1) ) / Htot
+            print('Calculating BT currents >> Max   : {}'.format(float(ds['uBT'].isel(time=-1).max())))
+            
 
         # Finding barotropic divergence
-        ds['divBT'] = (ds['Ubt'].roll(x=-1) - ds['Ubt'])/dx + (ds['Vbt'].roll(y=-1) - ds['Vbt'])/dx
+        ds['divBT'] = ((ds['uBT'].roll(x=-1) - ds['uBT']) + \
+                       (ds['vBT'].roll(y=-1) - ds['vBT'])   )/dx
 
-
-        imax = ds.divBT.isel(time=slice(1,122,60)).max()
-        ds.divBT.isel(time=slice(1,122,60)).plot(col='time',x='x',y='y',col_wrap=3, vmin =-0.3*imax,vmax=0.3*imax,cmap='RdBu')
+        # Figure :
+        # Top
+        times = np.concatenate([np.ones(1,dtype=np.int16), np.arange(60,310,60,dtype=np.int16)])
+        fig, axes = plt.subplots(ncols=3,nrows = 2, figsize=(16,8), subplot_kw=dict(box_aspect=1, sharex=True, sharey=True))
+        for i, axe in enumerate(axes.flat):
+            try : 
+                imax = ds.divBT.isel(time=times[i]).max()
+                ds.divBT.isel(time=times[i]).plot(cmap='RdBu',ax = axe,x='x',y='y',vmin=-0.5*imax,vmax=0.5*imax)
+            except :
+                pass
+        plt.tight_layout()
         plt.show()
-        imax = ds.divBT.isel(time=slice(180,360,60)).max()
-        ds.divBT.isel(time=slice(180,360,60)).plot(col='time',x='x',y='y',col_wrap=3,vmin = -0.3*imax,vmax = 0.3*imax,cmap='RdBu')
-        plt.show()
 
-        
     else :
         print('Alright!!!!!!!!!!!!!!!!!!!!! You do you!\n ')
 

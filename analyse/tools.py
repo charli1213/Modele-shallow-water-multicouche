@@ -13,7 +13,6 @@ from datetime import date
 
 nx     = 256 # Output spatial resolution.
 Lx     = 2e6 # Largeur du domaine-x.
-xx     = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
 klayer = 1   # Couche à l'étude
 dt     = 0.5 # Spatial discretisation (1/fileperday)
 
@@ -24,7 +23,7 @@ dt     = 0.5 # Spatial discretisation (1/fileperday)
 #                                                                   # 
 # ================================================================= #
 
-def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,minday=0,fields=None) : 
+def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,minday=0,fields=None,nx=nx) : 
     """
     La fonction 'create_ds_from_binary' ouvre un nombre nday/dt/outt de
     binaires pour créer une base de données de type XArray.Dataset .
@@ -45,6 +44,7 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
     """
 
     # > On fetch les champs dans le dossier 'data'
+    
     data_filenames = listdir(casepath + 'data/') # On liste les noms entiers de tous les fichiers
     max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) -1 # Indicateur numérique
     min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
@@ -58,6 +58,7 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
     # > Vecteurs des coordonnées et paramètres
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
+    xx   = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
     tt   = np.arange(min(minday,min_filenumber%100000),
                      min(maxday+step,nb_of_files*dt),step) # Le vecteur temps [jours]
 

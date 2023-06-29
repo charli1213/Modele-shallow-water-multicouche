@@ -69,7 +69,8 @@
 
    parameter ( IO_field=.true., IO_RHS_uv =.false.,  IO_forcing =.false.)
    parameter ( IO_QGAG=.false., IO_psivort=.false., IO_coupling=.false.)
-
+   parameter  ( IO_divBT=.true.)
+   
  ! --- Slab model/coupling switches --- 
    parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
    

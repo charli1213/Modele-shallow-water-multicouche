@@ -5,3 +5,6 @@ udpack-test/data/
 udpack-test/data/*
 testfft/*
 parameters.f90_last_compiled
+__pycache__
+newcase/*.py
+testmud

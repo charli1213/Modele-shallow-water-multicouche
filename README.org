@@ -4,18 +4,18 @@
 
 
 
-* Introduction
+** Introduction
 Here lies the Fortran algorithm for a N-layer /shallow water/ model.
 This Fortran code is used to simulate large scale oceanic bassin circulation -- and eventually couple it with a waves' statistic model, such as Wavewatch III.
 Initially, the overall algorithm is based on a 2 layers shallow water model coupled with a Ekman slab layer from [[https://github.com/tpeng2/ELSLabSW][GitHub's user tpeng2]] who work with the same team as me.
 
-* Description of each parameters (parameters.f90)
+** Description of each parameters (parameters.f90)
 What you find here is a description of each parameters you would find in the parameters file /parameters.f90/.
 Unless you want to change the code of the model, this would be the only file you would interact with before running the model.
 Parameters describe the scale of the experiment as well as physical quantities such as wind force and bottom drag.
 The /parameters.f90/ file also describe output generation as we will see in the next section.
 
-** Grid description
+*** Grid description
 The underlying grid must be big in order to simulate large scale geostrophic circulation and baroclinic instabilities/eddies, which is why the grid would be about 2000 km wide.
 Grid parameters can be found in the table [[tab:grid-param]]. 
 
@@ -34,7 +34,7 @@ Grid parameters can be found in the table [[tab:grid-param]].
 | nnx,nny   | Ghost points domain size | INTEGER |    nx+1, ny+1 | -     |
 |-----------+--------------------------+---------+---------------+-------|
 
-** Physical parameters 
+*** Physical parameters 
 
 Physical parameters describe physical forces applied onto and into the ocean.
 
@@ -54,4 +54,4 @@ Physical parameters describe physical forces applied onto and into the ocean.
 |-----------+---------------------------------------+------+---------------+-------------------|
 
 
-** Time parameters 
+*** Time parameters 
