@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 import cmocean.cm as cmo
 import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation
 from datetime import date
 today = date.today()
 
@@ -55,7 +56,7 @@ if __name__ == "__main__" :
         klayer  = str(int(input("quelle couche?")))
 
         # > Params : 
-        for maxday,outt in zip([50,250,750,850,950,1000,1500,1800], [1,5,8,10,10,10,10,10]) :
+        for maxday,outt in zip([50,250,750,850,950,1000,1500,1800], [1,5,8,10,10,10,15,20]) :
             print('\n >>> Figure {} jours'.format(maxday))
         #for maxday,outt in zip([50,200,1000,1500],[1,1,1,1]) :
             ### (***) On ouvre les données ici pour sauver de la mémoire vive, car on
@@ -206,9 +207,6 @@ if __name__ == "__main__" :
     # ================================================================= #
 
 
-
-
-
     """
     ds = tls.create_ds_from_binary(casepath = casepath,
                                    minday   = 800,
@@ -218,20 +216,17 @@ if __name__ == "__main__" :
                                    dt=dt)
 
     
-    fig, axes = plt.subplots(figsize=[11,8], ncols=2,nrows=2) #Creating the basis for the plot
+    fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
+    qty = 'divBT1'
+    def animate(time, ds=ds):
+        im = ds[qty].isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
+        return im,
+    ani =  animation.FuncAnimation(fig, animate, 150, interval=100, blit=True,repeat=True)
 
-
-    def animate(time):
-        out = []
-        for qty,ax in zip(['zeta1','div1','eta1','unorm1'],axes.flat) : 
-            out += [ds[qty].isel(time=time).plot(ax=axes[0])]
-        return out
-    
-    ani =  animation.FuncAnimation(fig, animate, 24, interval=400, blit=False)
-
-
-
-    ani.save(casepath + 'figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
-
+    ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
+    #ani = FuncAnimation(fig,animate,frames=100)
+    plt.close()
+    #plt.show()
     #HTML(ani.to_jshtml()) #Show the animation in the kernel
+    
     """

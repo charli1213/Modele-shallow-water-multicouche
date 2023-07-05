@@ -46,7 +46,7 @@
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 1  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 4  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nnx*nny*(10+0+0)+8*(nnx+nny+2))/3)
   iparm(15) = length ! Conseillé.

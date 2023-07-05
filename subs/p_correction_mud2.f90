@@ -13,12 +13,13 @@
        
        ! delta_psi_BT(:,:)   = 0.
        ! Finding dh/dt foreach layer. First layer must fit with dh1 + dh2 + dh3 ... = 0, cause dH=0
-       ! This is the derivative of thickness.
+       ! rhs_eta is the derivative of thickness and we find the one for h1, here.
        rhs_eta(:,:,1) = 0.
        do k = 2, nz
           rhs_eta(:,:,1) =  rhs_eta(:,:,1) - rhs_eta(:,:,k)
        enddo
-       
+
+       ! Barotropic loop : 
        do k = 1, nz
           uu(:,:) = u(:,:,k,ilevel)
           vv(:,:) = v(:,:,k,ilevel)
@@ -101,6 +102,12 @@
     !      we solve for d_psi_BT instead of pressure gradient  !
     !                                                          !
     ! ######################################################## !
+
+       !!! ***** THIS IS A TEST *****
+       ! >>> We give a new field, because the numeric instabilities persist.
+       CALL RANDOM_NUMBER(delta_psi_BT)
+       delta_psi_BT(:,:) = delta_psi_BT(:,:)/1000.
+       !!! ***** END OF TEST *****
        
        ! MUDPACK call  (for periodic boundaries)
        call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nnx,1:nny), & 
