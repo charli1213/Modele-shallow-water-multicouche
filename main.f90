@@ -63,8 +63,11 @@
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real divBT(0:nnx,0:nny)
+      real zetaBT(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-
+      real uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
+      real uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
+      
       ! Baroclinic/Barotropic modes with LAPACK ; 
       REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
       REAL WI(1:nz), VL(1:nz,1:nz)
@@ -105,7 +108,10 @@
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-
+      real uBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real vBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real psiBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      
       ! >>> Coupling quantities >>>
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
       REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2)
@@ -188,6 +194,7 @@
       REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
       REAL :: curl_of_RHS_u_BT(0:nnx,0:nny)
       REAL :: delta_psi_BT(0:nnx,0:nny)
+      REAL :: psiBT(0:nnx,0:nny)
       INTEGER :: dummy_int
       REAL :: dummy !Use this for anything
       
@@ -335,9 +342,9 @@
          ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = uu(:,:)/100.
+            uu(:,:) = (uu(:,:)-0.5)/100.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = vv(:,:)/100.
+            vv(:,:) = (vv(:,:)-0.5)/100.
          endif
          !
 
@@ -507,6 +514,19 @@
       !                      RHS (End)                     !
       ! ================================================== !
 
+         ! >>> DIVERGENCE CORRECTION (TESTING) >>>
+         !!!if (mod(its,10).eq.0) then
+         !!!   print *, "Barotropic correction, its ;", its
+         !!!   !ilevel = 3
+         !!!   !include 'subs/div_correction.f90'
+         !!!   ilevel = 2
+         !!!   include 'subs/div_correction.f90'
+         !!!   !ilevel = 1
+         !!!   !include 'subs/div_correction.f90'
+         !!!
+         !!!endif
+         ! <<< DIVERGENCE CORRECTION (END) <<<
+
 
          
          ! --- Updating time ---
@@ -538,6 +558,7 @@
          write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
+         
          !if(nsteps.lt.1.and.save_movie) then
          !   if ( mod(its,iout).eq.0 ) then  ! output 
          !      include 'subs/div_vort.f90'
@@ -560,7 +581,7 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            eta(:,:,1,3) = p_out(:,:)
+            eta(:,:,1,3) = delta_psi_BT(:,:)
             !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
             array = eta(:,:,1,3)
             include 'subs/bndy.f90'

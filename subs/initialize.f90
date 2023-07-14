@@ -60,7 +60,7 @@
 
        ! On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
        g = 10.00
-       rho(1) = 1.0000
+       rho(1) = 1000.00
        rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
        rho(3) = 2*rho(2) - rho(1)
 

@@ -64,7 +64,10 @@
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real divBT(0:nnx,0:nny)
+      real psiBT(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
+      real uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
+      real uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
       
       ! Baroclinic/Barotropic modes with LAPACK ; 
       REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
@@ -106,6 +109,9 @@
       real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
       real divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real uBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real vBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      real psiBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
       
       ! >>> Coupling quantities >>>
       REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)

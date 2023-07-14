@@ -21,7 +21,7 @@ figpath  = casepath + 'figures/'
 #datapath = './testgprime/data'
 
 # ---- Paramètres ----
-dt   = 0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
+dt   = 1/144 #0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
 nx =  256 #320
 
@@ -54,11 +54,12 @@ if __name__ == "__main__" :
 
         # Which layer to observe
         klayer  = str(int(input("quelle couche?")))
-
+        fields_list = [fname+str(klayer) for fname in ['u','v','zeta','div','eta']]
+        
         # > Params : 
         for maxday,outt in zip([50,250,750,850,950,1000,1500,1800], [1,5,8,10,10,10,15,20]) :
             print('\n >>> Figure {} jours'.format(maxday))
-        #for maxday,outt in zip([50,200,1000,1500],[1,1,1,1]) :
+
             ### (***) On ouvre les données ici pour sauver de la mémoire vive, car on
             ###       accumule beaucoup de mémoire à créer ces figures. C'est aussi
             ###       pourquoi le outt est variable en fonction de la figure. 
@@ -67,6 +68,7 @@ if __name__ == "__main__" :
                                            outt     = outt,
                                            klayer   = klayer,
                                            dt=dt,
+                                           fields   = fields_list,
                                            nx = nx)
             
             which_fields = ['zeta','div','eta','unorm']
@@ -207,26 +209,36 @@ if __name__ == "__main__" :
     # ================================================================= #
 
 
-    """
-    ds = tls.create_ds_from_binary(casepath = casepath,
-                                   minday   = 800,
-                                   maxday   = 1000,
-                                   outt     = 1,
-                                   klayer   = 1,
-                                   dt=dt)
+    try : del ds
+    except : pass
 
-    
-    fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
+    qty = 'div_rhsBT1'
+    qty = 'psiBT1'
+    qty = 'eta1'
     qty = 'divBT1'
-    def animate(time, ds=ds):
-        im = ds[qty].isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
-        return im,
-    ani =  animation.FuncAnimation(fig, animate, 150, interval=100, blit=True,repeat=True)
+    qty = 'uBT1'
+    
+    outt = 1
+    ds = tls.create_ds_from_binary(casepath = casepath,
+                                   #minday   = 1,
+                                   #maxday   = 100,
+                                   outt     = outt,
+                                   klayer   = 1,
+                                   fields = ['uBT1','vBT1','eta1','u1','divBT1','div1'],
+                                   dt=dt,
+                                   )
+    nt=len(ds.time)
 
-    ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
+    fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
+
+    def animate(time, ds=ds):
+        im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
+        return im,
+    ani =  animation.FuncAnimation(fig, animate, nt , interval=50, blit=True, repeat=True)
+
+    #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
     #ani = FuncAnimation(fig,animate,frames=100)
-    plt.close()
-    #plt.show()
+    #plt.close()
+    plt.show()
     #HTML(ani.to_jshtml()) #Show the animation in the kernel
     
-    """

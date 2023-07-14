@@ -54,7 +54,12 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
         data_names = fields
     else :
         data_names = list(set([name[:-7] for name in data_filenames])) # On liste les quantités
-    
+        for name in data_names :
+            if (str(klayer) not in name) :
+                del name
+            else :
+                pass
+            
     # > Vecteurs des coordonnées et paramètres
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
@@ -64,29 +69,31 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
 
     # > Boucle sur les noms des output
     for name in data_names :
-        if (str(klayer) in name) :
-            # On recrée data, car problème de np.roll.
-            data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
-            print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
-            for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
-                f = open( casepath + 'data/{}_{}'.format(name,min_filenumber+it*outt+int(minday/dt)), 'rb' )
-                data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
-                f.close()
-        
-            # coords/data = form (dims, data[, attrs, encoding])
-            data = np.roll(data, int(nx/4), axis = 2)
-            ds[name] = xr.DataArray(data,
+        # On recrée data, car problème de np.roll.
+        data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
+        print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
+        for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
+            f = open( casepath + 'data/{}_{}'.format(name,min_filenumber+it*outt+int(minday/dt)), 'rb' )
+            data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
+            f.close()
+                
+        # coords/data = form (dims, data[, attrs, encoding])
+        data = np.roll(data, int(nx/4), axis = 2)
+        ds[name] = xr.DataArray(data,
                                     coords = dict(time=('time',tt,{'units':'days'}),
                                                   x=('x',xx,{'units':'m','name':'x'}),
                                                   y=('y',xx,{'units':'m','name':'y'}),
                                                   ),
-                                    )
-            del data
-        else :
-            pass
+                                )
+        del data
+    else :
+        pass
         
     # création finale du Xarray.Dataset
-    ds['unorm'+str(klayer)] = np.sqrt(ds['u'+str(klayer)]**2 + ds['v'+str(klayer)]**2)
+    try : 
+        ds['unorm'+str(klayer)] = np.sqrt(ds['u'+str(klayer)]**2 + ds['v'+str(klayer)]**2)
+    except :
+        pass
     try :
         ds['rhsu' +str(klayer)] = (ds['rhsuBC'+str(klayer)] + ds.rhsuBT1)
     except :

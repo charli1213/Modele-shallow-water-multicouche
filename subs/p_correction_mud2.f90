@@ -60,12 +60,12 @@
 
 
        ! Finding mean barotropic RHS_u,v 
-       mean_rhsuBT = 0.
-       mean_rhsvBT = 0.
-       DO j=1,ny
-          mean_rhsuBT = mean_rhsuBT + SUM(rhs_u_BT(1:nx,j))/nx/ny
-          mean_rhsvBT = mean_rhsvBT + SUM(rhs_v_BT(1:nx,j))/nx/ny
-       ENDDO
+       !mean_rhsuBT = 0.
+       !mean_rhsvBT = 0.
+       !DO j=1,ny
+       !   mean_rhsuBT = mean_rhsuBT + SUM(rhs_u_BT(1:nx,j))/nx/ny
+       !   mean_rhsvBT = mean_rhsvBT + SUM(rhs_v_BT(1:nx,j))/nx/ny
+       !ENDDO
 
 
        ! baroclinic RHS_u,v
@@ -103,27 +103,24 @@
     !                                                          !
     ! ######################################################## !
 
-       !!! ***** THIS IS A TEST *****
-       ! >>> We give a new field, because the numeric instabilities persist.
-       CALL RANDOM_NUMBER(delta_psi_BT)
-       delta_psi_BT(:,:) = delta_psi_BT(:,:)/1000.
-       !!! ***** END OF TEST *****
-       
        ! MUDPACK call  (for periodic boundaries)
+       CALL RANDOM_NUMBER(delta_psi_BT)
        call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nnx,1:nny), & 
             &    delta_psi_BT(1:nnx,1:nny),mgopt,ierror)
               
        ! Removing integration constant is NOT NECESSARY since we differentiate to get u,v.
-       ! But we do it for diagnostics : 
-       dummy = 0.
-       DO j=1,ny
-          dummy = dummy + SUM(delta_psi_BT(1:nx,j))/nx/ny
-       ENDDO
-       delta_psi_BT = delta_psi_BT - dummy
+       ! But we do it for 1. diagnostics and 2. to make sure the solution stays in the same range :
+       array(:,:) = delta_psi_BT(:,:)
+       dummy=10.
+       do while (abs(dummy)>1.)
+          include '/subs/rm_int_cte.f90'
+          !print *, "Int cte ::", dummy
+       enddo
+       delta_psi_BT(:,:) = array(:,:)
        
     ! ######################################################## !
     !                                                          !
-    !                   -- PSI_BT SOLVED --                    !
+    !                -- DELTA_PSI_BT SOLVED --                 !
     !                                                          !   
     ! ######################################################## !
 
@@ -140,8 +137,9 @@
 
        do j = 1,ny
        do i = 1,nx
-            rhs_u_BT(i,j) = mean_rhsuBT - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy  ! barotropic part-x
-            rhs_v_BT(i,j) = mean_rhsvBT + (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx  ! barotropic part-y
+          !We removed mean_rhsuBT.
+          rhs_u_BT(i,j) =  - (delta_psi_BT(i,j+1) - delta_psi_BT(i,j))/dy  ! barotropic part-x
+          rhs_v_BT(i,j) =    (delta_psi_BT(i+1,j) - delta_psi_BT(i,j))/dx  ! barotropic part-y
        enddo
        enddo
        
@@ -173,16 +171,25 @@
           WRITE (*,*) " > Integration cte :", dummy
           WRITE (*,*) " > Maximum RHS MUDPACK      :: ", MAXVAL(curl_of_RHS_u_BT)
 
+          ! Mean delta psiBT 
           dummy = 0.
-          DO j=1,nx
-             dummy = dummy + SUM(delta_psi_BT(1:nx,j))/nx/ny
-          ENDDO           
+          DO j=1,ny
+          DO i=1,nx
+             dummy = dummy + delta_psi_BT(i,j)
+          ENDDO
+          ENDDO
+          dummy = dummy/nx/ny
           WRITE (*,*) " > Mean delta_psi_BT              :: ", dummy
 
+          ! Mean RHS for MUDPACK
           dummy = 0.
-          DO j=1,nx
-             dummy = dummy + SUM(curl_of_RHS_u_BT(1:nx,j))/nx/ny
-          ENDDO           
+          DO j=1,ny
+          DO i=1,nx
+             dummy = dummy + curl_of_RHS_u_BT(i,j)
+          ENDDO
+          ENDDO
+          dummy = dummy/nx/ny
           WRITE (*,*) " > Mean RHS MUDPACK         :: ", dummy
+          
        ENDIF
        

@@ -69,6 +69,8 @@
     
   end if !IO_field
 
+
+
   if (IO_RHS_uv) then
 
      ! Barotropic RHS
@@ -99,13 +101,10 @@
         string6 =  './data/rhsuBC' // trim(k_str) // '_' // trim(which)
         string7 =  './data/rhsvBC' // trim(k_str) // '_' // trim(which)       
 
-        ! U Stokes
-        
         open(unit=106,file=string6,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
         write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
         close(106)
-
 
         open(unit=107,file=string7,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
@@ -114,6 +113,26 @@
         
      enddo
 
+     ! divergence du RHS_barotrope (devrait être nul) [La variable divBT est dummy].
+     do j = 1,ny
+     do i = 1,nx
+     ip = i+1
+     jp = j+1   
+     array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
+          &     + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
+     enddo
+     enddo
+  
+     divBT_out (:,:) = array(isubx,isuby)
+
+     ! Outputing the divergence of the baroclinic current (Should be zero).
+     string8 =  './data/div_rhsBT' // '1' // '_' // trim(which)
+     open(unit=108,file=string8,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(108,REC=1) ((divBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(108)
+     
+     
      
   endif ! IO_rhsuv
 
@@ -123,6 +142,8 @@
   ! IO_divBT
   if (IO_divBT) then
      ! Finding thicknesses
+     uBT(:,:) = 0.
+     vBT(:,:) = 0.
      divBT(:,:) = 0.
      do k = 1,nz
         uu(:,:) = u(:,:,k,3) 
@@ -137,18 +158,41 @@
         endif
         ! Finding each divergence of barotropic transport 
         include 'subs/divBT.f90'
+        !!do j = 1,ny
+        !!do i = 1,nx
+        !!   divBT(i,j) = (uBT(i+1,j)-uBT(i,j))/dx + (vBT(i,j+1)-vBT(i,j))/dy
+        !!enddo
+        !!enddo
+
         ! Summing those to get the divergence of barotropic current
         divBT(:,:) = divBT(:,:) + array(:,:)/Htot
+        uBT(:,:) = uBT(:,:) + uh(:,:)/Htot
+        vBT(:,:) = vBT(:,:) + vh(:,:)/Htot
      enddo
      
-     divBT_out (:,:) = divBT(isubx,isuby)
-
+     divBT_out(:,:) = divBT(isubx,isuby)
+     uBT_out(:,:) = uBT(isubx,isuby)
+     vBT_out(:,:) = vBT(isubx,isuby)
+     
      ! Outputing the divergence of the baroclinic current (Should be zero).
      string8 =  './data/divBT' // '1' // '_' // trim(which)
      open(unit=108,file=string8,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
      write(108,REC=1) ((divBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
      close(108)
+
+     ! Outputing the barotropic currents (after the divergence correction)
+     string9 =  './data/uBT' // '1' // '_' // trim(which)
+     open(unit=109,file=string9,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(109,REC=1) ((uBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(109)
+
+     string10 =  './data/vBT' // '1' // '_' // trim(which)
+     open(unit=110,file=string10,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(110,REC=1) ((vBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     close(110)
 
   endif !IO_divBT
 

@@ -42,14 +42,14 @@
   
    parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 192
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 144
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
   
    parameter ( itape=86400*10/dt,ispechst=18) !spectrum output file, output one spectra per ispechst
  
-   parameter (save2dfft=.false.,calc1Dspec=.false. )
+   parameter ( save2dfft=.false.,calc1Dspec=.false. )
  
    parameter ( subsmprto=2, ftsubsmprto=1, save_movie=.true. )
  
