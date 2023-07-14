@@ -262,8 +262,6 @@
       write(108,REC=1) ((forcing_total(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
       close(108)
 
-  !  string9 = './data/dissi_u'  // '_' // trim(which)
-  !  string10 = './data/dissi_v'  // '_' // trim(which)
   !  string11 = './data/q'  // '_' // trim(which)
 
       string12 =  './data/taux'  // '_' // trim(which)

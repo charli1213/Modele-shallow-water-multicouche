@@ -53,20 +53,42 @@
       !
       REAL :: sl, ed
       real ran2
+
+      ! >>> Edges quantities :
       real u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3), eta(0:nnx,0:nny,nz,3)
       real u_ag(0:nnx,0:nny,nz), v_ag(0:nnx,0:nny,nz)
       real u_qg(0:nnx,0:nny,nz), v_qg(0:nnx,0:nny,nz)
       real u_ag_p(0:nnx,0:nny,2), v_ag_p(0:nnx,0:nny,2) !two BC-AG modes: also need complex part
+      real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
+      real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
+      real taux(0:nnx,0:nny), tauy(0:nnx,0:nny)
+      real taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
+      real wind_x(0:nnx,0:nny)
+      real uu(0:nnx,0:nny), vv(0:nnx,0:nny)
+      real uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
+      real uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
+      real uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
+      real uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
+      real rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
+      real mean_rhsuBT, mean_rhsvBT
+      real invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
+      real uh(0:nnx,0:nny), vh(0:nnx,0:nny)      
+      
+      ! >>> Vertices/nodes quantities :
+      real zetaBT(0:nnx,0:nny)
+      real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
+
+      
+      ! >>> Center quantities :
       real eta_ag(0:nnx,0:nny), eta_qg(0:nnx,0:nny)
       real eta_ag_p(0:nnx,0:nny,2)
-      real Psurf(0:nnx,0:nny), rhs_Psurf(0:nnx,0:nny)
       real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
       real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
       real divBT(0:nnx,0:nny)
-      real zetaBT(0:nnx,0:nny)
       real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-      real uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
-      real uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
+      real rhs_eta(0:nnx,0:nny,nz)
+      real pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
+
       
       ! Baroclinic/Barotropic modes with LAPACK ; 
       REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
@@ -76,22 +98,8 @@
       CHARACTER(8) :: ministr
 
       ! Physical quantities :
-      real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
-      real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
-      real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
-      real dissi_u(0:nnx,0:nny), dissi_v(0:nnx,0:nny)
-      real taux(0:nnx,0:nny), tauy(0:nnx,0:nny)
-      real taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
-      real rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
-      real rhs_eta(0:nnx,0:nny,nz)
-      real wind_x(0:nnx,0:nny)
-      real uu(0:nnx,0:nny), vv(0:nnx,0:nny)
-      real uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
-      real uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
-      real mean_rhsuBT, mean_rhsvBT
-      real invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
-      real uh(0:nnx,0:nny), vh(0:nnx,0:nny)
-      real pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
+
+
       real forcing_qg(0:nnx,0:nny), forcing_ag(0:nnx,0:nny)
       real forcing_total(0:nnx,0:nny)
       real tmp(0:10), array(0:nnx,0:nny)
