@@ -22,6 +22,7 @@
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
       logical  IO_divBT
+
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
       integer nghost, ng2
@@ -32,6 +33,7 @@
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
+      
       include 'parameters.f90'
       parameter( ntsrow=itape/ispechst  )! how many lines for a time series table (e.g. spectrum)   
       !random number
@@ -51,83 +53,101 @@
       !!!USE MPI 
       implicit none
       !
-      REAL :: sl, ed
-      real ran2
 
-      ! >>> Edges quantities :
-      real u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3), eta(0:nnx,0:nny,nz,3)
-      real u_ag(0:nnx,0:nny,nz), v_ag(0:nnx,0:nny,nz)
-      real u_qg(0:nnx,0:nny,nz), v_qg(0:nnx,0:nny,nz)
-      real u_ag_p(0:nnx,0:nny,2), v_ag_p(0:nnx,0:nny,2) !two BC-AG modes: also need complex part
-      real grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
-      real grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
-      real taux(0:nnx,0:nny), tauy(0:nnx,0:nny)
-      real taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
-      real wind_x(0:nnx,0:nny)
-      real uu(0:nnx,0:nny), vv(0:nnx,0:nny)
-      real uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
-      real uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
-      real uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
-      real uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
-      real rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
-      real mean_rhsuBT, mean_rhsvBT
-      real invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
-      real uh(0:nnx,0:nny), vh(0:nnx,0:nny)      
-      
-      ! >>> Vertices/nodes quantities :
-      real zetaBT(0:nnx,0:nny)
-      real zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
 
       
-      ! >>> Center quantities :
-      real eta_ag(0:nnx,0:nny), eta_qg(0:nnx,0:nny)
-      real eta_ag_p(0:nnx,0:nny,2)
-      real div(0:nnx,0:nny), zeta(0:nnx,0:nny)
-      real div1(0:nnx,0:nny),div2(0:nnx,0:nny)
-      real divBT(0:nnx,0:nny)
-      real B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-      real rhs_eta(0:nnx,0:nny,nz)
-      real pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
+    !!! ---------- Physical quantities definition ---------- !!!
+      ! > Sides :
+      REAL :: u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3)
+      REAL :: u_ag(0:nnx,0:nny,nz), v_ag(0:nnx,0:nny,nz)
+      REAL :: u_qg(0:nnx,0:nny,nz), v_qg(0:nnx,0:nny,nz)
+      REAL :: u_ag_p(0:nnx,0:nny,2), v_ag_p(0:nnx,0:nny,2) !two BC-AG modes: also need complex part
+      REAL :: uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
+      REAL :: uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
+      REAL :: grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
+      REAL :: grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
+      REAL :: taux(0:nnx,0:nny), tauy(0:nnx,0:nny)
+      REAL :: taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
+      REAL :: rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
+      REAL :: wind_x(0:nnx,0:nny)
+      REAL :: uu(0:nnx,0:nny), vv(0:nnx,0:nny)
+      REAL :: uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
+      REAL :: uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
+      REAL :: mean_rhsuBT, mean_rhsvBT
+      REAL :: uh(0:nnx,0:nny), vh(0:nnx,0:nny)
+      REAL :: dissi_u(0:nnx,0:nny), dissi_v(0:nnx,0:nny)
+      REAL :: invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
+      REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
+      REAL :: UStokes(0:nnx,0:nny,nz), VStokes(0:nnx,0:nny,nz)
 
+      
+      ! > Centers :
+      REAL :: eta(0:nnx,0:nny,nz,3)
+      REAL :: eta_ag(0:nnx,0:nny), eta_qg(0:nnx,0:nny)
+      REAL :: eta_ag_p(0:nnx,0:nny,2)
+      REAL :: div(0:nnx,0:nny)
+      REAL :: div1(0:nnx,0:nny),div2(0:nnx,0:nny)
+      REAL :: divBT(0:nnx,0:nny)
+      REAL :: Psurf(0:nnx,0:nny), rhs_Psurf(0:nnx,0:nny)
+      REAL :: B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
+      REAL :: rhs_eta(0:nnx,0:nny,nz)
+      REAL :: pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
+      REAL :: p_out(0:nnx,0:nny)
+
+      ! > Nodes :
+      REAL :: zeta(0:nnx,0:nny)
+      REAL :: zetaBT(0:nnx,0:nny)
+      REAL :: zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
+      REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
+      REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
+
+
+    !!! ---------- Outputs quantities definition ---------- !!!
+      ! > Sides :
+      REAL :: u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      REAL :: rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      REAL :: uBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: UStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: taux_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      ! >
+      REAL :: v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      REAL :: rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      REAL :: vBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: VStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
+
+      ! > Centers :
+      REAL :: eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
+      REAL :: div_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      
+      ! > Nodes : 
+      REAL :: zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: psiBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      
+
+      ! Other
+      REAL :: :: sl, ed
+      REAL :: ran2
+
+
+
+      
       
       ! Baroclinic/Barotropic modes with LAPACK ; 
-      REAL F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
-      REAL WI(1:nz), VL(1:nz,1:nz)
-      REAL L2M(1:nz,1:nz),M2L(1:nz,1:nz)
+      REAL :: F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
+      REAL :: WI(1:nz), VL(1:nz,1:nz)
+      REAL :: L2M(1:nz,1:nz),M2L(1:nz,1:nz)
       INTEGER WORKL(1:4*nz), INFO
-      CHARACTER(8) :: ministr
-
-      ! Physical quantities :
-
-
-      real forcing_qg(0:nnx,0:nny), forcing_ag(0:nnx,0:nny)
-      real forcing_total(0:nnx,0:nny)
-      real tmp(0:10), array(0:nnx,0:nny)
-      real q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
-      real qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
-      real u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real p_out(0:nnx,0:nny)
-      real eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      real div_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real uBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real vBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      real psiBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      CHARACTER(8) :: ministr      
       
-      ! >>> Coupling quantities >>>
-      REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
-      REAL :: UStokes(0:nnx,0:nny,2), VStokes(0:nnx,0:nny,2)
-      REAL :: UStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: VStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: taux_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      ! <<< Coupling quantities (End) <<<
+      REAL :: forcing_qg(0:nnx,0:nny), forcing_ag(0:nnx,0:nny)
+      REAL :: forcing_total(0:nnx,0:nny)
+      REAL :: tmp(0:10), array(0:nnx,0:nny)
+      
+      ! Initialize qties
       real f(0:nny)
       real gprime(nz), Htot, H(nz+1), rho(nz+1) ! +1 because see initialise.f90
       real top(nz), bot(nz)
