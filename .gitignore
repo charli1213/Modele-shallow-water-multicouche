@@ -8,3 +8,4 @@ parameters.f90_last_compiled
 __pycache__
 newcase/*.py
 testmud
+testcase

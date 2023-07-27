@@ -26,17 +26,17 @@
        ! Writing
        open(unit=101,file=string1,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isubx)))
-       write(101,REC=1) ((u_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       write(101,REC=1) ((u_out(i,j,k),i=1,endx),j=1,endy)
        close(101)
     
        open(unit=102,file=string2,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(102,REC=1) ((v_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       write(102,REC=1) ((v_out(i,j,k),i=1,endx),j=1,endy)
        close(102)
 
        open(unit=103,file=string3,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(103,REC=1) ((eta_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       write(103,REC=1) ((eta_out(i,j,k),i=1,endx),j=1,endy)
        close(103)
 
 
@@ -55,12 +55,12 @@
        ! Writing
        open(unit=139,file=string39,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(139,REC=1) ((div_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       write(139,REC=1) ((div_out(i,j),i=1,endx),j=1,endy)
        close(139)
 
        open(unit=140,file=string40,access='DIRECT',&
             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(140,REC=1) ((zeta_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+       write(140,REC=1) ((zeta_out(i,j),i=1,endx),j=1,endy)
        close(140)
 
     end do ! end of k-loop
@@ -82,12 +82,12 @@
      
      open(unit=104,file=string4,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(104,REC=1) ((rhsuBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(104,REC=1) ((rhsuBT_out(i,j),i=1,endx),j=1,endy)
      close(104)
 
      open(unit=105,file=string5,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(105,REC=1) ((rhsvBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(105,REC=1) ((rhsvBT_out(i,j),i=1,endx),j=1,endy)
      close(105)
 
      ! Baroclinic RHS
@@ -103,33 +103,34 @@
 
         open(unit=106,file=string6,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,endx),j=1,endy)
         close(106)
 
         open(unit=107,file=string7,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto)
+        write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,endx),j=1,endy)
         close(107)
         
      enddo
 
      ! divergence du RHS_barotrope (devrait être nul) [La variable divBT est dummy].
-     do j = 1,ny
-     do i = 1,nx
+     faces_array(:,:) = 0.
+     do j = 1,ny-1
+     do i = 1,nx-1
      ip = i+1
      jp = j+1   
-     array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
+     faces_array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
           &     + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
      enddo
      enddo
   
-     divBT_out (:,:) = array(isubx,isuby)
+     divBT_out (:,:) = faces_array(isubx,isuby)
 
      ! Outputing the divergence of the baroclinic current (Should be zero).
      string8 =  './data/div_rhsBT' // '1' // '_' // trim(which)
      open(unit=108,file=string8,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(108,REC=1) ((divBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(108,REC=1) ((divBT_out(i,j),i=1,endx),j=1,endy)
      close(108)
      
      
@@ -165,7 +166,7 @@
         !!enddo
 
         ! Summing those to get the divergence of barotropic current
-        divBT(:,:) = divBT(:,:) + array(:,:)/Htot
+        divBT(:,:) = divBT(:,:) + faces_array(:,:)/Htot
         uBT(:,:) = uBT(:,:) + uh(:,:)/Htot
         vBT(:,:) = vBT(:,:) + vh(:,:)/Htot
      enddo
@@ -178,20 +179,20 @@
      string8 =  './data/divBT' // '1' // '_' // trim(which)
      open(unit=108,file=string8,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(108,REC=1) ((divBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(108,REC=1) ((divBT_out(i,j),i=1,endx),j=1,endy)
      close(108)
 
      ! Outputing the barotropic currents (after the divergence correction)
      string9 =  './data/uBT' // '1' // '_' // trim(which)
      open(unit=109,file=string9,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(109,REC=1) ((uBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(109,REC=1) ((uBT_out(i,j),i=1,endx),j=1,endy)
      close(109)
 
      string10 =  './data/vBT' // '1' // '_' // trim(which)
      open(unit=110,file=string10,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(110,REC=1) ((vBT_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(110,REC=1) ((vBT_out(i,j),i=1,endx),j=1,endy)
      close(110)
 
   endif !IO_divBT
@@ -210,37 +211,37 @@
      string25 =  './data/UStokes'  // '_' // trim(which)
      open(unit=125,file=string25,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(125,REC=1) ((UStokes_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(125,REC=1) ((UStokes_out(i,j),i=1,endx),j=1,endy)
      close(125)
 
      string26 =  './data/VStokes'  // '_' // trim(which)
      open(unit=126,file=string26,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(126,REC=1) ((VStokes_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(126,REC=1) ((VStokes_out(i,j),i=1,endx),j=1,endy)
      close(126)
 
      !string27 = './data/taux_eff'  // '_' // trim(which)
      !open(unit=127,file=string27,access='DIRECT',&
      !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(127,REC=1) ((taux_eff(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     !write(127,REC=1) ((taux_eff(i,j),i=1,endx),j=1,endy)
      !close(127)
 
      !string28 = './data/tauy_eff'  // '_' // trim(which)
      !open(unit=128,file=string28,access='DIRECT',&
      !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(128,REC=1) ((tauy_eff(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     !write(128,REC=1) ((tauy_eff(i,j),i=1,endx),j=1,endy)
      !close(128)
 
      string29 =  './data/taux_ocean'  // '_' // trim(which)
      open(unit=129,file=string29,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(129,REC=1) ((taux_ocean_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(129,REC=1) ((taux_ocean_out(i,j),i=1,endx),j=1,endy)
      close(129)
      
      string30 =  './data/tauy_ocean'  // '_' // trim(which)
      open(unit=130,file=string30,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(130,REC=1) ((tauy_ocean_out(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+     write(130,REC=1) ((tauy_ocean_out(i,j),i=1,endx),j=1,endy)
      close(130)
      
   endif ! IO_coupling  
@@ -252,14 +253,14 @@
       string7 =  './data/forci_ag'  // '_' // trim(which)
       open(unit=107,file=string7,access='DIRECT',&
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-      write(107,REC=1) ((forcing_ag(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+      write(107,REC=1) ((forcing_ag(i,j),i=1,endx),j=1,endy)
       close(107)
 
     ! Forcing
       string8 =  './data/forci_to'  // '_' // trim(which)
       open(unit=108,file=string8,access='DIRECT',&
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-      write(108,REC=1) ((forcing_total(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+      write(108,REC=1) ((forcing_total(i,j),i=1,endx),j=1,endy)
       close(108)
 
   !  string11 = './data/q'  // '_' // trim(which)
@@ -267,7 +268,7 @@
       string12 =  './data/taux'  // '_' // trim(which)
       open(unit=112,file=string12,access='DIRECT',&
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-      write(112,REC=1) ((taux(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+      write(112,REC=1) ((taux(i,j),i=1,endx),j=1,endy)
       close(112)
   end if !IO_forcing
   
@@ -283,7 +284,7 @@
       string17 =  './data/eta_qg'  // '_' // trim(which)
       open(unit=117,file=string17,access='DIRECT',&
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-      write(117,REC=1) ((eta_qg(i,j),i=1,nx/subsmprto),j=1,ny/subsmprto)
+      write(117,REC=1) ((eta_qg(i,j),i=1,endx),j=1,endy)
       close(117)
 
   !  string18 = './data/eta_ag'  // '_' // trim(which)
@@ -292,14 +293,14 @@
     string20 =  './data/zeta_G' // '_' // trim(which)
     open(unit=120,file=string20,access='DIRECT',&
     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(120,REC=1) (((zeta_G(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
+    write(120,REC=1) (((zeta_G(i,j,k),i=1,endx),j=1,endy),k=1,dummy_int)
     close(120)
 
     ! ZETA-AG
     string21 =  './data/zeta_AG' // '_' // trim(which)
     open(unit=121,file=string21,access='DIRECT',&
     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(121,REC=1) (((zeta_AG(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
+    write(121,REC=1) (((zeta_AG(i,j,k),i=1,endx),j=1,endy),k=1,dummy_int)
     close(121)
 
     
@@ -307,7 +308,7 @@
     string22 =  './data/PSImode' // '_' // trim(which)
     open(unit=122,file=string22,access='DIRECT',&
     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(122,REC=1) (((psimode(i,j,k),i=1,nx/subsmprto),j=1,ny/subsmprto),k=1,dummy_int)
+    write(122,REC=1) (((psimode(i,j,k),i=1,endx),j=1,endy),k=1,dummy_int)
     close(122)
   end if !IO_psivort
 

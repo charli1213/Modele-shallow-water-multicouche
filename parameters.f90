@@ -11,11 +11,11 @@
 
    parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
    
-   parameter ( nx = ixp*2**(iex-1),  ny = jyq*2**(jey-1) ) ! 512
+   parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
       
    parameter ( nz = 3 )
  
-   parameter ( dx = Lx/nx, dy = Ly/ny )
+   parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
    parameter ( nnx = nx+1, nny = ny+1 ) ! 513
 
@@ -42,7 +42,7 @@
   
    parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 144
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -51,7 +51,9 @@
  
    parameter ( save2dfft=.false.,calc1Dspec=.false. )
  
-   parameter ( subsmprto=2, ftsubsmprto=1, save_movie=.true. )
+   parameter ( subsmprto=2, ftsubsmprto=1, save_movie=.true.)
+
+   parameter ( endx = nx/subsmprto+1, endy = ny/subsmprto+1) 
  
    parameter ( ifsteady = .false., forcingtype=0, iou_method=1) 
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)

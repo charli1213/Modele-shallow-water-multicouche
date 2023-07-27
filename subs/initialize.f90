@@ -26,7 +26,12 @@
        grad4u(:,:) = 0.
        grad4v(:,:) = 0.
        array(:,:) = 0.
+       array_x(:,:) = 0.
+       array_y(:,:) = 0.
+       faces_array(:,:) = 0.
        thickness(:,:) = H1
+       rhs_u(:,:,:) = 0.
+       rhs_v(:,:,:) = 0.
        rhs_eta(:,:,:) = 0.
 
        top(:) = 0.
@@ -34,14 +39,14 @@
        top(1) = 1.
        bot(nz) = 1.
 
-       count_specs_1 = 0
-       count_specs_2 = 0
-       count_specs_to = 0
-       count_specs_AG = 0
-       ke1_spec(:) = 0.
-       ke2_spec(:) = 0.
-       for_to_spec(:) = 0.
-       for_ag_spec(:) = 0.
+       !count_specs_1 = 0
+       !count_specs_2 = 0
+       !count_specs_to = 0
+       !count_specs_AG = 0
+       !ke1_spec(:) = 0.
+       !ke2_spec(:) = 0.
+       !for_to_spec(:) = 0.
+       !for_ag_spec(:) = 0.
 
        ! Baroclinic variables :
        Fmodes(:)    = 0.
@@ -137,19 +142,20 @@
        
 
        f(:) = f0
-       
-       do j = 1,ny
-          y = -Ly/2. + (j-1)*dy
-          taux_steady(:,j) = tau0*cos(twopi*y/Ly)
-       enddo
-       array = taux_steady
-       include 'subs/bndy.f90'
-       taux_steady = array
 
-       taux_var(:,:) = tau1
-       array = taux_var
-       include 'subs/bndy.f90'
-       taux_var = array
+       ! Stohastic wind
+       !do j = 1,ny
+       !   y = -Ly/2. + (j-1)*dy
+       !   taux_steady(:,j) = tau0*cos(twopi*y/Ly)
+       !enddo
+       !array = taux_steady
+       !include 'subs/bndy.f90'
+       !taux_steady = array
+       !
+       !taux_var(:,:) = tau1
+       !array = taux_var
+       !include 'subs/bndy.f90'
+       !taux_var = array
 
 
 !   --- Restart
@@ -163,8 +169,8 @@
 
        else !if restart
           open(0,file='restart')
-          do j = 0,nny
-          do i = 0,nnx
+          do j = 1,ny
+          do i = 1,nx
              read(0,*) u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),       &
                   &      eta(i,j,2,1),                         &
                   &      UStokes(i,j,1),VStokes(i,j,1),        &
@@ -216,20 +222,13 @@
 !    Set bndy conditions
 !
        do k = 1,nz
-          array(:,:) = u(:,:,k,1)
-          include 'subs/bndy.f90'
-          u(:,:,k,1) = array(:,:)
 
-          array(:,:) = v(:,:,k,1)
-          include 'subs/bndy.f90'
-          v(:,:,k,1) = array(:,:)
+          array_x(:,:) = u(:,:,k,1)
+          array_y(:,:) = v(:,:,k,1)
+          include 'subs/no_normal_flow.f90'
+          include 'subs/free_slip.f90'
+          u(:,:,k,1) = array_x(:,:)
+          v(:,:,k,1) = array_y(:,:)
 
-          array(:,:) = eta(:,:,k,1)
-          include 'subs/bndy.f90'
-          eta(:,:,k,1) = array(:,:)
        enddo ! k = 1,nz
-
-       array(:,:) = Psurf(:,:)
-       include 'subs/bndy.f90'
-       Psurf(:,:) = array(:,:)
 

@@ -13,18 +13,18 @@
   
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}={Yes,No}.
-  iparm(2)  = 0    ! nxa  : Flag for boundary conditions.
-  iparm(3)  = 0    ! nxb  ! {0}=periodic boundaries
-  iparm(4)  = 0    ! nyc  ! {1}=Dirichlet boundary
-  iparm(5)  = 0    ! nyd  ! {2}=mixed boundary condition (Neumann)
+  iparm(2)  = 1    ! nxa  : Flag for boundary conditions.
+  iparm(3)  = 1    ! nxb  ! {0}=periodic boundaries
+  iparm(4)  = 1    ! nyc  ! {1}=Dirichlet boundary
+  iparm(5)  = 1    ! nyd  ! {2}=mixed boundary condition (Neumann)
 
   iparm(6)  = ixp ! ixp
   iparm(7)  = jyq ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
   iparm(8)  = iex
   iparm(9)  = jey ! 2^[8] = nx = ny  >>>>  iparm(8 ou 9) = log2(nx ou ny)
-  iparm(10) = nnx          ! nx : # de points dans l'intervalle [xa,xb] (incluant la frontière)
+  iparm(10) = nx          ! nx : # de points dans l'intervalle [xa,xb] (incluant la frontière)
                           ! nx = ixp*(2**(iex-1)) + 1
-  iparm(11) = nny          ! ny
+  iparm(11) = ny          ! ny
   iparm(12) = 0           ! iguess : Prendre un guess (0=False)
   
   !     DOCUMENTATION :
@@ -49,7 +49,7 @@
   
   iparm(13) = 5  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
-  length = int(4*(nnx*nny*(10+0+0)+8*(nnx+nny+2))/3)
+  length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
 
   
@@ -57,7 +57,7 @@
   100 format(' > Integer input arguments ',/'      intl = ',I2,       &
            /'      nxa = ',I2,' nxb = ', I2,' nyc = ',I2, ' nyd = ',I2,  &
            /'      ixp = ',I2,' jyq = ',I2,' iex = ',I2,' jey = ',I2,    &
-           /'      nnx = ',I3,' nny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
+           /'      nx = ',I3,' ny = ',I3,' iguess = ',I2,' maxcy = ',I2,  &
            /'      method = ',I2, ' work space estimate = ',I7)
   PRINT *, "     Calculated nx = ", iparm(6)*(2**(iparm(8)-1)) + 1  
 
@@ -125,7 +125,10 @@
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
   CALL RANDOM_NUMBER(delta_psi_BT)
-  delta_psi_BT = delta_psi_BT/10
+  delta_psi_BT(0:1,:) = 0.
+  delta_psi_BT(nx:nnx,:) = 0.
+  delta_psi_BT(:,0:1) = 0.
+  delta_psi_BT(:,ny:nny) = 0.
   ! Conditions Dirichlet
   !delta_psi_BT(1,1:nx) = phi(1,1:nx)
   !delta_psi_BT(nx,1:nx) = phi(nx,1:nx)
@@ -155,14 +158,14 @@
   WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
   WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
   WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
-  WRITE (*,*) "     Shape rhs      =" ,SHAPE(curl_of_RHS_u_BT(1:nnx,1:nny))
-  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psi_BT(1:nnx,1:nny))
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(curl_of_RHS_u_BT(1:nx,1:ny))
+  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psi_BT(1:nx,1:ny))
   WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
   WRITE (*,*) " "
 
   ! initialising MUD2 function
   PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
-  call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nnx,1:nny),delta_psi_BT(1:nnx,1:nny),mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nx,1:ny),delta_psi_BT(1:nx,1:ny),mgopt,ierror)
   PRINT *, "     ERROR =",ierror
   PRINT *, " "
   IF (ierror .gt. 0) THEN

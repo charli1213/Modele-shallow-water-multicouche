@@ -23,7 +23,7 @@ figpath  = casepath + 'figures/'
 # ---- Paramètres ----
 dt   = 1/144 #0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
-nx =  256 #320
+nx =  257 #320
 
 
 
@@ -120,7 +120,7 @@ if __name__ == "__main__" :
             # > The end 
             print(' >>> Saving figures at {}'.format(figpath))
             fig.savefig(figpath + str(today) + '_hovmoller{}_t={}days.png'.format(klayer,maxday))
-            #plt.show()
+            plt.show()
             plt.close()
     else :
         print('Sure! .... \n ')
@@ -216,7 +216,7 @@ if __name__ == "__main__" :
     qty = 'psiBT1'
     qty = 'eta1'
     qty = 'divBT1'
-    qty = 'uBT1'
+    qty = 'eta1'
     
     outt = 1
     ds = tls.create_ds_from_binary(casepath = casepath,
@@ -224,8 +224,9 @@ if __name__ == "__main__" :
                                    #maxday   = 100,
                                    outt     = outt,
                                    klayer   = 1,
-                                   fields = ['uBT1','vBT1','eta1','u1','divBT1','div1'],
+                                   fields = [qty], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
                                    dt=dt,
+                                   nx=nx
                                    )
     nt=len(ds.time)
 
@@ -234,7 +235,7 @@ if __name__ == "__main__" :
     def animate(time, ds=ds):
         im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
         return im,
-    ani =  animation.FuncAnimation(fig, animate, nt , interval=50, blit=True, repeat=True)
+    ani =  animation.FuncAnimation(fig, animate, nt , interval=200, blit=True, repeat=True)
 
     #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
     #ani = FuncAnimation(fig,animate,frames=100)

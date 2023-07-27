@@ -30,7 +30,7 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
     Par défault, la première couche est toujours ouverte (klayer=1). 
     INPUT   :
     KWARGS  :
-     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.    
+p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.    
      - maxday (int)        :: Limite supérieure (en jour) des données qu'on veut ouvrir.
                               Valeur suggérée, car la fonction n'ouvrira jamais plus de
                               de fichiers qu'il y en a dans le dossier data.    
@@ -78,7 +78,8 @@ def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,
             f.close()
                 
         # coords/data = form (dims, data[, attrs, encoding])
-        data = np.roll(data, int(nx/4), axis = 2)
+        #data = np.roll(data, int(nx/4), axis = 2)
+        #data = np.roll(data, int(nx/4), axis = 1)
         ds[name] = xr.DataArray(data,
                                     coords = dict(time=('time',tt,{'units':'days'}),
                                                   x=('x',xx,{'units':'m','name':'x'}),

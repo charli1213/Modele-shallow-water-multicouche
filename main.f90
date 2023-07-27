@@ -11,7 +11,7 @@
       integer nsteps,start_spec
       real ndays,totaltime,dt
       real restart_from
-      integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile
+      integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile,endx,endy
       integer ftsubsmprto,forcingtype, iou_method
       logical restart, use_ramp, ifsteady, gaussian_bump_eta
       logical calc1Dspec,save_movie,save2dfft
@@ -56,83 +56,93 @@
 
 
       
-    !!! ---------- Physical quantities definition ---------- !!!
-      ! > Sides :
-      REAL :: u(0:nnx,0:nny,nz,3), v(0:nnx,0:nny,nz,3)
-      REAL :: u_ag(0:nnx,0:nny,nz), v_ag(0:nnx,0:nny,nz)
-      REAL :: u_qg(0:nnx,0:nny,nz), v_qg(0:nnx,0:nny,nz)
-      REAL :: u_ag_p(0:nnx,0:nny,2), v_ag_p(0:nnx,0:nny,2) !two BC-AG modes: also need complex part
-      REAL :: uBT(0:nnx,0:nny), vBT(0:nnx,0:nny) 
-      REAL :: uBC(0:nnx,0:nny,nz), vBC(0:nnx,0:nny,nz)
-      REAL :: grad2u(0:nnx,0:nny), grad4u(0:nnx,0:nny)
-      REAL :: grad2v(0:nnx,0:nny), grad4v(0:nnx,0:nny)
-      REAL :: taux(0:nnx,0:nny), tauy(0:nnx,0:nny)
-      REAL :: taux_steady(0:nnx,0:nny), taux_var(0:nnx,0:nny)
-      REAL :: rhs_u(0:nnx,0:nny,nz), rhs_v(0:nnx,0:nny,nz)
-      REAL :: wind_x(0:nnx,0:nny)
-      REAL :: uu(0:nnx,0:nny), vv(0:nnx,0:nny)
-      REAL :: uu1(0:nnx,0:nny), vv1(0:nnx,0:nny)
-      REAL :: uu_old(0:nnx,0:nny), vv_old(0:nnx,0:nny)
-      REAL :: mean_rhsuBT, mean_rhsvBT
-      REAL :: uh(0:nnx,0:nny), vh(0:nnx,0:nny)
-      REAL :: dissi_u(0:nnx,0:nny), dissi_v(0:nnx,0:nny)
-      REAL :: invLap_u(0:nnx,0:nny), invLap_v(0:nnx,0:nny)
-      REAL :: taux_ocean(0:nnx,0:nny,2), tauy_ocean(0:nnx,0:nny,2)
-      REAL :: UStokes(0:nnx,0:nny,nz), VStokes(0:nnx,0:nny,nz)
-
+    !!! ---------- Physical quantities definition [x] ---------- !!!
+      ! Mailles/Sides :
+      REAL :: u(0:nnx,0:ny,nz,3), v(0:nx,0:nny,nz,3)
+      REAL :: u_ag(0:nnx,0:ny,nz), v_ag(0:nx,0:nny,nz)
+      REAL :: u_qg(0:nnx,0:ny,nz), v_qg(0:nx,0:nny,nz)
+      REAL :: u_ag_p(0:nnx,0:ny,2), v_ag_p(0:nx,0:nny,2)
+      REAL :: uBT(0:nnx,0:ny), vBT(0:nx,0:nny) 
+      REAL :: uBC(0:nnx,0:ny,nz), vBC(0:nx,0:nny,nz)
+      REAL :: grad2u(0:nnx,0:ny), grad4u(0:nnx,0:ny)
+      REAL :: grad2v(0:nx,0:nny), grad4v(0:nx,0:nny)
+      REAL :: taux(0:nnx,0:ny), tauy(0:nx,0:nny)
+      REAL :: taux_steady(0:nx,0:nny), taux_var(0:nx,0:nny)
+      REAL :: rhs_u(0:nnx,0:ny,nz), rhs_v(0:nx,0:nny,nz)
+      REAL :: wind_x(0:nnx,0:ny)
+      REAL :: uu(0:nnx,0:ny), vv(0:nx,0:nny)
+      REAL :: uu1(0:nnx,0:ny), vv1(0:nx,0:nny)
+      REAL :: uu_old(0:nnx,0:ny), vv_old(0:nx,0:nny)
+      REAL :: uh(0:nnx,0:ny), vh(0:nx,0:nny)
+      REAL :: dissi_u(0:nnx,0:ny), dissi_v(0:nx,0:nny)
+      REAL :: invLap_u(0:nnx,0:ny), invLap_v(0:nx,0:nny)
+      REAL :: taux_ocean(0:nnx,0:ny,2), tauy_ocean(0:nx,0:nny,2) ! WW3
+      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3
+      REAL :: rhs_u_BT(0:nnx,0:ny), rhs_v_BT(0:nx,0:nny) ! mudpack
+      REAL :: rhs_u_BC(0:nnx,0:ny,nz), rhs_v_BC(0:nx,0:nny,nz) ! mudpack
+      REAL :: array_x(0:nnx,0:ny), array_y(0:nx,0:nny) ! dummy
       
-      ! > Centers :
-      REAL :: eta(0:nnx,0:nny,nz,3)
-      REAL :: eta_ag(0:nnx,0:nny), eta_qg(0:nnx,0:nny)
-      REAL :: eta_ag_p(0:nnx,0:nny,2)
-      REAL :: div(0:nnx,0:nny)
-      REAL :: div1(0:nnx,0:nny),div2(0:nnx,0:nny)
-      REAL :: divBT(0:nnx,0:nny)
-      REAL :: Psurf(0:nnx,0:nny), rhs_Psurf(0:nnx,0:nny)
-      REAL :: B(0:nnx,0:nny), B_nl(0:nnx,0:nny)
-      REAL :: rhs_eta(0:nnx,0:nny,nz)
-      REAL :: pressure(0:nnx,0:nny), thickness(0:nnx,0:nny)
-      REAL :: p_out(0:nnx,0:nny)
+      ! Centres/Centers [x] :
+      REAL :: eta(0:nx,0:ny,nz,3)
+      REAL :: rhs_eta(0:nx,0:ny,nz)
+      REAL :: div(0:nx,0:ny)
+      REAL :: div1(0:nx,0:ny),div2(0:nx,0:ny)
+      REAL :: divBT(0:nx,0:ny)
+      REAL :: Psurf(0:nx,0:ny), rhs_Psurf(0:nx,0:ny)
+      REAL :: B(0:nx,0:ny), B_nl(0:nx,0:ny)
+      REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny)
+      REAL :: eta_ag(0:nx,0:ny), eta_qg(0:nx,0:ny)
+      REAL :: eta_ag_p(0:nx,0:ny,2)
+      REAL :: p_out(0:nx,0:ny)
 
-      ! > Nodes :
+      ! Noeuds/Nodes [x] :
       REAL :: zeta(0:nnx,0:nny)
       REAL :: zetaBT(0:nnx,0:nny)
-      REAL :: zeta_G(0:nnx,0:nny,nz),zeta_AG(0:nnx,0:nny,nz)
+      REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
+      REAL :: curl_of_RHS_u_BT(0:nnx,0:nny) ! mudpack
+      REAL :: delta_psi_BT(0:nnx,0:nny) ! mudpack
+      REAL :: psiBT(0:nnx,0:nny) ! mudpack
+      REAL :: array(0:nnx,0:nny) ! dummy
+      REAL :: faces_array(0:nx,0:ny) ! dummy
 
 
-    !!! ---------- Outputs quantities definition ---------- !!!
-      ! > Sides :
-      REAL :: u_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      REAL :: rhsuBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: rhsuBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      REAL :: uBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: UStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: taux_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
+
+
+
+      
+      
+     !!! ---------- Outputs quantities definition ---------- !!!
+      ! *** same as FFT model 
+      ! Sides :
+      REAL :: u_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
+      REAL :: rhsuBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: rhsuBC_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
+      REAL :: uBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: UStokes_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: taux_ocean_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
       ! >
-      REAL :: v_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      REAL :: rhsvBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: rhsvBC_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      REAL :: vBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: VStokes_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: tauy_ocean_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      REAL :: v_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
+      REAL :: rhsvBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: rhsvBC_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
+      REAL :: vBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: VStokes_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: tauy_ocean_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
 
-      ! > Centers :
-      REAL :: eta_out(1:(nx/subsmprto),1:(ny/subsmprto),nz)
-      REAL :: div_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: divBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
+      ! Centers :
+      REAL :: eta_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
+      REAL :: div_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: divBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
       
-      ! > Nodes : 
-      REAL :: zeta_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      REAL :: psiBT_out(1:(nx/subsmprto),1:(ny/subsmprto))
-      
+      ! Nodes : 
+      REAL :: zeta_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: psiBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
 
-      ! Other
-      REAL :: :: sl, ed
+      !!! ---------- Other quantities ---------- 
+      REAL :: sl, ed
       REAL :: ran2
-
-
+      REAL :: mean_rhsuBT, mean_rhsvBT
 
       
       
@@ -145,7 +155,7 @@
       
       REAL :: forcing_qg(0:nnx,0:nny), forcing_ag(0:nnx,0:nny)
       REAL :: forcing_total(0:nnx,0:nny)
-      REAL :: tmp(0:10), array(0:nnx,0:nny)
+      REAL :: tmp(0:10)
       
       ! Initialize qties
       real f(0:nny)
@@ -154,6 +164,7 @@
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
       real Lrossby
+
       ! real amp_matrix(864000) !3000 days
       real amp_forcing, amp, rms_amp, ampfactor, Omgrange !initialize_forcing
       real amp_matrix(nsteps+1),time_tmp(nsteps+1),amp_save,amp_load !nsteps+1 days
@@ -161,40 +172,43 @@
       real ke1, ke2, ke1_qg, ke2_qg, pe, pe_qg, etot, etot_qg
       real*4 tmp_out(10)
 
+      ! *** On bloque tout ce qui est en lien avec fftw parce que ça marchera pas, anyway.
       !2-D FFT spectra reduced
-      real*4 ke1_spec(0:nx), ke2_spec(0:nx)
-      real*4 ke1_qg_spec(0:nx), ke2_qg_spec(0:nx)
-      real*4 ke1_ag_spec(0:nx), ke2_ag_spec(0:nx)
-      real*4 for_to_spec(0:nx), for_ag_spec(0:nx)
+      !real*4 ke1_spec(0:nx), ke2_spec(0:nx)
+      !real*4 ke1_qg_spec(0:nx), ke2_qg_spec(0:nx)
+      !real*4 ke1_ag_spec(0:nx), ke2_ag_spec(0:nx)
+      !real*4 for_to_spec(0:nx), for_ag_spec(0:nx)
       !1-D spectra
-      real*4 kex1_spec(0:nx/2), kex2_spec(0:nx/2)
-      real*4 key1_spec(0:ny/2), key2_spec(0:ny/2)
-      real*4 kex1_spec_tb(0:nx/2,1:ntsrow),key1_spec_tb(0:ny/2,1:ntsrow),tstime(1:ntsrow)
-      real*4 kex2_spec_tb(0:nx/2,1:ntsrow),key2_spec_tb(0:ny/2,1:ntsrow)
+      !real*4 kex1_spec(0:nx/2), kex2_spec(0:nx/2)
+      !real*4 key1_spec(0:ny/2), key2_spec(0:ny/2)
+      !real*4 kex1_spec_tb(0:nx/2,1:ntsrow),key1_spec_tb(0:ny/2,1:ntsrow)
+      !real*4 kex2_spec_tb(0:nx/2,1:ntsrow),key2_spec_tb(0:ny/2,1:ntsrow)
       !
-      double complex,dimension(nx/2+1,ny,nz) :: ufft,vfft,etafft
-      double complex,dimension(nx/2+1,ny) :: ftotalfft,fagfft,div_fft
-
-      double complex,dimension(nx/2+1,ny,nz) :: u_agfft,v_agfft,u_qgfft,v_qgfft
-      double complex,dimension(nx/2+1,ny) :: u_agfft_bc,v_agfft_bc,u_gfft_bc,v_gfft_bc
-      double complex,dimension(nx/2+1,ny) :: eta_agfft,eta_qgfft
+      !double complex,dimension(nx/2+1,ny,nz) :: ufft,vfft,etafft
+      !double complex,dimension(nx/2+1,ny) :: ftotalfft,fagfft,div_fft
+      !
+      !double complex,dimension(nx/2+1,ny,nz) :: u_agfft,v_agfft,u_qgfft,v_qgfft
+      !double complex,dimension(nx/2+1,ny) :: u_agfft_bc,v_agfft_bc,u_gfft_bc,v_gfft_bc
+      !double complex,dimension(nx/2+1,ny) :: eta_agfft,eta_qgfft
 
       ! Poincare modes
-      double complex,dimension(nx/2+1,ny,2) :: u_agfft_p,v_agfft_p,eta_agfft_p,div_fft_p 
-      real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
-      real sgn1,tmp2,tmp3
-      double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
+      !double complex,dimension(nx/2+1,ny,2) :: u_agfft_p,v_agfft_p,eta_agfft_p,div_fft_p 
+      !real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
+      !real sgn1,tmp2,tmp3
+      !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
       integer i, j, k, ii, jj, kk, ip, im, jp, jm, kp, km
-      integer ilevel, itt,  it, its, imode, ntimes, inkrow, wfits
+      integer ilevel, itt,  it, its, imode, ntimes, inkrow
+      real*4 tstime(1:ntsrow)
       
-      !subsampling arrays
-      integer,allocatable:: isubx(:),isuby(:),iftsubkl(:,:)
-      integer rdsubk,rdsubl !temporary variables for reading (k,l) pair 
+      !subsampling arrays (I/O)
+      integer,allocatable:: isubx(:),isuby(:)!,iftsubkl(:,:)
+      !integer rdsubk,rdsubl !temporary variables for reading (k,l) pair 
       
-      !subsampling size
+      !subsampling size (I/O)
       integer szsubx,szsuby,szftrdrow,szftrdcol
+      
       !I/O info
-      integer icount,iftcount, count_specs_1, count_specs_2
+      integer icount ,iftcount, count_specs_1, count_specs_2
       integer icount_srt,iftcount_srt
       integer count_specs_to, count_specs_ag
 
@@ -217,25 +231,20 @@
       character(88) string56, string57, string58, string59, string60
       character(88) string99,string98,fmtstr,fmtstr1
 
-      ! Psi correction with MUDPACK
-      REAL :: rhs_u_BT(0:nnx,0:nny),    rhs_v_BT(0:nnx,0:nny)
-      REAL :: rhs_u_BC(0:nnx,0:nny,nz), rhs_v_BC(0:nnx,0:nny,nz)
-      REAL :: curl_of_RHS_u_BT(0:nnx,0:nny)
-      REAL :: delta_psi_BT(0:nnx,0:nny)
-      REAL :: psiBT(0:nnx,0:nny)
       INTEGER :: dummy_int
-      REAL :: dummy !Use this for anything
+      REAL :: dummy !Usep this for anything
       
       ! MUDPACK solver
       INTEGER            :: iparm(17), mgopt(4), length
       REAL               :: fparm(6)
       REAL,ALLOCATABLE   :: workm(:)
       CHARACTER(LEN=80)  :: myformat
+
       ! SUBROUTINES CALLS
       external coef,bndyc
 
-      include 'fftw_stuff/fft_params.f90'
-      include 'fftw_stuff/fft_init.f90'
+      !include 'fftw_stuff/fft_params.f90'
+      !include 'fftw_stuff/fft_init.f90'
       
       ! >>> Modification CEL >>>
       !IF (cou) THEN
@@ -268,7 +277,7 @@
 
       
       ! === Complex number i
-      eye=(0.0,1.0)
+       eye=(0.0,1.0)
 
       ! === Set random number seeds
       call date_and_time(VALUES=values)
@@ -294,7 +303,7 @@
 
 
       ! === FFT subsmpling, fed with (k,l) pair
-      include 'subs/read_kxky_subsmp.f90'
+      ! include 'subs/read_kxky_subsmp.f90'
 
       ! === 
       !set icount and time based on if restart is true or false !moved to initialize
@@ -313,9 +322,9 @@
       ! --- Initializing mudpack
       include 'subs/init_mudpack.f90'
 
-      ! --- Initializing fields and rossby radii
+      ! --- Initializing each fields and rossby radii
       include 'subs/initialize.f90'
-      wfits = 1
+
       its=1
       itlocal=1
       ! (***) Faut le mettre si on veut un forçage transient.
@@ -325,7 +334,7 @@
       if(restart .eqv. .false.)   nspecfile=0
       write(*,*) 'iout,ispechst,ntsrow',iout,ispechst,ntsrow
       
-      call get_taux(taux_steady,amp_matrix(its),taux)
+      !call get_taux(taux_steady,amp_matrix(its),taux)
 
       !==============================================================
       !
@@ -334,12 +343,12 @@
       !==============================================================
       write(*,*) 'First time step'
       
-      ramp = 1.
-      if ( use_ramp .eqv. .true. ) then
-         tmp(1) = 10*twopi/f0/dt
-         ramp0  =  1./tmp(1)
-         ramp = ramp0
-      endif
+      !ramp = 1.
+      !if ( use_ramp .eqv. .true. ) then
+      !   tmp(1) = 10*twopi/f0/dt
+      !   ramp0  =  1./tmp(1)
+      !   ramp = ramp0
+      !endif
 
 
       !
@@ -376,6 +385,15 @@
          endif
          !
 
+         ! Boundaries on the random noise
+         array_x = uu
+         array_y = vv
+         include 'subs/no_normal_flow.f90'
+         include 'subs/free_slip.f90'
+         uu = array_x
+         vv = array_y
+         
+
          ! Finding thickness locally
          if (k.eq.1) then
             thickness(:,:) = H(k) - eta(:,:,k+1,1) 
@@ -410,11 +428,11 @@
 
       ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
       rhs_eta(:,:,1) = 0. ! First layer is a rigid lid.
-      array(:,:) = rhs_eta(:,:,nz) ! bottom layer. array = \Delta \eta_{k+1}
-      eta(:,:,nz,2) = eta(:,:,nz,1) + dt*array(:,:)
+      faces_array(:,:) = rhs_eta(:,:,nz) ! bottom layer. faces_array = \Delta \eta_{k+1}
+      eta(:,:,nz,2) = eta(:,:,nz,1) + dt*faces_array(:,:)
       do k = nz-1, 2, -1
-         array(:,:)   = rhs_eta(:,:,k) + array(:,:)
-         eta(:,:,k,2) = eta(:,:,k,1) + dt*array(:,:)
+         faces_array(:,:)   = rhs_eta(:,:,k) + faces_array(:,:)
+         eta(:,:,k,2) = eta(:,:,k,1) + dt*faces_array(:,:)
       end do ! end k-loop
       
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
@@ -428,12 +446,9 @@
       
       time = dt
       its = its + 1
-      call get_taux(taux_steady,amp_matrix(its),taux)
+      !call get_taux(taux_steady,amp_matrix(its),taux)
 
 
-
-      ! >>> First OUTPUT (Timestep =1)
-      ! For dump_bin.f90
       u(:,:,:,3) = u(:,:,:,2)
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
@@ -529,11 +544,11 @@
 
          ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
          rhs_eta(:,:,1) = 0. ! Rigid lid
-         array(:,:) = rhs_eta(:,:,nz)
-         eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*array(:,:)
+         faces_array(:,:) = rhs_eta(:,:,nz)
+         eta(:,:,nz,3) = eta(:,:,nz,1) + 2.*dt*faces_array(:,:)
          do k = nz-1, 2, -1
-            array(:,:) = rhs_eta(:,:,k) + array(:,:)
-            eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*array(:,:)
+            faces_array(:,:) = rhs_eta(:,:,k) + faces_array(:,:)
+            eta(:,:,k,3) = eta(:,:,k,1) + 2.*dt*faces_array(:,:)
          end do ! end k-loop
          
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
@@ -542,25 +557,11 @@
       !                      RHS (End)                     !
       ! ================================================== !
 
-         ! >>> DIVERGENCE CORRECTION (TESTING) >>>
-         !!!if (mod(its,10).eq.0) then
-         !!!   print *, "Barotropic correction, its ;", its
-         !!!   !ilevel = 3
-         !!!   !include 'subs/div_correction.f90'
-         !!!   ilevel = 2
-         !!!   include 'subs/div_correction.f90'
-         !!!   !ilevel = 1
-         !!!   !include 'subs/div_correction.f90'
-         !!!
-         !!!endif
-         ! <<< DIVERGENCE CORRECTION (END) <<<
-
-
          
          ! --- Updating time ---
          time = time + dt
          today = time/86400
-         call get_taux(taux_steady,amp_matrix(its),taux)
+         !call get_taux(taux_steady,amp_matrix(its),taux)
 
          
          u(:,:,:,2) = u(:,:,:,2) + rf*(u(:,:,:,1)+u(:,:,:,3)-2*u(:,:,:,2))
@@ -576,8 +577,8 @@
 
          ke1 = 0.
          ke2 = 0.
-         do j = 1, ny
-         do i = 1, nx
+         do j = 1, ny-1
+         do i = 1, nx-1
             ke1 = ke1+(u(i,j,1,3)**2+v(i,j,1,3)**2)/2.
             ke2 = ke2+(u(i,j,2,3)**2+v(i,j,2,3)**2)/2.
          enddo
@@ -609,67 +610,64 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            eta(:,:,1,3) = delta_psi_BT(:,:)
-            !eta(1:nnx,1:nny,1,3) = rhs_mud(1:nnx,1:nny)
-            array = eta(:,:,1,3)
-            include 'subs/bndy.f90'
-            eta(:,:,1,3) = array
+            eta(1:nx,1:ny,1,3) = delta_psi_BT(1:nx,1:ny)
             include 'subs/dump_bin.f90'
 
             if(mod(its,iout).eq.0)write(*,*) 'current its',its
             print*, 'writing data No.', icount
          end if
 
-         if ( mod(its,ispechst).eq.0 ) then
-            count_specs_1 = count_specs_1 + 1
-            count_specs_2 = count_specs_2 + 1 
-            count_specs_to = count_specs_to + 1
-            count_specs_ag = count_specs_ag + 1
-
-            include 'subs/calc_1Dspec.f90'
-            include 'subs/calc_2Dspec.f90'              
-            
-            
-            ! AG+, AG- decomposition
-            ! 1. convert eta_A and div to FFT space
-            datr(:,:) = eta_ag(1:nx,1:ny)
-            include 'fftw_stuff/spec1.f90'
-            eta_agfft(:,:)=datc ! BC mode
-
-            k=1
-            include 'subs/div_vort.f90'
-            div1 = div
-
-            k=2
-            include 'subs/div_vort.f90'
-            div2 = div
-
-            datr(:,:) = div2(1:nx,1:ny)-div1(1:nx,1:ny)
-            include 'fftw_stuff/spec1.f90'
-            div_fft(:,:)=datc ! BC mode
-
-            ! for each k,l pair, calculate M, then eta_+ and eta_-
-            ! In polarization relations, (2*pi) in FT is vanished
-            kappa_ijsq=nkx**2+nky**2 !nkx,nky defined in fft_params.f90
-            M=eye*sqrt(c_bc**2*kappa_ijsq+f0**2)*gprime(2)/c_bc**2 !only bc mode
-            ! two AG frequencies omega_+ and omega_- (BC only for rigid lid)
-            do imode = 1,2
-               sgn1=-(-1.)**imode; ! sgn1=1 when imode ==1, sgn1=-1 when imode==2
-               omega_p(:,:,imode)=sgn1*sqrt(c_bc**2*kappa_ijsq+f0**2)
-               eta_agfft_p(:,:,imode)=1/(2*M)*(M*eta_agfft+sgn1*div_fft)
-               u_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nkx+eye*f0*nky)&
-                    /(c_bc**2*kappa_ijsq)
-               v_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nky-eye*f0*nkx)&
-                    /(c_bc**2*kappa_ijsq)
-            end do ! imode
-            ! AG+-mode decomp finished
-
-            ! Write 2-D FFT fields
-            if(save2dfft) then
-               iftcount=iftcount+1
-               include 'subs/dump_bin_spec2d.f90'
-            endif !itsrow==ntsrow
-         endif
+         !!! FFTW stuff that CÉ removed.
+         !if ( mod(its,ispechst).eq.0 ) then
+         !   count_specs_1 = count_specs_1 + 1
+         !   count_specs_2 = count_specs_2 + 1 
+         !   count_specs_to = count_specs_to + 1
+         !   count_specs_ag = count_specs_ag + 1
+         !
+         !   include 'subs/calc_1Dspec.f90'
+         !   include 'subs/calc_2Dspec.f90'              
+         !   
+         !   
+         !   ! AG+, AG- decomposition
+         !   ! 1. convert eta_A and div to FFT space
+         !   datr(:,:) = eta_ag(1:nx,1:ny)
+         !   include 'fftw_stuff/spec1.f90'
+         !   eta_agfft(:,:)=datc ! BC mode
+         !
+         !   k=1
+         !   include 'subs/div_vort.f90'
+         !   div1 = div
+         !
+         !   k=2
+         !   include 'subs/div_vort.f90'
+         !   div2 = div
+         !
+         !   datr(:,:) = div2(1:nx,1:ny)-div1(1:nx,1:ny)
+         !   include 'fftw_stuff/spec1.f90'
+         !   div_fft(:,:)=datc ! BC mode
+         !
+         !   ! for each k,l pair, calculate M, then eta_+ and eta_-
+         !   ! In polarization relations, (2*pi) in FT is vanished
+         !   kappa_ijsq=nkx**2+nky**2 !nkx,nky defined in fft_params.f90
+         !   M=eye*sqrt(c_bc**2*kappa_ijsq+f0**2)*gprime(2)/c_bc**2 !only bc mode
+         !   ! two AG frequencies omega_+ and omega_- (BC only for rigid lid)
+         !   do imode = 1,2
+         !      sgn1=-(-1.)**imode; ! sgn1=1 when imode ==1, sgn1=-1 when imode==2
+         !      omega_p(:,:,imode)=sgn1*sqrt(c_bc**2*kappa_ijsq+f0**2)
+         !      eta_agfft_p(:,:,imode)=1/(2*M)*(M*eta_agfft+sgn1*div_fft)
+         !      u_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nkx+eye*f0*nky)&
+         !           /(c_bc**2*kappa_ijsq)
+         !      v_agfft_p(:,:,imode)=gprime(2)*eta_agfft(:,:)*(omega_p(:,:,imode)*nky-eye*f0*nkx)&
+         !           /(c_bc**2*kappa_ijsq)
+         !   end do ! imode
+         !   ! AG+-mode decomp finished
+         !
+         !   ! Write 2-D FFT fields
+         !   if(save2dfft) then
+         !      iftcount=iftcount+1
+         !      include 'subs/dump_bin_spec2d.f90'
+         !   endif !itsrow==ntsrow
+         !endif
 
 
          ! ========= From the original code
@@ -686,7 +684,7 @@
       enddo ! its
       !===== time loop ends here
 
-      include 'fftw_stuff/fft_destroy.f90'
+      !include 'fftw_stuff/fft_destroy.f90'
     end program main
 
 function ran2(idum)
