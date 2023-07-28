@@ -379,9 +379,9 @@
          ! Adding random noise 
          if (restart .eqv. .false.) then
             CALL RANDOM_NUMBER(uu)
-            uu(:,:) = (uu(:,:)-0.5)/100.
+            uu(:,:) = (uu(:,:)-0.5)/1000.
             CALL RANDOM_NUMBER(vv)
-            vv(:,:) = (vv(:,:)-0.5)/100.
+            vv(:,:) = (vv(:,:)-0.5)/1000.
          endif
          !
 
@@ -417,7 +417,7 @@
       !
       ilevel = 1      
       p_out(:,:) = 0.
-      include 'subs/p_correction_mud2.f90'
+      include 'subs/psi_correction_mudpack.f90'
       ! <<< barotropic correction (End)
 
 
@@ -532,7 +532,7 @@
          !
          ilevel = 2
          p_out(:,:) = 0.
-         include 'subs/p_correction_mud2.f90'
+         include 'subs/psi_correction_mudpack.f90'
          ! <<< Barotropic psi-correction (End)
 
          

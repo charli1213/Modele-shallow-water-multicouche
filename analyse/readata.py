@@ -216,9 +216,9 @@ if __name__ == "__main__" :
     qty = 'psiBT1'
     qty = 'eta1'
     qty = 'divBT1'
-    qty = 'eta1'
+    qty = 'div1'
     
-    outt = 1
+    outt = 5
     ds = tls.create_ds_from_binary(casepath = casepath,
                                    #minday   = 1,
                                    #maxday   = 100,
