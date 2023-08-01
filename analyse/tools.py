@@ -23,7 +23,14 @@ dt     = 0.5 # Spatial discretisation (1/fileperday)
 #                                                                   # 
 # ================================================================= #
 
-def create_ds_from_binary(casepath='./',maxday=365*5,outt=1,klayer=klayer,dt=dt,minday=0,fields=None,nx=nx) : 
+def create_ds_from_binary(casepath='./',
+                          minday=0,
+                          maxday=365*5,
+                          outt=1,
+                          klayer=klayer,
+                          fields=None,
+                          dt=dt,
+                          nx=nx) : 
     """
     La fonction 'create_ds_from_binary' ouvre un nombre nday/dt/outt de
     binaires pour créer une base de données de type XArray.Dataset .
@@ -65,8 +72,9 @@ p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.
     step = outt*dt
     xx   = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
     tt   = np.arange(min(minday,min_filenumber%100000),
-                     min(maxday+step,nb_of_files*dt),step) # Le vecteur temps [jours]
-
+                     min(maxday+step,nb_of_files*dt),
+                     step) # Le vecteur temps [jours]
+    
     # > Boucle sur les noms des output
     for name in data_names :
         # On recrée data, car problème de np.roll.

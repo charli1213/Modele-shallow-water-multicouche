@@ -21,7 +21,7 @@ figpath  = casepath + 'figures/'
 #datapath = './testgprime/data'
 
 # ---- Paramètres ----
-dt   = 1/144 #0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
+dt   = 0.25 #0.25 #1/96 #0.5 # [days] # Fréquence des outputs (fileperday)
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
 nx =  257 #320
 
@@ -48,16 +48,16 @@ if __name__ == "__main__" :
     #                                                                   #
     #                Hovmoller of curl, zeta, eta, unorm                #
     #                                                                   #
-    # ================================================================= #    
-    debug = input('Sortir Hovmoller? [Y/n] \n')
-    if 'Y' in debug :
+    # ================================================================= #
+    # Code-Gate
+    if input('Sortir Hovmoller? [y/n] \n') == 'y' : 
 
         # Which layer to observe
         klayer  = str(int(input("quelle couche?")))
         fields_list = [fname+str(klayer) for fname in ['u','v','zeta','div','eta']]
         
         # > Params : 
-        for maxday,outt in zip([50,250,750,850,950,1000,1500,1800], [1,5,8,10,10,10,15,20]) :
+        for maxday,outt in zip([50,250,500,750,850,950,1000,1500,1800], [1,5,8,10,10,10,10,15,20]) :
             print('\n >>> Figure {} jours'.format(maxday))
 
             ### (***) On ouvre les données ici pour sauver de la mémoire vive, car on
@@ -67,9 +67,10 @@ if __name__ == "__main__" :
                                            maxday   = maxday,
                                            outt     = outt,
                                            klayer   = klayer,
-                                           dt=dt,
                                            fields   = fields_list,
-                                           nx = nx)
+                                           dt       = dt,
+                                           nx       = nx,
+                                           )
             
             which_fields = ['zeta','div','eta','unorm']
             # > Figure :
@@ -124,16 +125,20 @@ if __name__ == "__main__" :
             plt.close()
     else :
         print('Sure! .... \n ')
+        
     # ================================================================= #
     #                                                                   #
     #                   Checking barotropic transport                   #
     #                                                                   #
     # ================================================================= #    
+    # Code-Gate : 
+    if input('Checking barotropic transport? [y/n] \n') == 'y':
 
-    debug = input('Checking barotropic transport? [Y/n] \n')
-    if 'Y' in debug :
+        # Removing old dataset 
         try : del ds
         except : pass
+
+        # Physical qty
         dx = 2000000/nx
         Htot = 3000
         ds = xr.Dataset()
@@ -208,38 +213,38 @@ if __name__ == "__main__" :
     #                                                                   # 
     # ================================================================= #
 
+    if (input('Voir animation? [y/n]') == 'y') :
+        try : del ds
+        except : pass
 
-    try : del ds
-    except : pass
-
-    qty = 'div_rhsBT1'
-    qty = 'psiBT1'
-    qty = 'eta1'
-    qty = 'divBT1'
-    qty = 'div1'
-    
-    outt = 5
-    ds = tls.create_ds_from_binary(casepath = casepath,
-                                   #minday   = 1,
-                                   #maxday   = 100,
+        qty = 'div_rhsBT1'
+        qty = 'psiBT1'
+        qty = 'eta1'
+        qty = 'divBT1'
+        qty = 'div1'
+        
+        outt = 5
+        ds = tls.create_ds_from_binary(casepath = casepath,
+                                       #minday   = 1,
+                                       #maxday   = 100,
                                    outt     = outt,
-                                   klayer   = 1,
-                                   fields = [qty], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
-                                   dt=dt,
-                                   nx=nx
-                                   )
-    nt=len(ds.time)
+                                       klayer   = 1,
+                                       fields = [qty], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
+                                       dt=dt,
+                                       nx=nx
+                                       )
+        nt=len(ds.time)
 
-    fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
+        fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
 
-    def animate(time, ds=ds):
-        im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
-        return im,
-    ani =  animation.FuncAnimation(fig, animate, nt , interval=200, blit=True, repeat=True)
+        def animate(time, ds=ds):
+            im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
+            return im,
+        ani =  animation.FuncAnimation(fig, animate, nt , interval=200, blit=True, repeat=True)
 
-    #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
-    #ani = FuncAnimation(fig,animate,frames=100)
-    #plt.close()
-    plt.show()
-    #HTML(ani.to_jshtml()) #Show the animation in the kernel
+        #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
+        #ani = FuncAnimation(fig,animate,frames=100)
+        #plt.close()
+        plt.show()
+        #HTML(ani.to_jshtml()) #Show the animation in the kernel
     
