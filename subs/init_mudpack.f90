@@ -1,8 +1,8 @@
    
-  curl_of_RHS_u_BT(:,:) = 0.
-  delta_psi_BT(:,:)  = 0.
-  CALL RANDOM_NUMBER(psiBT)
-  psiBT(:,:) = psiBT(:,:)/1000.
+  RHS_zetaBT(:,:,:) = 0.
+  delta_psiBT(:,:,:)  = 0.
+  psiBT(:,:) = 0.
+  zetaBT(:,:) = 0.
   
   ! ************************************************** !
   !                                                    !
@@ -124,16 +124,13 @@
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(delta_psi_BT)
-  delta_psi_BT(0:1,:) = 0.
-  delta_psi_BT(nx:nnx,:) = 0.
-  delta_psi_BT(:,0:1) = 0.
-  delta_psi_BT(:,ny:nny) = 0.
-  ! Conditions Dirichlet
-  !delta_psi_BT(1,1:nx) = phi(1,1:nx)
-  !delta_psi_BT(nx,1:nx) = phi(nx,1:nx)
-  !delta_psi_BT(1:nx,1) = phi(1:nx,1)
-  !delta_psi_BT(1:nx,ny) = phi(1:nx,ny)
+  CALL RANDOM_NUMBER(delta_psiBT(:,:,2))
+  delta_psiBT(:,:,:) = delta_psiBT(:,:,:)/1000000
+  ! Dirichlet boundary conditions : 
+  delta_psiBT(1 ,:,2) = 0.
+  delta_psiBT(nx,:,2) = 0.
+  delta_psiBT(:,1 ,2) = 0.
+  delta_psiBT(:,ny,2) = 0.
 
 
   ! mgopt
@@ -158,14 +155,14 @@
   WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
   WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
   WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
-  WRITE (*,*) "     Shape rhs      =" ,SHAPE(curl_of_RHS_u_BT(1:nx,1:ny))
-  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psi_BT(1:nx,1:ny))
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(RHS_zetaBT(:,:,2))
+  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psiBT(:,:,2))
   WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
   WRITE (*,*) " "
 
   ! initialising MUD2 function
   PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
-  call mud2(iparm,fparm,workm,coef,bndyc,curl_of_RHS_u_BT(1:nx,1:ny),delta_psi_BT(1:nx,1:ny),mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,RHS_zetaBT(:,:,2),delta_psiBT(:,:,2),mgopt,ierror)
   PRINT *, "     ERROR =",ierror
   PRINT *, " "
   IF (ierror .gt. 0) THEN

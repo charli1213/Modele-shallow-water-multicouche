@@ -53,8 +53,8 @@
  
    parameter ( subsmprto=2, ftsubsmprto=1, save_movie=.true.)
 
-   parameter ( endx = nx/subsmprto+1, endy = ny/subsmprto+1) 
- 
+   parameter ( szsubx=ceiling(nx/(subsmprto*1.)) , szsuby=ceiling(ny/(subsmprto*1.)) )
+   
    parameter ( ifsteady = .false., forcingtype=0, iou_method=1) 
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way

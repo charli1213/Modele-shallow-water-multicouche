@@ -34,7 +34,7 @@
           im = i-1
 
        faces_array(i,j) = (uh(ip,j)-uh(i,j))/dx   &
-       &          + (vh(i,jp)-vh(i,j))/dy 
+       &                + (vh(i,jp)-vh(i,j))/dy 
 
        enddo
        enddo

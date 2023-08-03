@@ -48,16 +48,20 @@
 
        ! --- Edges loop
        do j = 1,ny-1
+          jp = j+1
+          jm = j-1
        do i = 1,nx-1
-       
-          grad2u(i,j) = (uu_old(i+1,j)+uu_old(i-1,j)-2.*uu_old(i,j))/dx/dx   &
-          &           + (uu_old(i,j+1)+uu_old(i,j-1)-2.*uu_old(i,j))/dy/dy   
+          ip = i+1
+          im = i-1
           
-          grad2v(i,j) = (vv_old(i+1,j)+vv_old(i-1,j)-2.*vv_old(i,j))/dx/dx   &
-          &           + (vv_old(i,j+1)+vv_old(i,j-1)-2.*vv_old(i,j))/dy/dy   
+          grad2u(i,j) = (uu_old(ip,j)+uu_old(im,j)-2.*uu_old(i,j))/dx/dx   &
+          &           + (uu_old(i,jp)+uu_old(i,jm)-2.*uu_old(i,j))/dy/dy   
+          
+          grad2v(i,j) = (vv_old(ip,j)+vv_old(im,j)-2.*vv_old(i,j))/dx/dx   &
+          &           + (vv_old(i,jp)+vv_old(i,jm)-2.*vv_old(i,j))/dy/dy   
 
-          uh(i,j) = 0.5*(thickness(i,j)+thickness(i-1,j))*uu(i,j)
-          vh(i,j) = 0.5*(thickness(i,j)+thickness(i,j-1))*vv(i,j)
+          uh(i,j) = 0.5*(thickness(i,j)+thickness(im,j))*uu(i,j)
+          vh(i,j) = 0.5*(thickness(i,j)+thickness(i,jm))*vv(i,j)
 
        enddo
        enddo
@@ -93,7 +97,7 @@
 
        wind_x(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
        wind_x(i,j) = wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
-
+       
        enddo
        enddo
 

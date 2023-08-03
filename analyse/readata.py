@@ -219,8 +219,6 @@ if __name__ == "__main__" :
 
         qty = 'div_rhsBT1'
         qty = 'psiBT1'
-        qty = 'eta1'
-        qty = 'divBT1'
         qty = 'div1'
         
         outt = 5
@@ -229,7 +227,7 @@ if __name__ == "__main__" :
                                        #maxday   = 100,
                                    outt     = outt,
                                        klayer   = 1,
-                                       fields = [qty], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
+                                       fields = [qty,'divBT1'], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
                                        dt=dt,
                                        nx=nx
                                        )
@@ -240,7 +238,7 @@ if __name__ == "__main__" :
         def animate(time, ds=ds):
             im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
             return im,
-        ani =  animation.FuncAnimation(fig, animate, nt , interval=200, blit=True, repeat=True)
+        ani =  animation.FuncAnimation(fig, animate, nt , interval=100, blit=True, repeat=True)
 
         #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
         #ani = FuncAnimation(fig,animate,frames=100)

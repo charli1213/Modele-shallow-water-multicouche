@@ -12,6 +12,7 @@
       real ndays,totaltime,dt
       real restart_from
       integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile,endx,endy
+      integer szsubx,szsuby
       integer ftsubsmprto,forcingtype, iou_method
       logical restart, use_ramp, ifsteady, gaussian_bump_eta
       logical calc1Dspec,save_movie,save2dfft
@@ -101,8 +102,10 @@
       REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
-      REAL :: curl_of_RHS_u_BT(0:nnx,0:nny) ! mudpack
-      REAL :: delta_psi_BT(0:nnx,0:nny) ! mudpack
+      REAL :: RHS_zetaBT(1:nx,1:ny,2) ! mudpack
+      REAL :: delta_psiBT(1:nx,1:ny,2) ! mudpack
+      REAL :: correction_RHSzetaBT(1:nx,1:ny) ! mudpack
+      REAL :: correction_deltaPsiBT(1:nx,1:ny) ! mudpack
       REAL :: psiBT(0:nnx,0:nny) ! mudpack
       REAL :: array(0:nnx,0:nny) ! dummy
       REAL :: faces_array(0:nx,0:ny) ! dummy
@@ -116,28 +119,28 @@
      !!! ---------- Outputs quantities definition ---------- !!!
       ! *** same as FFT model 
       ! Sides :
-      REAL :: u_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
-      REAL :: rhsuBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: rhsuBC_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
-      REAL :: uBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: UStokes_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: taux_ocean_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: u_out(1:szsubx,1:szsuby,nz)
+      REAL :: rhsuBT_out(1:szsubx,1:szsuby)
+      REAL :: rhsuBC_out(1:szsubx,1:szsuby,nz)
+      REAL :: uBT_out(1:szsubx,1:szsuby)
+      REAL :: UStokes_out(1:szsubx,1:szsuby)
+      REAL :: taux_ocean_out(1:szsubx,1:szsuby)
       ! >
-      REAL :: v_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
-      REAL :: rhsvBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: rhsvBC_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
-      REAL :: vBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: VStokes_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: tauy_ocean_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: v_out(1:szsubx,1:szsuby,nz)
+      REAL :: rhsvBT_out(1:szsubx,1:szsuby)
+      REAL :: rhsvBC_out(1:szsubx,1:szsuby,nz)
+      REAL :: vBT_out(1:szsubx,1:szsuby)
+      REAL :: VStokes_out(1:szsubx,1:szsuby)
+      REAL :: tauy_ocean_out(1:szsubx,1:szsuby)
 
       ! Centers :
-      REAL :: eta_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1),nz)
-      REAL :: div_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: divBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: eta_out(1:szsubx,1:szsuby,nz)
+      REAL :: div_out(1:szsubx,1:szsuby)
+      REAL :: divBT_out(1:szsubx,1:szsuby)
       
       ! Nodes : 
-      REAL :: zeta_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
-      REAL :: psiBT_out(1:(nx/subsmprto+1),1:(ny/subsmprto+1))
+      REAL :: zeta_out(1:szsubx,1:szsuby)
+      REAL :: psiBT_out(1:szsubx,1:szsuby)
 
       !!! ---------- Other quantities ---------- 
       REAL :: sl, ed
@@ -205,7 +208,7 @@
       !integer rdsubk,rdsubl !temporary variables for reading (k,l) pair 
       
       !subsampling size (I/O)
-      integer szsubx,szsuby,szftrdrow,szftrdcol
+      integer szftrdrow,szftrdcol
       
       !I/O info
       integer icount ,iftcount, count_specs_1, count_specs_2
@@ -284,8 +287,6 @@
       iseed = -(values(8)+values(7)+values(6))
 
       ! === Allocate variables
-      szsubx=ceiling(nx/(subsmprto+1e-15))
-      szsuby=ceiling(ny/(subsmprto+1e-15))
       write(*,*) 'Physical field subsmpling res.',szsubx,'by',szsuby
       ! szftrdrow=ceiling((nx/2+1)/(ftsubsmprto+1e-15))
       ! szftrdcol=ceiling(ny/(ftsubsmprto+1e-15))
@@ -376,12 +377,23 @@
          uu_old(:,:) = u(:,:,k,1) 
          vv_old(:,:) = v(:,:,k,1)
 
-         ! Adding random noise 
+         ! Adding random noise from a psiBT
          if (restart .eqv. .false.) then
-            CALL RANDOM_NUMBER(uu)
-            uu(:,:) = (uu(:,:)-0.5)/1000.
-            CALL RANDOM_NUMBER(vv)
-            vv(:,:) = (vv(:,:)-0.5)/1000.
+            psiBT(:,:) = 0.
+            CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1))
+            psiBT(:,:)  = (psiBT(:,:)-0.5)/1000000.
+            psiBT(0,:) = 0.
+            psiBT(nx,:) = 0.
+            psiBT(:,0) = 0.
+            psiBT(:,ny) = 0.
+            
+            do j = 1,ny-1
+            do i = 1,nx-1
+               uu(i,j) =  - (psiBT(i,j+1) - psiBT(i,j))/dy  ! barotropic part-x
+               vv(i,j) =    (psiBT(i+1,j) - psiBT(i,j))/dx  ! barotropic part-y
+            enddo
+            enddo
+            
          endif
          !
 
@@ -587,11 +599,11 @@
          write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
-         if (mod(its,1000).eq.0 ) then
-            ilevel = 2
-            print *, '<CEL-CALL> Strong divergence correction.'
-            include 'subs/strong_correction.f90'
-         end if
+         !-!if (mod(its,10000).eq.0 ) then
+         !-!   ilevel = 2
+         !-!   print *, '<CEL-CALL> Strong divergence correction. its = ', its
+         !-!   include 'subs/strong_correction.f90'
+         !-!end if
          
          !if(nsteps.lt.1.and.save_movie) then
          !   if ( mod(its,iout).eq.0 ) then  ! output 
@@ -615,7 +627,7 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            eta(1:nx,1:ny,1,3) = delta_psi_BT(1:nx,1:ny)
+            eta(1:nx,1:ny,1,3) = delta_PsiBT(1:nx,1:ny,2)
             include 'subs/dump_bin.f90'
 
             if(mod(its,iout).eq.0)write(*,*) 'current its',its
