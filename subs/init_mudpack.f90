@@ -1,8 +1,10 @@
    
-  RHS_zetaBT(:,:,:) = 0.
-  delta_psiBT(:,:,:)  = 0.
   psiBT(:,:) = 0.
+  psiBT_old(:,:) = 0.
   zetaBT(:,:) = 0.
+  zetaBT_old(:,:) = 0.
+  correction_zetaBT(:,:) = 0.
+  correction_PsiBT(:,:) = 0.
   
   ! ************************************************** !
   !                                                    !
@@ -124,19 +126,19 @@
   ! Si iguess=0, alors phi doit quand même être initialisé à tous les points de grille.
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
-  CALL RANDOM_NUMBER(delta_psiBT(:,:,2))
-  delta_psiBT(:,:,:) = delta_psiBT(:,:,:)/1000000
+  CALL RANDOM_NUMBER(correction_psiBT(:,:))
+  correction_psiBT(:,:) = correction_psiBT(:,:)/1000000
   ! Dirichlet boundary conditions : 
-  delta_psiBT(1 ,:,2) = 0.
-  delta_psiBT(nx,:,2) = 0.
-  delta_psiBT(:,1 ,2) = 0.
-  delta_psiBT(:,ny,2) = 0.
+  correction_psiBT(1 ,:) = 0.
+  correction_psiBT(nx,:) = 0.
+  correction_psiBT(:,1 ) = 0.
+  correction_psiBT(:,ny) = 0.
 
 
   ! mgopt
   !           an integer vector of length 4 which allows the user to select
   !           among various multigrid options. 
-  mgopt(1) = 0 ! kcycle (Default)
+  mgopt(1) = 2 ! kcycle (Default)
   mgopt(2) = 2 ! iprer (Default)
   mgopt(3) = 1 ! ipost (Default)
   mgopt(4) = 3 ! intpol (Default)
@@ -155,14 +157,14 @@
   WRITE (*,*) "     Shape iparm    =" ,SHAPE(iparm)
   WRITE (*,*) "     Shape fmarp    =" ,SHAPE(fparm)
   WRITE (*,*) "     Shape work     =" ,SHAPE(workm)
-  WRITE (*,*) "     Shape rhs      =" ,SHAPE(RHS_zetaBT(:,:,2))
-  WRITE (*,*) "     Shape solution =" ,SHAPE(delta_psiBT(:,:,2))
+  WRITE (*,*) "     Shape rhs      =" ,SHAPE(correction_zetaBT(:,:))
+  WRITE (*,*) "     Shape solution =" ,SHAPE(correction_psiBT(:,:))
   WRITE (*,*) "     Shape mgopt    =" ,SHAPE(mgopt)
   WRITE (*,*) " "
 
   ! initialising MUD2 function
   PRINT *, " > Initialising MUDPACK (iparm(1)=0)"
-  call mud2(iparm,fparm,workm,coef,bndyc,RHS_zetaBT(:,:,2),delta_psiBT(:,:,2),mgopt,ierror)
+  call mud2(iparm,fparm,workm,coef,bndyc,correction_zetaBT(:,:),correction_psiBT(:,:),mgopt,ierror)
   PRINT *, "     ERROR =",ierror
   PRINT *, " "
   IF (ierror .gt. 0) THEN

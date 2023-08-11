@@ -72,67 +72,67 @@
 
 
   if (IO_RHS_uv) then
-
-     ! Barotropic RHS
-     rhsuBT_out(:,:) = rhs_u_BT(isubx,isuby)
-     rhsvBT_out(:,:) = rhs_v_BT(isubx,isuby)
-
-     string4 =  './data/rhsuBT' // '1' // '_' // trim(which)
-     string5 =  './data/rhsvBT' // '1' // '_' // trim(which)       
-     
-     open(unit=104,file=string4,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(104,REC=1) ((rhsuBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(104)
-
-     open(unit=105,file=string5,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(105,REC=1) ((rhsvBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(105)
-
-     ! Baroclinic RHS
-     do k = 1,dummy_int
-        rhsuBC_out(:,:,k) = rhs_u_BC(isubx,isuby,k)
-        rhsvBC_out(:,:,k) = rhs_v_BC(isubx,isuby,k)
-     enddo
-
-     do k = 1,dummy_int
-        WRITE (k_str,'(I0)') k
-        string6 =  './data/rhsuBC' // trim(k_str) // '_' // trim(which)
-        string7 =  './data/rhsvBC' // trim(k_str) // '_' // trim(which)       
-
-        open(unit=106,file=string6,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
-        close(106)
-
-        open(unit=107,file=string7,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
-        close(107)
-        
-     enddo
-
-     ! divergence du RHS_barotrope (devrait être nul) [La variable divBT est dummy].
-     faces_array(:,:) = 0.
-     do j = 1,ny-1
-     jp = j+1   
-     do i = 1,nx-1
-     ip = i+1
-     faces_array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
-          &           + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
-     enddo
-     enddo
-  
-     divBT_out (:,:) = faces_array(isubx,isuby)
-
-     ! Outputing the divergence of the baroclinic current (Should be zero).
-     string8 =  './data/div_rhsBT' // '1' // '_' // trim(which)
-     open(unit=108,file=string8,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(108)
-     
+  !*!   
+  !*!   ! Barotropic RHS
+  !*!   rhsuBT_out(:,:) = rhs_u_BT(isubx,isuby)
+  !*!   rhsvBT_out(:,:) = rhs_v_BT(isubx,isuby)
+  !*!
+  !*!   string4 =  './data/rhsuBT' // '1' // '_' // trim(which)
+  !*!   string5 =  './data/rhsvBT' // '1' // '_' // trim(which)       
+  !*!   
+  !*!   open(unit=104,file=string4,access='DIRECT',&
+  !*!        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+  !*!   write(104,REC=1) ((rhsuBT_out(i,j),i=1,szsubx),j=1,szsuby)
+  !*!   close(104)
+  !*!
+  !*!   open(unit=105,file=string5,access='DIRECT',&
+  !*!        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+  !*!   write(105,REC=1) ((rhsvBT_out(i,j),i=1,szsubx),j=1,szsuby)
+  !*!   close(105)
+  !*!
+  !*!   ! Baroclinic RHS
+  !*!   do k = 1,dummy_int
+  !*!      rhsuBC_out(:,:,k) = rhs_u_BC(isubx,isuby,k)
+  !*!      rhsvBC_out(:,:,k) = rhs_v_BC(isubx,isuby,k)
+  !*!   enddo
+  !*!
+  !*!   do k = 1,dummy_int
+  !*!      WRITE (k_str,'(I0)') k
+  !*!      string6 =  './data/rhsuBC' // trim(k_str) // '_' // trim(which)
+  !*!      string7 =  './data/rhsvBC' // trim(k_str) // '_' // trim(which)       
+  !*!
+  !*!      open(unit=106,file=string6,access='DIRECT',&
+  !*!           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+  !*!      write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
+  !*!      close(106)
+  !*!
+  !*!      open(unit=107,file=string7,access='DIRECT',&
+  !*!           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+  !*!      write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
+  !*!      close(107)
+  !*!      
+  !*!   enddo
+  !*!
+  !*!   ! divergence du RHS_barotrope (devrait être nul) [La variable divBT est dummy].
+  !*!   faces_array(:,:) = 0.
+  !*!   do j = 1,ny-1
+  !*!   jp = j+1   
+  !*!   do i = 1,nx-1
+  !*!   ip = i+1
+  !*!   faces_array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
+  !*!        &           + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
+  !*!   enddo
+  !*!   enddo
+  !*!
+  !*!   divBT_out (:,:) = faces_array(isubx,isuby)
+  !*!
+  !*!   ! Outputing the divergence of the baroclinic current (Should be zero).
+  !*!   string8 =  './data/div_rhsBT' // '1' // '_' // trim(which)
+  !*!   open(unit=108,file=string8,access='DIRECT',&
+  !*!        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+  !*!   write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
+  !*!   close(108)
+  !*!   
      
      
   endif ! IO_rhsuv
@@ -140,38 +140,64 @@
   
 
   
-  ! IO_divBT
-  if (IO_divBT) then
+  ! IO_BT
+  if (IO_BT) then
      ! Finding thicknesses
-     uBT(:,:) = 0.
-     vBT(:,:) = 0.
+     !***!uBT(:,:) = 0.
+     !***!vBT(:,:) = 0.
+     !***!divBT(:,:) = 0.
+     !***!do k = 1,nz
+     !***!   uu(:,:) = u(:,:,k,3) 
+     !***!   vv(:,:) = v(:,:,k,3)
+     !***!   if (k.eq.1) then
+     !***!      thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
+     !***!   elseif(k.eq.nz) then
+     !***!      thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
+     !***!   else
+     !***!      thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
+     !***!           &             -  eta(:,:,k+1,ilevel)
+     !***!   endif
+     !***!   ! Finding each divergence of barotropic transport 
+     !***!   include 'subs/divBT.f90'
+     !***!   include 'subs/zetaBT.f90'
+     !***!
+     !***!   ! Summing those to get the divergence of barotropic current
+     !***!   divBT(:,:) = divBT(:,:) + faces_array(:,:)/Htot
+     !***!   zetaBT(:,:) = zetaBT(:,:) + array(1:nx,1:ny)/Htot        
+     !***!   uBT(:,:) = uBT(:,:) + uh(:,:)/Htot
+     !***!   vBT(:,:) = vBT(:,:) + vh(:,:)/Htot
+     !***!enddo
      divBT(:,:) = 0.
-     do k = 1,nz
-        uu(:,:) = u(:,:,k,3) 
-        vv(:,:) = v(:,:,k,3)
-        if (k.eq.1) then
-           thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
-        elseif(k.eq.nz) then
-           thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
-        else
-           thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
-                &             -  eta(:,:,k+1,ilevel)
-        endif
-        ! Finding each divergence of barotropic transport 
-        include 'subs/divBT.f90'
-        !!do j = 1,ny
-        !!do i = 1,nx
-        !!   divBT(i,j) = (uBT(i+1,j)-uBT(i,j))/dx + (vBT(i,j+1)-vBT(i,j))/dy
-        !!enddo
-        !!enddo
-
-        ! Summing those to get the divergence of barotropic current
-        divBT(:,:) = divBT(:,:) + faces_array(:,:)/Htot
-        uBT(:,:) = uBT(:,:) + uh(:,:)/Htot
-        vBT(:,:) = vBT(:,:) + vh(:,:)/Htot
+     do j = 1, ny-1
+        jp = j+1
+     do i = 1, nx-1
+        ip = i+1
+        ! divBT post-Mudpack (while zetaBT is pre-Mudpack)
+        divBT(i,j) = (uBT(ip,j)-uBT(i,j))/dx   &
+        &          + (vBT(i,jp)-vBT(i,j))/dy 
      enddo
-     
-     divBT_out(:,:) = divBT(isubx,isuby)
+     enddo
+
+     ! On calcule le laplacien de psiBT pour avoir zetaBT
+     zetaBT_post(:,:) = 0.
+     ! Pas besoin d'update les contours de zeta ou psi.
+     do j = 2,ny-1
+        jp = j+1
+        jm = j-1
+     do i = 2,nx-1
+        ip = i+1
+        im = i-1
+          
+        zetaBT_post(i,j) = (psiBT(ip,j)+psiBT(im,j)-2.*psiBT(i,j))/dx/dx   &
+        &                + (psiBT(i,jp)+psiBT(i,jm)-2.*psiBT(i,j))/dy/dy
+        
+     enddo
+     enddo
+
+     ! Out block
+     divBT_out(:,:)  = divBT(isubx,isuby)
+     zetaBT_out(:,:) = zetaBT(isubx,isuby)
+     zetaBT_post_out(:,:) = zetaBT_post(isubx,isuby)
      uBT_out(:,:) = uBT(isubx,isuby)
      vBT_out(:,:) = vBT(isubx,isuby)
      
@@ -195,7 +221,19 @@
      write(110,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(110)
 
-  endif !IO_divBT
+     string11 =  './data/zetaBT' // '1' // '_' // trim(which)
+     open(unit=111,file=string11,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(111,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(111)
+
+     string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
+     open(unit=112,file=string12,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(112)
+
+  endif !IO_BT
 
 
   

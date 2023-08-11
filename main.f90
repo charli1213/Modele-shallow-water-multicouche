@@ -22,7 +22,7 @@
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
-      logical  IO_divBT
+      logical  IO_BT
 
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
@@ -79,8 +79,6 @@
       REAL :: invLap_u(0:nnx,0:ny), invLap_v(0:nx,0:nny)
       REAL :: taux_ocean(0:nnx,0:ny,2), tauy_ocean(0:nx,0:nny,2) ! WW3
       REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3
-      REAL :: rhs_u_BT(0:nnx,0:ny), rhs_v_BT(0:nx,0:nny) ! mudpack
-      REAL :: rhs_u_BC(0:nnx,0:ny,nz), rhs_v_BC(0:nx,0:nny,nz) ! mudpack
       REAL :: array_x(0:nnx,0:ny), array_y(0:nx,0:nny) ! dummy
       
       ! Centres/Centers [x] :
@@ -95,20 +93,22 @@
       REAL :: eta_ag(0:nx,0:ny), eta_qg(0:nx,0:ny)
       REAL :: eta_ag_p(0:nx,0:ny,2)
       REAL :: p_out(0:nx,0:ny)
-
+      REAL :: faces_array(0:nx,0:ny) ! dummy
+      
       ! Noeuds/Nodes [x] :
       REAL :: zeta(0:nnx,0:nny)
-      REAL :: zetaBT(0:nnx,0:nny)
+      REAL :: zetaBT(1:nx,1:ny) ! mudpack
+      REAL :: zetaBT_post(1:nx,1:ny) ! mudpack
+      REAL :: zetaBT_old(1:nx,1:ny) ! mudpack psiBT_corr
       REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
-      REAL :: RHS_zetaBT(1:nx,1:ny,2) ! mudpack
-      REAL :: delta_psiBT(1:nx,1:ny,2) ! mudpack
-      REAL :: correction_RHSzetaBT(1:nx,1:ny) ! mudpack
-      REAL :: correction_deltaPsiBT(1:nx,1:ny) ! mudpack
-      REAL :: psiBT(0:nnx,0:nny) ! mudpack
+      REAL :: correction_zetaBT(1:nx,1:ny) ! mudpack psiBT_corr
+      REAL :: correction_PsiBT(1:nx,1:ny) ! mudpack psiBT_corr
+      REAL :: psiBT(1:nx,1:ny) ! mudpack
+      REAL :: psiBT_old(1:nx,1:ny) ! mudpack psiBT_corr
       REAL :: array(0:nnx,0:nny) ! dummy
-      REAL :: faces_array(0:nx,0:ny) ! dummy
+      
 
 
 
@@ -141,7 +141,9 @@
       ! Nodes : 
       REAL :: zeta_out(1:szsubx,1:szsuby)
       REAL :: psiBT_out(1:szsubx,1:szsuby)
-
+      REAL :: zetaBT_out(1:szsubx,1:szsuby)
+      REAL :: zetaBT_post_out(1:szsubx,1:szsuby)
+      
       !!! ---------- Other quantities ---------- 
       REAL :: sl, ed
       REAL :: ran2
@@ -162,7 +164,7 @@
       
       ! Initialize qties
       real f(0:nny)
-      real gprime(nz), Htot, H(nz+1), rho(nz+1) ! +1 because see initialise.f90
+      real gprime(nz), Htot, H(nz), H_bin(3), rho(nz+1) ! +1 because see initialise.f90
       real top(nz), bot(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
@@ -382,9 +384,9 @@
             psiBT(:,:) = 0.
             CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1))
             psiBT(:,:)  = (psiBT(:,:)-0.5)/1000000.
-            psiBT(0,:) = 0.
+            psiBT(1,:) = 0.
             psiBT(nx,:) = 0.
-            psiBT(:,0) = 0.
+            psiBT(:,1) = 0.
             psiBT(:,ny) = 0.
             
             do j = 1,ny-1
@@ -393,7 +395,7 @@
                vv(i,j) =    (psiBT(i+1,j) - psiBT(i,j))/dx  ! barotropic part-y
             enddo
             enddo
-            
+            psiBT(:,:) = 0.            
          endif
          !
 
@@ -410,28 +412,14 @@
          if (k.eq.1) then
             thickness(:,:) = H(k) - eta(:,:,k+1,1) 
          else if (k.eq.nz) then
-            pressure(:,:) = pressure(:,:) + gprime(k)*eta(:,:,k,1) 
+            pressure(:,:) = pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,1) 
             thickness(:,:) = H(k) + eta(:,:,k,1)   
          else
-            pressure(:,:) =  pressure(:,:) + gprime(k)*eta(:,:,k,1) 
+            pressure(:,:) =  pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,1) 
             thickness(:,:) =  H(k) + eta(:,:,k,1) - eta(:,:,k+1,1)
          endif
-
          include 'subs/rhs.f90'
-
-
       enddo  ! end of the do k = 1,nz loop
-
-      ! >>> barotropic psi-correction
-      write(*,*) 'First barotropic psi-correction'
-      !
-      !     need to correct RHS_u,v for surface pressure 
-      !
-      ilevel = 1      
-      p_out(:,:) = 0.
-      include 'subs/psi_correction_mudpack.f90'
-      ! <<< barotropic correction (End)
-
 
       
       ! ================================================== !
@@ -455,6 +443,17 @@
       !                      RHS (END)                     !
       ! ================================================== !
 
+
+      ! >>> barotropic psi-correction
+      write(*,*) 'First barotropic psi-correction'
+      !
+      !     need to correct RHS_u,v for surface pressure 
+      !
+      ilevel = 2
+      p_out(:,:) = 0.
+      include 'subs/psiBT_correction.f90'
+      ! <<< barotropic correction (End)
+      
       
       time = dt
       its = its + 1
@@ -465,6 +464,7 @@
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
       eta(:,:,1,3) = p_out(:,:)
+
       !
       include 'subs/dump_bin.f90'
       !
@@ -529,24 +529,15 @@
                ! p = 0, because eta(:,:,1,:) = 0.
                thickness(:,:) = H(k) - eta(:,:,k+1,2) 
             else if (k.eq.nz) then
-               pressure(:,:)  = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
+               pressure(:,:)  = pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2)
             else
-               pressure(:,:)  = pressure(:,:) + gprime(k)*eta(:,:,k,2) 
+               pressure(:,:)  = pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
             end if
             include 'subs/rhs.f90' 
          enddo  ! k
          
-         ! >>> Barotropic psi-correction
-         !
-         !     stuff for barotropic psi-correction
-         !
-         ilevel = 2
-         p_out(:,:) = 0.
-         include 'subs/psi_correction_mudpack.f90'
-         ! <<< Barotropic psi-correction (End)
-
          
       ! ================================================== !
       !                  RHS (begining)                    !
@@ -569,6 +560,17 @@
       !                      RHS (End)                     !
       ! ================================================== !
 
+
+         ! >>> Barotropic psi-correction
+         !
+         !     stuff for barotropic psi-correction
+         !
+         ilevel = 3
+         p_out(:,:) = 0.
+         include 'subs/psiBT_correction.f90'
+         ! <<< Barotropic psi-correction (End)
+
+         
          
          ! --- Updating time ---
          time = time + dt
@@ -627,7 +629,8 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            eta(1:nx,1:ny,1,3) = delta_PsiBT(1:nx,1:ny,2)
+            eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
+            !eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
             include 'subs/dump_bin.f90'
 
             if(mod(its,iout).eq.0)write(*,*) 'current its',its

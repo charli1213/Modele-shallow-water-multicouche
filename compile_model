@@ -18,8 +18,8 @@ then
     mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
     model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
-    case=testcase_nouvelle_methode
-    
+    #case=test_2layers_strongcorr
+    case=testcase_2layers_newzeta
 fi
 
 # >>> Preparing before compilation ::

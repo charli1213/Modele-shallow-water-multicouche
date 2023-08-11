@@ -13,7 +13,7 @@
    
    parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
       
-   parameter ( nz = 3 )
+   parameter ( nz = 2 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
@@ -24,8 +24,8 @@
  
    parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
  
-   parameter ( f0 = 7.e-5, beta = 0) ! 1.e-11 )
- 
+   parameter ( f0 = 7.e-5, beta = 0. ) ! 1.e-11 )
+   
    parameter ( r_drag = 1.e-7 )
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
@@ -67,7 +67,7 @@
 
    parameter ( IO_field=.true.,  IO_RHS_uv =.false., IO_forcing =.false.)
    parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.false.)
-   parameter ( IO_divBT=.true.)
+   parameter ( IO_BT   =.true. )
    
  ! --- Slab model/coupling switches --- 
    parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)

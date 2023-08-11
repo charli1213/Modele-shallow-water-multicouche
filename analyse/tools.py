@@ -11,10 +11,10 @@ from os import listdir
 from datetime import date
 
 
-nx     = 256 # Output spatial resolution.
-Lx     = 2e6 # Largeur du domaine-x.
-klayer = 1   # Couche à l'étude
-dt     = 0.5 # Spatial discretisation (1/fileperday)
+nx     = 257 # Output spatial resolution [-].
+Lx     = 2e6 # Largeur du domaine-x [m].
+klayer = 1   # Couche à l'étude [-]
+dt     = 0.25 # Spatial discretisation (1/fileperday) [days^{-1}]
 
 
 # ================================================================= #
@@ -23,30 +23,31 @@ dt     = 0.5 # Spatial discretisation (1/fileperday)
 #                                                                   # 
 # ================================================================= #
 
-def create_ds_from_binary(casepath='./',
+def bintods(casepath='./',
                           minday=0,
                           maxday=365*5,
                           outt=1,
                           klayer=klayer,
-                          fields=None,
+                          fields_to_open=None,
                           dt=dt,
                           nx=nx) : 
+
     """
-    La fonction 'create_ds_from_binary' ouvre un nombre nday/dt/outt de
+    La fonction 'bintods' ouvre un nombre nday/dt/outt de
     binaires pour créer une base de données de type XArray.Dataset .
     Par défault, la première couche est toujours ouverte (klayer=1). 
-    INPUT   :
-    KWARGS  :
-p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.    
-     - maxday (int)        :: Limite supérieure (en jour) des données qu'on veut ouvrir.
-                              Valeur suggérée, car la fonction n'ouvrira jamais plus de
-                              de fichiers qu'il y en a dans le dossier data.    
-     - outt (int)          :: Longueur des bonds et/ou résolution itero-temporelle. 
-                              Par exemple : outt = 4 : on ouvre 1 fichier sur 4.    
-     - klayer (int)        :: Indicateur de la couche à observer.
-     - dt (float)          :: Intervalle de temps entre les output [en jours].
-     - fields(list)        :: Liste de str du genre ['u1','v1',...]. Si None, tous les champs sont ouverts.
-    RETURNS :
+
+    >>> INPUT   :: NONE (Only default kwargs for simplicity)
+    >>> KWARGS  ::
+     > casepath       :: (str) Chemin où se retrouve le dossier 'data'.    
+     > maxday         :: (int) Limite supérieure (en jour) des données qu'on veut ouvrir.
+                         N.B. Valeur suggérée, car la fonction n'ouvrira jamais plus de
+                         de fichiers qu'il y en a dans le dossier data.    
+     > outt           :: (int) Longueur des bonds entre les fichiers.
+     > klayer         :: (int) Indicateur de la couche à observer.
+     > dt             :: (float)Intervalle de temps entre les output [en jours].
+     > fields_to_open :: (list) Liste de str du genre ['u1','v1',...]. Si None, tous les champs sont ouverts.
+    >>> RETURNS ::
        ds (xarray.dataset) :: La base de données créée à partir des fichiers binaires.
     """
 
@@ -57,8 +58,8 @@ p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.
     min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
     nb_of_files    = max_filenumber%100000
 
-    if fields is not None :
-        data_names = fields
+    if fields_to_open is not None :
+        data_names = fields_to_open
     else :
         data_names = list(set([name[:-7] for name in data_filenames])) # On liste les quantités
         for name in data_names :
@@ -71,17 +72,18 @@ p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
     xx   = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
-    tt   = np.arange(min(minday,min_filenumber%100000),
-                     min(maxday+step,nb_of_files*dt),
+    tt   = np.arange(max(minday, min_filenumber%100000),
+                     min(maxday+step, nb_of_files*dt),
                      step) # Le vecteur temps [jours]
-    
+
     # > Boucle sur les noms des output
     for name in data_names :
         # On recrée data, car problème de np.roll.
         data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
         print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
         for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
-            f = open( casepath + 'data/{}_{}'.format(name,min_filenumber+it*outt+int(minday/dt)), 'rb' )
+            ifile = min_filenumber+int(minday/dt)+it*outt
+            f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
             data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
             f.close()
                 
@@ -109,3 +111,6 @@ p     - casepath (str)      :: Chemin où se retrouve le dossier 'data'.
         pass
     return ds
 
+if __name__ == "__main__" :
+    ds = bintods(minday=120, maxday = 500, fields_to_open = ['u1','v1'])
+    

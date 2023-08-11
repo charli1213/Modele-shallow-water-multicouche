@@ -54,42 +54,48 @@
        A(:,:)       = 0. 
 
 
-       ! Thicknesses parameters (This could be cleaner) :
-       H(1) = H1
-       H(2) = H2
-       H(3) = H3
+       ! Thicknesses parameters :
+       H_bin = (/H1, H2, H3 /)
        Htot = 0
        do k = 1,nz
+          H(k) = H_bin(k)
           Htot = Htot + H(k)
        end do
-
+       
        ! On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
        g = 10.00
        rho(1) = 1000.00
-       rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
-       rho(3) = 2*rho(2) - rho(1)
-
+       if (nz.gt.1) then
+          rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
+          if (nz.gt.2) then
+             rho(3) = 2*rho(2) - rho(1)
+          end if
+       end if
+       
        !!! >>> Printing Diagnostics
        print *, " >>> Diagnostics for initialize.f90 sub-routine : "
 
-       ! gprime
+       ! gprime [x]
        gprime(1) = g
        print *, '     gprime(1) = ', gprime(1)
+       if (nz.gt.1) then
        do k = 2,nz
           WRITE (k_str,'(I0)') k
           gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
           print *, '     gprime(',TRIM(k_str),') = ', gprime(k)
        enddo
-
+       end if
        
        ! --- Finding baroclinic streamfunc :
-       ! > "Stolen" from Louis-Philippe
-       ! > N.B. Here g(k) is defined for ceiling of layer k (not floor)
-       ! > (Which is why it's different than LP's code)
+       ! > "Stolen" from Louis-Philippe "Naydo".
+       ! > N.B. Here g(k) is defined for ceiling of layer k (not floor like in Vallis)
+       ! > (Which is why it's also different than LP's code)
+       if (nz.gt.1) then
        do k=1,nz-1
           F_layer(k,k)   = f0**2/( H(k)*gprime(k)  )
           F_layer(k,k+1) = f0**2/( H(k)*gprime(k+1))
        end do
+       end if
        F_layer(nz,nz) = f0**2/( H(nz)*gprime(nz)  ) 
 
        ! > Creating matrix of streamfunc linear operator A (From left to right):
@@ -141,8 +147,10 @@
        end do
        
 
-       f(:) = f0
-
+       do j = 1,ny
+          f(j) = f0 + beta*(j-1)*dy
+       end do
+       
        ! Stohastic wind
        !do j = 1,ny
        !   y = -Ly/2. + (j-1)*dy
@@ -170,8 +178,9 @@
        else !if restart
           open(0,file='restart')
           do j = 1,ny
-          do i = 1,nx
-             read(0,*) u(i,j,2,1),v(i,j,1,1),v(i,j,2,1),       &
+          do i = 1,nx             
+             read(0,*)   u(i,j,1,1),u(i,j,2,1),                &
+                  &      v(i,j,1,1),v(i,j,2,1),                &
                   &      eta(i,j,2,1),                         &
                   &      UStokes(i,j,1),VStokes(i,j,1),        &
                   &      taux_ocean(i,j,1),tauy_ocean(i,j,1)

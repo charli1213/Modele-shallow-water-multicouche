@@ -65,26 +65,22 @@
       which3=trim(which2)//'restart'//trim(adjustl(which))
       open(0,file=which3)
 
-      array_x = u(:,:,1,3)
-      array_y = v(:,:,1,3)
-      include 'subs/no_normal_flow.f90'
-      include 'subs/free_slip.f90'
-      u(:,:,1,3) = array_x
-      v(:,:,1,3) = array_y
-
-      array_x = u(:,:,2,3)
-      array_y = v(:,:,2,3)
-      include 'subs/no_normal_flow.f90'
-      include 'subs/free_slip.f90'
-      u(:,:,2,3) = array_x
-      v(:,:,2,3) = array_y
-
+      do k=1,nz
+         array_x = u(:,:,k,3)
+         array_y = v(:,:,k,3)
+         include 'subs/no_normal_flow.f90'
+         include 'subs/free_slip.f90'
+         u(:,:,k,3) = array_x
+         v(:,:,k,3) = array_y
+      end do
+   
       do j = 1,ny
       do i = 1,nx
-         write(0,*) u(i,j,2,3),v(i,j,1,3),v(i,j,2,3),    &
-            &      eta(i,j,2,3),                         &
-            &      UStokes(i,j,2),VStokes(i,j,2),        &
-            &      taux_ocean(i,j,2), tauy_ocean(i,j,2)
+         write(0,*) u(i,j,1,3),u(i,j,2,3),                &
+            &       v(i,j,1,3),v(i,j,2,3),                &
+            &       eta(i,j,2,3),                         &
+            &       UStokes(i,j,2),VStokes(i,j,2),        &
+            &       taux_ocean(i,j,2), tauy_ocean(i,j,2)
       enddo
       enddo
       write(0,*) icount+icount_srt,time,nspecfile,iftcount+iftcount_srt

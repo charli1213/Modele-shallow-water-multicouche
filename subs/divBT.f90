@@ -1,6 +1,6 @@
 !    Calculate the horizontal divergence of transport locally (for a specific layer)
 !    
-!    bndy condition: periodic in x,y
+!    bndy condition: dirichlet at 0 and nx,ny
 !    
 
        array_x = uu
@@ -28,10 +28,8 @@
        
        do j = 1, ny-1
           jp = j+1
-          jm = j-1
        do i = 1, nx-1
           ip = i+1
-          im = i-1
 
        faces_array(i,j) = (uh(ip,j)-uh(i,j))/dx   &
        &                + (vh(i,jp)-vh(i,j))/dy 
