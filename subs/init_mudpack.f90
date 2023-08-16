@@ -1,6 +1,7 @@
    
   psiBT(:,:,:) = 0.
   zetaBT(:,:,:) = 0.
+  zetaBT_post(:,:) = 0.
   correction_zetaBT(:,:) = 0.
   correction_PsiBT(:,:) = 0.
   

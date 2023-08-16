@@ -7,9 +7,9 @@
  
    parameter ( Lx = 2e6, Ly = Lx )
    
-   parameter ( H1 = 1.0e3, H2 = 1.0e3, H3 = 1.0e3 )
+   parameter ( H1 = 1.0e3, H2 = 3.0e3, H3 = 1.0e3 )
 
-   parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
+   parameter ( iex = 5, jey = 5, ixp = 16, jyq = 16 )
    
    parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
       
@@ -32,7 +32,7 @@
  
    parameter ( Ah = 1.e-5*dx**4 ) !parameter ( Ah = 2.5e-6*dx**4 ) 
  
-   parameter ( rf = 0.001 )
+   parameter ( rf = 0.00 ) !0.001
  
    parameter ( c_bc = 2. )
       
@@ -42,7 +42,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))

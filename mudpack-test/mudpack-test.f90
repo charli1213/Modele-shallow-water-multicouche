@@ -7,24 +7,26 @@ PROGRAM mudpack_test
   INTEGER, PARAMETER :: ixp = 2,            jyq = 2
   INTEGER, PARAMETER :: nx  = ixp*2**(iex-1)+1
   INTEGER, PARAMETER :: ny  = jyq*2**(jey-1)+1
-  INTEGER, PARAMETER :: nnx = nx+1,         nny = ny+1
-  REAL,    PARAMETER :: xa  = 0.,          xb  = 1000000.
-  REAL,    PARAMETER :: yc  = 0.,          yd  = 1000000.
+  INTEGER, PARAMETER :: nnx = nx+1,        nny = ny+1
+  REAL,    PARAMETER :: xa  = 0.,          xb  = 1000.
+  REAL,    PARAMETER :: yc  = 0.,          yd  = 1000.
   REAL,    PARAMETER :: Lx  = xb-xa,       Ly  = yd-yc
   REAL,    PARAMETER :: dx  = Lx/(nx-1),   dy  = Ly/(ny-1)
-  REAL,    PARAMETER :: ddx  = Lx/(nx-1),  ddy  = Ly/(ny-1)
   INTEGER            :: i,j,ierror
+
   ! Intermediate arrays and prints : 
-  REAL               :: phi(0:nnx,0:nny), errorphi(0:nnx,0:nny)
+  real   :: phi(nx,ny), errorphi(nx,ny)
   REAL               :: int_cte
   ! functions
-  REAL               :: true_solution
+  real   :: true_solution
+
   ! MUDPACK INPUT (Main.f90)
   INTEGER            :: iparm(17), mgopt(4), length
   REAL               :: fparm(6)
   REAL,ALLOCATABLE   :: workm(:)
   CHARACTER(LEN=80)  :: myformat
-  REAL               :: RHS_MUD(1:nx,1:ny), solution(1:nx,1:ny)
+  real               :: RHS_MUD(1:nx,1:ny), solution(1:nx,1:ny), RHS_MUD2(1:nx,1:ny), dRHS(1:nx,1:ny)
+
   ! SUBROUTINES CALLS
   external coef,bndyc
 
@@ -34,22 +36,32 @@ PROGRAM mudpack_test
   
   ! Initalisation du champ à résoudre : 
   PRINT *, "> 1. Initialisation du champ à résoudre à l'aide de la fonction true_solution"
-  DO j = 0,nnx
-  DO i = 0,nnx
-     phi(i,j) = true_solution(i,j,ddx,ddy,Lx,Ly)
+  DO j = 1,nx
+  DO i = 1,nx
+     phi(i,j) = sin(pi*(i-1)/(nx-1))* sin(2*pi*(j-1)/(nx-1))
   END DO
   END DO
+  phi(1,:) = 0.
+  phi(nx,:) = 0.
+  phi(:,1) = 0.
+  phi(:,ny) = 0.
 
   ! On trouve le laplacien du champ phi (le RHS de la fonction)
   ! -- Définit sur le champ, lui-même (Aux coins)
   PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
-  DO j = 1,ny
-  DO i = 1,nx
+  DO j = 2,ny-1
+  DO i = 2,nx-1
      RHS_MUD(i,j) = (phi(i+1,j)+phi(i-1,j)-2.*phi(i,j))/dx/dx   &
           &       + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
   ENDDO
   ENDDO
-    
+
+  ! On applique le laplacien aux frontières.
+  RHS_MUD(1, :) = (phi(3,   :) - 2*phi(2,   :))/dx**2
+  RHS_MUD(nx,:) = (phi(nx-2,:) - 2*phi(nx-1,:))/dx**2
+  RHS_MUD(:, 1) = (phi(:,   3) - 2*phi(:,   2))/dy**2
+  RHS_MUD(:,ny) = (phi(:,ny-2) - 2*phi(:,ny-1))/dy**2
+
   
   
 
@@ -70,10 +82,10 @@ PROGRAM mudpack_test
   
   ! iparm : integer vector of length 17
   iparm(1)  = 0    ! intl : Initializing {0,1}={Yes,No}.
-  iparm(2)  = 0    ! nxa  : Flag for boundary conditions.
-  iparm(3)  = 0    ! nxb  ! {0}=periodic boundaries
-  iparm(4)  = 0    ! nyc  ! {1}=Dirichlet boundary
-  iparm(5)  = 0    ! nyd  ! {2}=mixed boundary condition (Neumann)
+  iparm(2)  = 1    ! nxa  : Flag for boundary conditions.
+  iparm(3)  = 1    ! nxb  ! {0}=periodic boundaries
+  iparm(4)  = 1    ! nyc  ! {1}=Dirichlet boundary
+  iparm(5)  = 1    ! nyd  ! {2}=mixed boundary condition (Neumann)
 
   iparm(6)  = ixp ! ixp
   iparm(7)  = jyq ! jyq Plus grand commun diviseur de nx et ny (512 ou 256)
@@ -104,7 +116,7 @@ PROGRAM mudpack_test
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 10  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 100  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
@@ -183,10 +195,10 @@ PROGRAM mudpack_test
 
   CALL RANDOM_NUMBER(solution)
   ! Conditions Dirichlet
-  !solution(1,1:nx) = phi(1,1:nx)
-  !solution(nx,1:nx) = phi(nx,1:nx)
-  !solution(1:nx,1) = phi(1:nx,1)
-  !solution(1:nx,ny) = phi(1:nx,ny)
+  solution(1,1:nx) = 0.
+  solution(nx,1:nx) = 0.
+  solution(1:nx,1) = 0.
+  solution(1:nx,ny) = 0.
 
 
   ! mgopt
@@ -239,11 +251,6 @@ PROGRAM mudpack_test
 
 
 
-
-
-
-  
-
   
   
 
@@ -259,15 +266,37 @@ PROGRAM mudpack_test
 
 
 
-  
-  ! On retire la constante d'intégration pour que la fctn soit en moyenne 0.
-  int_cte = 0.
-  DO j = 1,ny-1
-  DO i = 1,ny-1
-     int_cte = int_cte +  solution(i,j)
+
+  PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
+  DO j = 2,ny-1
+  DO i = 2,nx-1
+     RHS_MUD2(i,j) = (solution(i+1,j)+solution(i-1,j)-2.*solution(i,j))/dx/dx   &
+          &        + (solution(i,j+1)+solution(i,j-1)-2.*solution(i,j))/dy/dy
   ENDDO
   ENDDO
-  solution(:,:) = solution(:,:) - int_cte/(nx-1)/(ny-1)
+
+  ! On applique le laplacien aux frontières.
+  RHS_MUD2(1, :) = (solution(3,   :) - 2*solution(2,   :))/dx**2
+  RHS_MUD2(nx,:) = (solution(nx-2,:) - 2*solution(nx-1,:))/dx**2
+  RHS_MUD2(:, 1) = (solution(:,   3) - 2*solution(:,   2))/dy**2
+  RHS_MUD2(:,ny) = (solution(:,ny-2) - 2*solution(:,ny-1))/dy**2
+
+
+
+  drhs(:,:) = RHS_MUD2(:,:) - RHS_MUD(:,:)
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   ! >>> Writing outputs
   open(unit=101,file='data/rhs',access='DIRECT',&
@@ -298,6 +327,11 @@ PROGRAM mudpack_test
   close(104)
 
   WRITE (*,'(e10.3)') MAXVAL(errorphi(:,:))
+
+  open(unit=105,file='data/RHS_MUD2',access='DIRECT',&
+       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  write(105,REC=1) ((dRHS(i,j),i=1,nx),j=1,ny)
+  close(105)
 
   
 END PROGRAM mudpack_test
@@ -338,24 +372,4 @@ SUBROUTINE coef(x,y,cxx,cyy,cx,cy,ce)
   return
 end SUBROUTINE coef
 
-
-FUNCTION true_solution(i,j,dx,dy,Lx,Ly)
-  ! ************************************************* ! 
-  !                                                   ! 
-  !                                                   !
-  !     Initialitation de la solution réelle          !
-  !                                                   !
-  !                                                   !
-  ! ************************************************* !
-  !IMPLICIT NONE
-  INTEGER, INTENT(IN)  :: i,j
-  REAL,    PARAMETER   :: pi  = 3.14159265358979323846
-  REAL                 :: true_solution
-  REAL                 :: dx,dy,Lx,Ly
-  
-  ! On invente une solution. 
-  ! On assume que la solution est périodique :
-  ! (Même si le modèle va solver comme si elle ne l'était pas)
-  true_solution = 1.*COS( 2*pi*(0.*(i-1)*(dx/Lx) + 1.*(j-1)*dy/Ly ) )
-END FUNCTION true_solution
 

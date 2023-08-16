@@ -15,10 +15,8 @@ nb_of_files    = len(data_filenames)
 iex = 9
 ixp = 2 
 nx   = ixp*2**(iex-1)+1  # Output resolution
-dt   = 0.5 # days
 outt = 1 # Dénominateur du ratio de fichiers qu'on prend ratio = 1/outt
 xx   = np.linspace(-2000,2000,nx)
-tt   = np.arange(1,nb_of_files,outt) # Le vecteur temps [jours]
 ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
 print('NX=',nx)
 

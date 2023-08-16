@@ -200,6 +200,7 @@
      zetaBT_post_out(:,:) = zetaBT_post(isubx,isuby)
      uBT_out(:,:) = uBT(isubx,isuby)
      vBT_out(:,:) = vBT(isubx,isuby)
+     correction_zetaBT_out(:,:) = correction_zetaBT(isubx,isuby)
      correction_PsiBT_out(:,:) = correction_PsiBT(isubx,isuby)
      
      ! Outputing the divergence of the baroclinic current (Should be zero).
@@ -209,18 +210,18 @@
      write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(108)
 
-     ! Outputing the barotropic currents (after the divergence correction)
-     string9 =  './data/uBT' // '1' // '_' // trim(which)
-     open(unit=109,file=string9,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(109,REC=1) ((uBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(109)
-
-     string10 =  './data/vBT' // '1' // '_' // trim(which)
-     open(unit=110,file=string10,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(110,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(110)
+     !%%%!! Outputing the barotropic currents (after the divergence correction)
+     !%%%!string9 =  './data/uBT' // '1' // '_' // trim(which)
+     !%%%!open(unit=109,file=string9,access='DIRECT',&
+     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !%%%!write(109,REC=1) ((uBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     !%%%!close(109)
+     !%%%!
+     !%%%!string10 =  './data/vBT' // '1' // '_' // trim(which)
+     !%%%!open(unit=110,file=string10,access='DIRECT',&
+     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !%%%!write(110,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     !%%%!close(110)
 
      string11 =  './data/zetaBT' // '1' // '_' // trim(which)
      open(unit=111,file=string11,access='DIRECT',&
@@ -228,11 +229,11 @@
      write(111,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(111)
 
-     !!-!!string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
-     !!-!!open(unit=112,file=string12,access='DIRECT',&
-     !!-!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !!-!!write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
-     !!-!!close(112)
+     string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
+     open(unit=112,file=string12,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(112)
 
      string13 =  './data/PsiBTcorrection' // '1' // '_' // trim(which)
      open(unit=113,file=string13,access='DIRECT',&
@@ -240,6 +241,13 @@
      write(113,REC=1) ((correction_PsiBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(113)
 
+     string14 =  './data/zetaBTcorrection' // '1' // '_' // trim(which)
+     open(unit=114,file=string14,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(114,REC=1) ((correction_zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(114)
+
+     
   endif !IO_BT
 
 

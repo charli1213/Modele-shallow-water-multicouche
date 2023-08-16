@@ -10,7 +10,7 @@ then
     lapack_path=/usr/lib64/
     mudpack_path=~/mudpack5.0.1/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
-    case=/storage/celizotte/test_3couche_mudpack2
+    case=/storage/celizotte/t2layers_leapfrog
 
 elif [ "${pcid}" == "2" ]
 then

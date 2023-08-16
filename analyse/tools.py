@@ -54,9 +54,9 @@ def bintods(casepath='./',
     # > On fetch les champs dans le dossier 'data'
     
     data_filenames = listdir(casepath + 'data/') # On liste les noms entiers de tous les fichiers
-    max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) -1 # Indicateur numérique
+    max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) # Indicateur numérique
     min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
-    nb_of_files    = max_filenumber%100000
+    nb_of_files    = max_filenumber%100000 + 1
 
     if fields_to_open is not None :
         data_names = fields_to_open
@@ -67,7 +67,7 @@ def bintods(casepath='./',
                 del name
             else :
                 pass
-            
+
     # > Vecteurs des coordonnées et paramètres
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
@@ -76,6 +76,14 @@ def bintods(casepath='./',
                      min(maxday+step, nb_of_files*dt),
                      step) # Le vecteur temps [jours]
 
+    # > Diagnostiques : 
+    print('>>> Diagnostique :')
+    print(' > MINDAY:', minday, min_filenumber%100000)
+    print(' > MAXDAY:', maxday+step, nb_of_files*dt)
+    print(' > MAX FILENUMBER', max_filenumber)
+    print(' > # of files', nb_of_files)
+    print(tt)
+    
     # > Boucle sur les noms des output
     for name in data_names :
         # On recrée data, car problème de np.roll.
@@ -87,7 +95,8 @@ def bintods(casepath='./',
                 f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
                 data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
                 f.close()
-            except : 
+            except :
+                print('Champ inexistant')
                 data[it,:,:] = np.nan
         # coords/data = form (dims, data[, attrs, encoding])
         #data = np.roll(data, int(nx/4), axis = 2)

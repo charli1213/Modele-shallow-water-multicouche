@@ -143,7 +143,9 @@ def debug(field='zetaBT1', outt=1) :
     ds = tls.bintods(outt = outt,
                      minday = 0,
                      maxday = 100,
-                     fields_to_open = ['zetaBT1','eta1','u1','v1','zetaBT1','zeta1','eta2','zetaBTpost1','divBT1'])
+                     fields_to_open = ['zetaBT1','eta1','u1','v1','zeta1','eta2',
+                                       'zetaBTpost1','divBT1','PsiBTcorrection1',
+                                       'zetaBTcorrection1'])
 
     # Figure :
     fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
@@ -155,7 +157,33 @@ def debug(field='zetaBT1', outt=1) :
     plt.show()
 
     return ds
- 
+
+# ================================================================= #
+def mudpack(init_field = 'zetaBT1', final_field = 'zetaBTpost1', t0=0 ) : 
+    # Opening data ::
+    ds = tls.bintods(outt = 1,
+                     minday = 0,
+                     maxday = 50,
+                     fields_to_open = [init_field, final_field],
+                     )
+
+    # Finding delta ::
+    ds['delta'] = ds[final_field] - ds[init_field]
+    
+    # Figure ::
+    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
+    
+    for t,ax in enumerate(axes.transpose()) :
+        ds[init_field].isel(time=t0+t).plot(ax=ax[0],x='x')
+        ds[final_field].isel(time=t0+t).plot(ax=ax[1],x='x')
+        ds['delta'].isel(time=t0+t).plot(ax=ax[2],x='x')
+        plt.tight_layout()
+    plt.show()
+    return ds
+
+
+
+
 def difference (field='eta1') : 
     """ Sort 8 plot-imshow pour les 8 premiers pas de temps."""
     # Opening data : 
@@ -219,7 +247,9 @@ if __name__ == "__main__" :
         ds = hovmoller()
 
     elif input("Debugg?? [y/]") == 'y' :
-        ds = debug()
+        #ds = mudpack()
+        ds = debug('PsiBTcorrection1')
+        ds = debug('zetaBTcorrection1')
         
     else : 
         ds = tls.bintods(outt = 1,

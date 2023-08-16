@@ -142,6 +142,7 @@
       REAL :: zetaBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_post_out(1:szsubx,1:szsuby)
       REAL :: correction_PsiBT_out(1:szsubx,1:szsuby)
+      REAL :: correction_zetaBT_out(1:szsubx,1:szsuby)
       
       !!! ---------- Other quantities ---------- 
       REAL :: sl, ed
@@ -390,9 +391,9 @@
             enddo
             enddo
 
-            psiBT(1,:,1) = 0.
+            psiBT(1,:,1)  = 0.
             psiBT(nx,:,1) = 0.
-            psiBT(:,1,1) = 0.
+            psiBT(:,1,1)  = 0.
             psiBT(:,ny,1) = 0.
             
             do j = 1,ny-1
@@ -404,6 +405,21 @@
          endif
          !
 
+         ! Pas besoin d'update les contours de zeta ou psi.
+         do j = 2,ny-1
+            jp = j+1
+            jm = j-1
+         do i = 2,nx-1
+            ip = i+1
+            im = i-1
+            
+            zetaBT(i,j,1) = (psiBT(ip,j,1)+psiBT(im,j,1)-2.*psiBT(i,j,1))/dx/dx   &
+            &             + (psiBT(i,jp,1)+psiBT(i,jm,1)-2.*psiBT(i,j,1))/dy/dy
+            
+         enddo
+         enddo
+
+         
          ! Boundaries on the random noise
          array_x = uu
          array_y = vv
