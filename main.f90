@@ -97,16 +97,14 @@
       
       ! Noeuds/Nodes [x] :
       REAL :: zeta(0:nnx,0:nny)
-      REAL :: zetaBT(1:nx,1:ny) ! mudpack
+      REAL :: zetaBT(1:nx,1:ny,3) ! mudpack
       REAL :: zetaBT_post(1:nx,1:ny) ! mudpack
-      REAL :: zetaBT_old(1:nx,1:ny) ! mudpack psiBT_corr
       REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       REAL :: correction_zetaBT(1:nx,1:ny) ! mudpack psiBT_corr
       REAL :: correction_PsiBT(1:nx,1:ny) ! mudpack psiBT_corr
-      REAL :: psiBT(1:nx,1:ny) ! mudpack
-      REAL :: psiBT_old(1:nx,1:ny) ! mudpack psiBT_corr
+      REAL :: psiBT(1:nx,1:ny,3) ! mudpack
       REAL :: array(0:nnx,0:nny) ! dummy
       
 
@@ -143,6 +141,7 @@
       REAL :: psiBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_post_out(1:szsubx,1:szsuby)
+      REAL :: correction_PsiBT_out(1:szsubx,1:szsuby)
       
       !!! ---------- Other quantities ---------- 
       REAL :: sl, ed
@@ -381,21 +380,27 @@
 
          ! Adding random noise from a psiBT
          if (restart .eqv. .false.) then
-            psiBT(:,:) = 0.
-            CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1))
-            psiBT(:,:)  = (psiBT(:,:)-0.5)/1000000.
-            psiBT(1,:) = 0.
-            psiBT(nx,:) = 0.
-            psiBT(:,1) = 0.
-            psiBT(:,ny) = 0.
+            psiBT(:,:,1) = 0.
+            !CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1,1))
+            do j = 1,ny
+               jm=j-1
+            do i = 1,nx
+               im=i-1
+               psiBT(i,j,1) = SIN(2*twopi*im/(nx-1))*SIN(2*twopi*jm/(ny-1))/1e17
+            enddo
+            enddo
+
+            psiBT(1,:,1) = 0.
+            psiBT(nx,:,1) = 0.
+            psiBT(:,1,1) = 0.
+            psiBT(:,ny,1) = 0.
             
             do j = 1,ny-1
             do i = 1,nx-1
-               uu(i,j) =  - (psiBT(i,j+1) - psiBT(i,j))/dy  ! barotropic part-x
-               vv(i,j) =    (psiBT(i+1,j) - psiBT(i,j))/dx  ! barotropic part-y
+               uu(i,j) =  - (psiBT(i,j+1,1) - psiBT(i,j,1))/dy  ! barotropic part-x
+               vv(i,j) =    (psiBT(i+1,j,1) - psiBT(i,j,1))/dx  ! barotropic part-y
             enddo
             enddo
-            psiBT(:,:) = 0.            
          endif
          !
 
@@ -464,8 +469,11 @@
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
       eta(:,:,1,3) = p_out(:,:)
+      ! Eta is barotropic streamfunction.
+      eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny,ilevel)
 
       !
+      
       include 'subs/dump_bin.f90'
       !
 
@@ -577,7 +585,7 @@
          today = time/86400
          !call get_taux(taux_steady,amp_matrix(its),taux)
 
-         
+         ! robert filter
          u(:,:,:,2) = u(:,:,:,2) + rf*(u(:,:,:,1)+u(:,:,:,3)-2*u(:,:,:,2))
          v(:,:,:,2) = v(:,:,:,2) + rf*(v(:,:,:,1)+v(:,:,:,3)-2*v(:,:,:,2))
          eta(:,:,:,2) = eta(:,:,:,2)   &
@@ -629,8 +637,9 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
-            !eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
+            ! Eta is barotropic streamfunction.
+            eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny,3)
+
             include 'subs/dump_bin.f90'
 
             if(mod(its,iout).eq.0)write(*,*) 'current its',its

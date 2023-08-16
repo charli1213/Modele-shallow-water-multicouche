@@ -188,18 +188,19 @@
         ip = i+1
         im = i-1
           
-        zetaBT_post(i,j) = (psiBT(ip,j)+psiBT(im,j)-2.*psiBT(i,j))/dx/dx   &
-        &                + (psiBT(i,jp)+psiBT(i,jm)-2.*psiBT(i,j))/dy/dy
+        zetaBT_post(i,j) = (psiBT(ip,j,ilevel)+psiBT(im,j,ilevel)-2.*psiBT(i,j,ilevel))/dx/dx   &
+        &                + (psiBT(i,jp,ilevel)+psiBT(i,jm,ilevel)-2.*psiBT(i,j,ilevel))/dy/dy
         
      enddo
      enddo
 
      ! Out block
      divBT_out(:,:)  = divBT(isubx,isuby)
-     zetaBT_out(:,:) = zetaBT(isubx,isuby)
+     zetaBT_out(:,:) = zetaBT(isubx,isuby,ilevel)
      zetaBT_post_out(:,:) = zetaBT_post(isubx,isuby)
      uBT_out(:,:) = uBT(isubx,isuby)
      vBT_out(:,:) = vBT(isubx,isuby)
+     correction_PsiBT_out(:,:) = correction_PsiBT(isubx,isuby)
      
      ! Outputing the divergence of the baroclinic current (Should be zero).
      string8 =  './data/divBT' // '1' // '_' // trim(which)
@@ -227,11 +228,17 @@
      write(111,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(111)
 
-     string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
-     open(unit=112,file=string12,access='DIRECT',&
+     !!-!!string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
+     !!-!!open(unit=112,file=string12,access='DIRECT',&
+     !!-!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !!-!!write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
+     !!-!!close(112)
+
+     string13 =  './data/PsiBTcorrection' // '1' // '_' // trim(which)
+     open(unit=113,file=string13,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(112)
+     write(113,REC=1) ((correction_PsiBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(113)
 
   endif !IO_BT
 

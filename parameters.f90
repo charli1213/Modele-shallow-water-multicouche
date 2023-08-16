@@ -24,7 +24,7 @@
  
    parameter ( tau0 = 1.e-4, tau1 = 1.e-5 ) !tau0 = (tau/rho_o) in that case (reality mean(tau) = O(0.1))
  
-   parameter ( f0 = 7.e-5, beta = 0. ) ! 1.e-11 )
+   parameter ( f0 = 7.e-5, beta = 0. ) !1.e-11 )
    
    parameter ( r_drag = 1.e-7 )
  
@@ -40,7 +40,7 @@
  
    parameter ( dt = 300. )
   
-   parameter ( ndays= 5*365, totaltime = 86400 * ndays ) !365
+   parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
    parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
    

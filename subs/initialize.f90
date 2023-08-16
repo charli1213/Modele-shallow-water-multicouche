@@ -147,7 +147,7 @@
        end do
        
 
-       do j = 1,ny
+       do j = 0,nny
           f(j) = f0 + beta*(j-1)*dy
        end do
        

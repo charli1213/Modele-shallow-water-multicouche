@@ -39,8 +39,8 @@ saturation = dict(eta    = 0.9,
                   )
 
 timestamps_dict = {maxday : outt for maxday,outt in
-                   zip([50,250,500,750,850,950,1000,1500,1800],
-                       [1 ,5  ,8  ,10 ,10 ,10 ,  10,15  ,20  ]
+                   zip([50,250,500,750,850,950,1000,1500,1800,3600],
+                       [1 ,5  ,8  ,10 ,10 ,10 ,  10,15  ,20  ,40]
                        )
                    }
 
@@ -60,7 +60,7 @@ def hovmoller() :
     fields_to_open = [fname+str(klayer) for fname in ['u','v','zeta','div','eta','zetaBT','uBT','vBT','divBT']]
     fields_to_show = ['zeta','div','eta','unorm']
     minday_to_show = [0 ,0  ,0  ,0 ,0,0,0,0,0]
-    maxday_to_show = [50,250,500,750,850,950,1000,1500,1800]
+    maxday_to_show = [50] #,250,500,750,850,950,1000,1500,1800,3600]
     nrows = len(fields_to_show)
         
     # > Params : 
@@ -132,7 +132,53 @@ def hovmoller() :
         plt.show()
 
     return ds
+# ================================================================= #
+#                                                                   #
+#                        4-PANNELS ANIMATION                        #
+#                                                                   # 
+# ================================================================= #
+def debug(field='zetaBT1', outt=1) :
+    """ Sort 8 plot-imshow pour les 8 premiers pas de temps."""
+    # Opening data : 
+    ds = tls.bintods(outt = outt,
+                     minday = 0,
+                     maxday = 100,
+                     fields_to_open = ['zetaBT1','eta1','u1','v1','zetaBT1','zeta1','eta2','zetaBTpost1','divBT1'])
 
+    # Figure :
+    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
+    for t,ax in enumerate(axes.flat) :
+        try : 
+            ds[field].isel(time=t*outt).plot(x='x',ax=ax)
+        except : print('Field Missing')
+    plt.tight_layout()
+    plt.show()
+
+    return ds
+ 
+def difference (field='eta1') : 
+    """ Sort 8 plot-imshow pour les 8 premiers pas de temps."""
+    # Opening data : 
+    ds = tls.bintods(outt = 1,
+                     minday = 0,
+                     maxday = 100,
+                     fields_to_open = ['zetaBT1','eta1','u1','v1','zetaBT1',
+                                       'zeta1','eta2','zetaBTpost1','divBT1'])
+    
+    da = ds[field]
+    # Figure :
+    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
+    for t,ax in enumerate(axes.flat) :
+        try :
+            da_diff  = (da.isel(time=t+1)-da.isel(time=t))
+            da_diff.plot(x='x',ax=ax)
+            ax.set_title('delta Psi BT, it = {}'.format(t))
+            del da_diff
+        except : print('Field Missing')
+    plt.tight_layout()
+    plt.show()
+
+    return ds
         
 
 # ================================================================= #
@@ -140,43 +186,6 @@ def hovmoller() :
 #                        4-PANNELS ANIMATION                        #
 #                                                                   # 
 # ================================================================= #
-####
-####    if (input('Voir animation? [y/n]') == 'y') :
-####        try : del ds
-####        except : pass
-####
-####        qty = 'div_rhsBT1'
-####        qty = 'psiBT1'
-####        qty = 'zeta1'
-####        
-####        outt = 1
-####        ds = tls.bintods(casepath = casepath,
-####                                    #minday   = 1,
-####                                    #maxday   = 100,
-####                                    outt     = outt,
-####                                    klayer   = 1,
-####                                    fields = [qty,'divBT1'], #'uBT1','vBT1','eta1','u1','divBT1','div1'],
-####                                    dt=dt,
-####                                    nx=nx,
-####                                    )
-####        nt=len(ds.time)
-####
-####        fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
-####
-####        def animate(time, ds=ds):
-####            im = (ds[qty]).isel(time=time).plot(x='x',ax=axes,add_colorbar=False)
-####            return im,
-####        ani =  animation.FuncAnimation(fig, animate, nt , interval=150, blit=True, repeat=True)
-####
-####        #ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
-####        #ani = FuncAnimation(fig,animate,frames=100)
-####        #plt.close()
-####        plt.show()
-####        #HTML(ani.to_jshtml()) #Show the animation in the kernel
-####    
-
-
-
 
 def anim(dA) :
     # Parameters ::
@@ -208,6 +217,10 @@ def anim(dA) :
 if __name__ == "__main__" :
     if input("Sortir Hovmoller? [y/]") == 'y' :
         ds = hovmoller()
+
+    elif input("Debugg?? [y/]") == 'y' :
+        ds = debug()
+        
     else : 
         ds = tls.bintods(outt = 1,
                          minday = 1,
@@ -224,3 +237,5 @@ if __name__ == "__main__" :
         plt.show()
 
         anim(da)
+
+

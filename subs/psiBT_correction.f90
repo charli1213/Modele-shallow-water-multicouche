@@ -24,7 +24,7 @@
               &             -  eta(:,:,k+1,ilevel)
           endif
 
-          ! Barotropic RHS of u and v.
+          ! Barotropic part of u(ilevel=3) and v(ilevel=3).
           do j=1,ny-1
           do i=1,nx-1
 
@@ -33,9 +33,8 @@
           vBT(i,j) = vBT(i,j)                                             &
           &        + vv(i,j)*(thickness(i,j) + thickness(i,j-1))/Htot/2   
 
-
           enddo
-       enddo
+          enddo
 
           ! Bndy
           array_x = uBT
@@ -48,31 +47,29 @@
           
        end do !end k-loop
 
-
-       
-       ! baroclinic RHS_u,v
-       ! note : no need for bndy conditions.
+       ! Barotropic part of u(ilevel=3) and v(ilevel=3).
+       ! note : no need for bndy conditions here.
        do k = 1, nz
           uBC(:,:,k) = u(:,:,k,ilevel) - uBT(:,:)
           vBC(:,:,k) = v(:,:,k,ilevel) - vBT(:,:)
        enddo
 
        
-       ! finding curl of uBT OR RHS_zetaBT (same thing)
+       ! finding curl of uBT OR RHS_zetaBT after leapfrog 
        ! note : no need for bndy conditions here : Boundaries are set to 0.
        do j = 2,ny-1
           jm = j-1
        do i = 2,nx-1
           im = i-1
           
-          zetaBT(i,j) =  (vBT(i,j)-vBT(im,j))/dx    &
-          &           -  (uBT(i,j)-uBT(i,jm))/dy           
+          zetaBT(i,j,ilevel) =  (vBT(i,j) - vBT(im,j))/dx    &
+          &                  -  (uBT(i,j) - uBT(i,jm))/dy           
        enddo
        enddo
 
        ! See MUDPACK documentation for this. It makes solutions
-       ! more trustworthy. 
-       correction_zetaBT(:,:) = zetaBT(:,:) - zetaBT_old(:,:)
+       ! more trustworthy.
+       correction_zetaBT(:,:) = zetaBT(:,:,ilevel) - zetaBT(:,:,1)
 
        
     ! ######################################################## !
@@ -94,7 +91,7 @@
     !                                                          !   
     ! ######################################################## !
 
-       PsiBT(:,:) = PsiBT_old(:,:) + correction_PsiBT(:,:)
+       PsiBT(:,:,ilevel) = PsiBT(:,:,1) + correction_PsiBT(:,:)
        
        ! Note : u = - \curl(\psi \kvec) = k \times \gradient(\psi)
        do j = 1,ny-1
@@ -102,8 +99,8 @@
        do i = 1,nx-1
           ip = i+1
 
-          uBT(i,j) =  - (psiBT(i,jp) - psiBT(i,j))/dy  ! barotropic part-x
-          vBT(i,j) =    (psiBT(ip,j) - psiBT(i,j))/dx  ! barotropic part-y
+          uBT(i,j) =  - (psiBT(i,jp,ilevel) - psiBT(i,j,ilevel))/dy  ! barotropic part-x
+          vBT(i,j) =    (psiBT(ip,j,ilevel) - psiBT(i,j,ilevel))/dx  ! barotropic part-y
        enddo
        enddo
 
@@ -123,8 +120,18 @@
        enddo
        ! --- u,v are now updated! (Cheers!)
 
+
+       
+       ! Robert filter
+       zetaBT(:,:,2) = zetaBT(:,:,2) &
+       &             + rf*(zetaBT(:,:,1)+zetaBT(:,:,3)-2*zetaBT(:,:,2))
+       PsiBT(:,:,2)  = PsiBT(:,:,2) &
+       &             + rf*(PsiBT(:,:,1)+PsiBT(:,:,3)-2*PsiBT(:,:,2))
+       
        
        ! Updating quantities for next timestep
-       zetaBT_old(:,:) = zetaBT(:,:)
-       PsiBT_old(:,:)  = PsiBT(:,:)
+       zetaBT(:,:,1) = zetaBT(:,:,2)
+       PsiBT(:,:,1)   = PsiBT(:,:,2)
 
+       zetaBT(:,:,2) = zetaBT(:,:,ilevel)
+       PsiBT(:,:,2)   = PsiBT(:,:,ilevel)

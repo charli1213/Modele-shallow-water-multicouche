@@ -1,8 +1,6 @@
    
-  psiBT(:,:) = 0.
-  psiBT_old(:,:) = 0.
-  zetaBT(:,:) = 0.
-  zetaBT_old(:,:) = 0.
+  psiBT(:,:,:) = 0.
+  zetaBT(:,:,:) = 0.
   correction_zetaBT(:,:) = 0.
   correction_PsiBT(:,:) = 0.
   
@@ -127,7 +125,7 @@
   ! Ces valeurs vont être utilisées comme guess initial. Mettre tous à zéro si une
   ! solution approximative n'est pas illustrée.
   CALL RANDOM_NUMBER(correction_psiBT(:,:))
-  correction_psiBT(:,:) = correction_psiBT(:,:)/1000000
+  correction_psiBT(:,:) = correction_psiBT(:,:)/1e-20
   ! Dirichlet boundary conditions : 
   correction_psiBT(1 ,:) = 0.
   correction_psiBT(nx,:) = 0.
@@ -138,7 +136,7 @@
   ! mgopt
   !           an integer vector of length 4 which allows the user to select
   !           among various multigrid options. 
-  mgopt(1) = 2 ! kcycle (Default)
+  mgopt(1) = 0 ! kcycle (Default)
   mgopt(2) = 2 ! iprer (Default)
   mgopt(3) = 1 ! ipost (Default)
   mgopt(4) = 3 ! intpol (Default)

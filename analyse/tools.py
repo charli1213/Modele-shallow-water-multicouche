@@ -83,10 +83,12 @@ def bintods(casepath='./',
         print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
         for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
             ifile = min_filenumber+int(minday/dt)+it*outt
-            f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
-            data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
-            f.close()
-                
+            try : 
+                f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
+                data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
+                f.close()
+            except : 
+                data[it,:,:] = np.nan
         # coords/data = form (dims, data[, attrs, encoding])
         #data = np.roll(data, int(nx/4), axis = 2)
         #data = np.roll(data, int(nx/4), axis = 1)
