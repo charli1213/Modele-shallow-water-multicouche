@@ -9,3 +9,14 @@ __pycache__
 newcase/*.py
 testmud
 testcase
+mudpack-test/data/delta_RHS1
+mudpack-test/data/erreur_abs1
+mudpack-test/data/first_RHS
+mudpack-test/data/primitive
+mudpack-test/data/solution1
+mudpack-test/compile_test
+mudpack-test/data/RHS_MUD2
+mudpack-test/data/mud_sol
+mudpack-test/data/rhs
+mudpack-test/data/solution
+mudpack-test/data/true_error

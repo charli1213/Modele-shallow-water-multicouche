@@ -86,12 +86,14 @@ def bintods(casepath='./',
     
     # > Boucle sur les noms des output
     for name in data_names :
+        print('NAME :: ',name)
         # On recrée data, car problème de np.roll.
         data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
         print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
         for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
             ifile = min_filenumber+int(minday/dt)+it*outt
-            try : 
+            try :
+                print( "filename :: {}".format(casepath + 'data/{}_{}'.format(name,ifile)))
                 f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
                 data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
                 f.close()

@@ -201,7 +201,7 @@
      uBT_out(:,:) = uBT(isubx,isuby)
      vBT_out(:,:) = vBT(isubx,isuby)
      correction_zetaBT_out(:,:) = correction_zetaBT(isubx,isuby)
-     correction_PsiBT_out(:,:) = correction_PsiBT(isubx,isuby)
+     PsiBT_correction_out(:,:) = PsiBT_correction(isubx,isuby)
      
      ! Outputing the divergence of the baroclinic current (Should be zero).
      string8 =  './data/divBT' // '1' // '_' // trim(which)
@@ -238,7 +238,7 @@
      string13 =  './data/PsiBTcorrection' // '1' // '_' // trim(which)
      open(unit=113,file=string13,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(113,REC=1) ((correction_PsiBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     write(113,REC=1) ((PsiBT_correction_out(i,j),i=1,szsubx),j=1,szsuby)
      close(113)
 
      string14 =  './data/zetaBTcorrection' // '1' // '_' // trim(which)

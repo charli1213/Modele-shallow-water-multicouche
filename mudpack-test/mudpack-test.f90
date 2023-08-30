@@ -12,41 +12,45 @@ PROGRAM mudpack_test
   REAL,    PARAMETER :: yc  = 0.,          yd  = 1000.
   REAL,    PARAMETER :: Lx  = xb-xa,       Ly  = yd-yc
   REAL,    PARAMETER :: dx  = Lx/(nx-1),   dy  = Ly/(ny-1)
-  INTEGER            :: i,j,ierror
+  INTEGER, PARAMETER :: nmud = 0 ! Nombre de cycles MUDPACK
+  INTEGER            :: i,j,k,ierror
 
   ! Intermediate arrays and prints : 
   real   :: phi(nx,ny), errorphi(nx,ny)
-  REAL               :: int_cte
-  ! functions
-  real   :: true_solution
 
   ! MUDPACK INPUT (Main.f90)
   INTEGER            :: iparm(17), mgopt(4), length
   REAL               :: fparm(6)
   REAL,ALLOCATABLE   :: workm(:)
   CHARACTER(LEN=80)  :: myformat
-  real               :: RHS_MUD(1:nx,1:ny), solution(1:nx,1:ny), RHS_MUD2(1:nx,1:ny), dRHS(1:nx,1:ny)
+  REAL   :: RHS_MUD(nx,ny), RHS_MUD2(nx,ny,nmud+1)
+  REAL   :: delta_RHS(nx,ny,nmud+1)
+  REAL   :: solution(nx,ny), correction(1:nx,1:ny,nmud)
+  character(88)      :: which
 
   ! SUBROUTINES CALLS
   external coef,bndyc
 
-
   
   ! >>> PROGRAMME
+  ! Initialisation des champs 
+  rhs_mud(:,:)  = 0.
+  rhs_mud2(:,:,:) = 0.
+  solution(:,:) = 0.
+  correction(:,:,:) = 0.
+  phi(:,:) = 0.
   
-  ! Initalisation du champ à résoudre : 
-  PRINT *, "> 1. Initialisation du champ à résoudre à l'aide de la fonction true_solution"
-  DO j = 1,nx
-  DO i = 1,nx
+
+  ! Initalisation de la primitive/solution réelle (PHI)
+  PRINT *, "> 1. Initialisation du champ à résoudre (Primitive)."
+  DO j = 2,ny-1
+  DO i = 2,nx-1
      phi(i,j) = sin(pi*(i-1)/(nx-1))* sin(2*pi*(j-1)/(nx-1))
   END DO
   END DO
-  phi(1,:) = 0.
-  phi(nx,:) = 0.
-  phi(:,1) = 0.
-  phi(:,ny) = 0.
 
-  ! On trouve le laplacien du champ phi (le RHS de la fonction)
+
+  ! On trouve le laplacien du champ phi (le RHS de l'opérateur linéaire)
   ! -- Définit sur le champ, lui-même (Aux coins)
   PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
   DO j = 2,ny-1
@@ -55,14 +59,21 @@ PROGRAM mudpack_test
           &       + (phi(i,j+1)+phi(i,j-1)-2.*phi(i,j))/dy/dy
   ENDDO
   ENDDO
+  
 
-  ! On applique le laplacien aux frontières.
-  RHS_MUD(1, :) = (phi(3,   :) - 2*phi(2,   :))/dx**2
-  RHS_MUD(nx,:) = (phi(nx-2,:) - 2*phi(nx-1,:))/dx**2
-  RHS_MUD(:, 1) = (phi(:,   3) - 2*phi(:,   2))/dy**2
-  RHS_MUD(:,ny) = (phi(:,ny-2) - 2*phi(:,ny-1))/dy**2
+  !!! ---------- PRE-MUDPACK OUTPUT ---------- !!!
+  open(unit=101,file='data/primitive',access='DIRECT',&
+       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  write(101,REC=1) ((phi(i,j),i=1,nx),j=1,ny)
+  close(101)
 
   
+  open(unit=102,file='data/first_RHS',access='DIRECT',&
+       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+  write(102,REC=1) ((REAL(RHS_mud(i,j)),i=1,nx),j=1,ny)
+  close(102)
+  !!! --------------------------------------- !!!
+
   
 
 
@@ -116,7 +127,7 @@ PROGRAM mudpack_test
   !     level where cycles will remain fixed) can be tried.
   !     > On va essayer les deux.
   
-  iparm(13) = 100  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
+  iparm(13) = 10  ! maxcy  : the exact number of cycles executed between the finest and the coarsest
   iparm(14) = 0  ! method : Méthode conseillée si Cxx = Cyy partout. (Si ça chie, prendre 3)
   length = int(4*(nx*ny*(10+0+0)+8*(nx+ny+2))/3)
   iparm(15) = length ! Conseillé.
@@ -245,6 +256,11 @@ PROGRAM mudpack_test
   !                (END) Init MUDPACK                  !
   !                                                    !
   ! ************************************************** !
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !
+
+
+
+
 
 
 
@@ -252,62 +268,55 @@ PROGRAM mudpack_test
 
 
   
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !
+  ! >>> PREMIER (VRAI) CALL DE MUDPACK
+  !
+  ! > Header
+  k=1
+  WRITE(which,'(I1)') k
+  PRINT *, " >>>> MUDPACK CYCLES >>>> "
+  PRINT *, " "
   
-
   
-  PRINT *, " > 8. Appel secondaire de MUD2 (iparm(1)=1)"
+  ! *********************************************** !
+  !       Premier (vrai) call de MUDPACK            !
+  ! *********************************************** !
+  !
+  PRINT *, "------------------------------------------------------------ "
+  PRINT *, "> 1) Appel initial de MUD2 (iparm(1)=1)"
   iparm(1) = 1
   call mud2(iparm,fparm,workm,coef,bndyc,RHS_mud,solution,mgopt,ierror)
   PRINT *, "ERROR =",ierror
   PRINT *, "Number of multigrid cycles =",iparm(17)
   PRINT *, "max difference =",fparm(6)
-
-
-
-
-
-
-  PRINT *, "> 2. On trouve le laplacien de la fonction (RHS_MUD)"
+  !
+  ! *********************************************** !
+  !    (END) Premier (vrai) call de MUDPACK         !
+  ! *********************************************** !
+  
+  
+  ! >>> Pré-Ré-Analyse :
+  ! On retrouve le RHS de l'opérateur linéaire à l'aide de la solution trouvée
+  PRINT *, "> 2) On trouve le laplacien de la fonction (RHS_MUD)"
+  PRINT *, " "
   DO j = 2,ny-1
   DO i = 2,nx-1
-     RHS_MUD2(i,j) = (solution(i+1,j)+solution(i-1,j)-2.*solution(i,j))/dx/dx   &
-          &        + (solution(i,j+1)+solution(i,j-1)-2.*solution(i,j))/dy/dy
+     RHS_MUD2(i,j,1) = (solution(i+1,j)+solution(i-1,j)-2.*solution(i,j))/dx/dx   &
+     &               + (solution(i,j+1)+solution(i,j-1)-2.*solution(i,j))/dy/dy
   ENDDO
   ENDDO
 
-  ! On applique le laplacien aux frontières.
-  RHS_MUD2(1, :) = (solution(3,   :) - 2*solution(2,   :))/dx**2
-  RHS_MUD2(nx,:) = (solution(nx-2,:) - 2*solution(nx-1,:))/dx**2
-  RHS_MUD2(:, 1) = (solution(:,   3) - 2*solution(:,   2))/dy**2
-  RHS_MUD2(:,ny) = (solution(:,ny-2) - 2*solution(:,ny-1))/dy**2
+  ! On trouve l'écart entre les RHS.
+  delta_RHS(:,:,1) =  RHS_MUD(:,:) - RHS_MUD2(:,:,1)
 
 
 
-  drhs(:,:) = RHS_MUD2(:,:) - RHS_MUD(:,:)
+!!! ---------- POST-MUDPACK OUTPUT ---------- !!!
 
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  ! >>> Writing outputs
-  open(unit=101,file='data/rhs',access='DIRECT',&
+  open(unit=103,file='data/solution' // trim(which),access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(101,REC=1) ((RHS_mud(i,j),i=1,nx),j=1,ny)
-  close(101)
-  
-  open(unit=102,file='data/mud_sol',access='DIRECT',&
-       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(102,REC=1) ((solution(i,j),i=1,nx),j=1,ny)
-  close(102)
+  write(103,REC=1) ((REAL(solution(i,j)),i=1,nx),j=1,ny)
+  close(103)
 
   errorphi(:,:)=0.
   DO i=1,nx
@@ -315,23 +324,94 @@ PROGRAM mudpack_test
         errorphi(i,j) = abs(phi(i,j) - solution(i,j))
      ENDDO
   ENDDO
-
-  open(unit=103,file='data/solution',access='DIRECT',&
-       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(103,REC=1) ((phi(i,j),i=1,nx),j=1,ny)
-  close(103)
-
-  open(unit=104,file='data/true_error',access='DIRECT',&
+  
+  open(unit=104,file='data/erreur_abs' // trim(which),access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
   write(104,REC=1) ((errorphi(i,j),i=1,nx),j=1,ny)
   close(104)
 
-  WRITE (*,'(e10.3)') MAXVAL(errorphi(:,:))
-
-  open(unit=105,file='data/RHS_MUD2',access='DIRECT',&
+  open(unit=105,file='data/delta_RHS' // trim(which),access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
-  write(105,REC=1) ((dRHS(i,j),i=1,nx),j=1,ny)
-  close(105)
+  write(105,REC=1) ((REAL(delta_RHS(i,j,1)),i=1,nx),j=1,ny)
+  close(105) 
+
+  !!! ----------------------------------------- !!!
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !
+
+  
+
+
+
+
+
+
+  
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !
+  ! >>> Appels cycliques de MUDPACK
+  !
+  DO k = 1,nmud
+     WRITE(which,'(I1)') k+1
+     !
+     !
+     ! *********************************************** !
+     !                  MUDPACK CALL                   !
+     ! *********************************************** !
+     !
+     PRINT *, "------------------------------------------------------------ "
+     PRINT *, "> 1) ", trim(which),"ème appel de MUD2 (iparm(1)=1)"
+     CALL MUD2(iparm,fparm,workm,coef,bndyc,delta_RHS(:,:,k),correction(:,:,k),mgopt,ierror)
+     PRINT *, "ERROR =",ierror
+     PRINT *, "Number of multigrid cycles =",iparm(17)
+     PRINT *, "max difference =",fparm(6)
+     !
+     ! *********************************************** !
+     !                (END) MUDPACK CALL               !
+     ! *********************************************** !     
+     
+
+     ! On corrige la solution. 
+     solution(:,:) = solution(:,:) + correction(:,:,k)
+
+     ! >>> Pré-Ré-Analyse :
+     ! On retrouve le RHS de l'opérateur linéaire à l'aide de la solution trouvée 
+     PRINT *, "> 2) On trouve le laplacien de la nouvelle solution corrigée"
+     DO j = 2,ny-1
+     DO i = 2,nx-1
+        RHS_MUD2(i,j,k+1) = (solution(i+1,j)+solution(i-1,j)-2.*solution(i,j))/dx/dx   &
+        &                 + (solution(i,j+1)+solution(i,j-1)-2.*solution(i,j))/dy/dy
+     ENDDO
+     ENDDO
+
+     ! On trouve l'écart entre les RHS. 
+     delta_RHS(:,:,k+1) = RHS_MUD(:,:) - RHS_MUD2(:,:,k+1)
+     ! delta_RHS(:,:,k+1) = RHS_MUD2(:,:,k+1) - RHS_MUD2(:,:,k)
+
+     !!! OUTPUTS     
+     errorphi(:,:) = 0.
+     DO i=1,nx
+     DO j=1,ny
+        errorphi(i,j) = abs(phi(i,j) - solution(i,j))
+     ENDDO
+     ENDDO
+     
+     open(unit=106,file='data/erreur_abs' // trim(which), access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+     write(106,REC=1) ((errorphi(i,j),i=1,nx),j=1,ny)
+     close(106)
+     
+     open(unit=108,file='data/delta_RHS' // trim(which), access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(nx*ny))
+     write(108,REC=1) ((REAL(delta_RHS(i,j,k+1)),i=1,nx),j=1,ny)
+     close(108) 
+
+     !!! Info supplémentaire
+     PRINT *, "Max Abs Err   : ", MAXVAL(errorphi)
+     PRINT *, "Maximum RHS   : ", MAXVAL(RHS_MUD2(:,:,k+1))
+     PRINT *, "Max delta RHS : ", MAXVAL(delta_RHS(:,:,k+1))
+     PRINT *, " "     
+
+     
+  ENDDO
 
   
 END PROGRAM mudpack_test

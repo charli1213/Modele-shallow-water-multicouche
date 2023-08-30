@@ -137,12 +137,14 @@ def hovmoller() :
 #                        4-PANNELS ANIMATION                        #
 #                                                                   # 
 # ================================================================= #
-def debug(field='zetaBT1', outt=1) :
-    """ Sort 8 plot-imshow pour les 8 premiers pas de temps."""
+def debug(field='zetaBT1', outt=1, minday = 0, maxday = 50) :
+    """ Sort 12 plot-imshow pour les 12 premiers pas de temps."""
+    
     # Opening data : 
     ds = tls.bintods(outt = outt,
-                     minday = 0,
-                     maxday = 100,
+                     minday = minday,
+                     maxday = maxday,
+                     dt = 1/4,
                      fields_to_open = ['zetaBT1','eta1','u1','v1','zeta1','eta2',
                                        'zetaBTpost1','divBT1','PsiBTcorrection1',
                                        'zetaBTcorrection1'])
@@ -248,9 +250,8 @@ if __name__ == "__main__" :
 
     elif input("Debugg?? [y/]") == 'y' :
         #ds = mudpack()
-        ds = debug('PsiBTcorrection1')
-        ds = debug('zetaBTcorrection1')
-        
+        ds = debug(field = 'zetaBT1', outt = 1)
+
     else : 
         ds = tls.bintods(outt = 1,
                          minday = 1,

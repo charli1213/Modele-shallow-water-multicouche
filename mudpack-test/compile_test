@@ -1,6 +1,6 @@
 #!/bin/bash
-#mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
-mudpack_path=~/mudpack5.0.1/lib
+mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
+#mudpack_path=~/mudpack5.0.1/lib
 #lapack_path=/usr/lib/x86_64-linux-gnu/lapack
 lapack_path=/usr/lib64
 blas_path=/usr/lib64

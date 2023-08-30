@@ -103,8 +103,13 @@
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
       REAL :: correction_zetaBT(1:nx,1:ny) ! mudpack psiBT_corr
-      REAL :: correction_PsiBT(1:nx,1:ny) ! mudpack psiBT_corr
+      REAL :: PsiBT_correction(1:nx,1:ny) ! mudpack psiBT_corr
       REAL :: psiBT(1:nx,1:ny,3) ! mudpack
+
+      REAL :: new_RHS(1:nx,1:ny) ! mudpack
+      REAL :: delta_RHS(1:nx,1:ny) ! mudpack
+      REAL :: delta_correction(1:nx,1:ny) ! mudpack
+      
       REAL :: array(0:nnx,0:nny) ! dummy
       
 
@@ -141,7 +146,7 @@
       REAL :: psiBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_post_out(1:szsubx,1:szsuby)
-      REAL :: correction_PsiBT_out(1:szsubx,1:szsuby)
+      REAL :: PsiBT_correction_out(1:szsubx,1:szsuby)
       REAL :: correction_zetaBT_out(1:szsubx,1:szsuby)
       
       !!! ---------- Other quantities ---------- 
@@ -387,7 +392,7 @@
                jm=j-1
             do i = 1,nx
                im=i-1
-               psiBT(i,j,1) = SIN(2*twopi*im/(nx-1))*SIN(2*twopi*jm/(ny-1))/1e17
+               psiBT(i,j,1) = SIN(2*twopi*im/(nx-1))*SIN(2*twopi*jm/(ny-1))/1e10
             enddo
             enddo
 
@@ -442,7 +447,7 @@
          include 'subs/rhs.f90'
       enddo  ! end of the do k = 1,nz loop
 
-      
+
       ! ================================================== !
       !                  RHS (begining)                    !
       ! ================================================== !
@@ -459,11 +464,10 @@
       u(:,:,:,2) = u(:,:,:,1) + dt*rhs_u(:,:,:)
       v(:,:,:,2) = v(:,:,:,1) + dt*rhs_v(:,:,:)
 
-
+      
       ! ================================================== !
       !                      RHS (END)                     !
       ! ================================================== !
-
 
       ! >>> barotropic psi-correction
       write(*,*) 'First barotropic psi-correction'
@@ -474,8 +478,7 @@
       p_out(:,:) = 0.
       include 'subs/psiBT_correction.f90'
       ! <<< barotropic correction (End)
-      
-      
+
       time = dt
       its = its + 1
       !call get_taux(taux_steady,amp_matrix(its),taux)

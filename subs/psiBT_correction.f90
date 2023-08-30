@@ -43,7 +43,7 @@
           include 'subs/free_slip.f90'
           uBT = array_x
           vBT = array_y
-
+            
           
        end do !end k-loop
 
@@ -83,7 +83,7 @@
     ! ######################################################## !
 
        call mud2(iparm,fparm,workm,coef,bndyc,correction_zetaBT, & 
-            &    correction_PsiBT,mgopt,ierror)
+            &    PsiBT_correction,mgopt,ierror)
        
     ! ######################################################## !
     !                                                          !
@@ -91,7 +91,45 @@
     !                                                          !   
     ! ######################################################## !
 
-       PsiBT(:,:,ilevel) = PsiBT(:,:,1) + correction_PsiBT(:,:)
+       ! PsiBT updated
+       ! PsiBT(:,:,ilevel) = PsiBT(:,:,1) + PsiBT_correction(:,:)
+
+
+
+
+
+
+    ! >>>> Second MUDPACK cycle for a more precise solution.
+       ! Re-finding laplacian of psi' to compare RHS (curls).
+       DO j = 2,ny-1
+       DO i = 2,nx-1
+          new_RHS(i,j) = (PsiBT_correction(i+1,j)+PsiBT_correction(i-1,j)      &
+          &               -2.*PsiBT_correction(i,j))/dx/dx                     &
+          &            + (PsiBT_correction(i,j+1)+PsiBT_correction(i,j-1)      &
+          &               -2.*PsiBT_correction(i,j))/dy/dy
+       ENDDO
+       ENDDO
+
+       ! Getting differrence between curl(uBT) and Lap(psi') : deltaRHS
+       delta_RHS = correction_zetaBT - new_RHS
+       
+       ! ------------------------ MUDPACK -------------------------- !
+       call mud2(iparm,fparm,workm,coef,bndyc,delta_RHS, & 
+            &    delta_correction ,mgopt,ierror)
+       ! ---------------------- MUDPACK (END) ---------------------- !
+
+       ! Applying second correction to solution
+       PsiBT_correction = PsiBT_correction + delta_correction
+       
+       ! Applying total correction to PsiBT. PsiBT is now updated.
+       PsiBT(:,:,ilevel) = PsiBT(:,:,1) + PsiBT_correction(:,:)
+       
+
+
+
+
+
+
        
        ! Note : u = - \curl(\psi \kvec) = k \times \gradient(\psi)
        do j = 1,ny-1
@@ -103,7 +141,7 @@
           vBT(i,j) =    (psiBT(ip,j,ilevel) - psiBT(i,j,ilevel))/dx  ! barotropic part-y
        enddo
        enddo
-
+       
        ! Bndy
        array_x = uBT
        array_y = vBT

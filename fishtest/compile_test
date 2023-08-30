@@ -1,0 +1,11 @@
+#!/bin/bash
+mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
+#mudpack_path=~/mudpack5.0.1/lib
+#lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+lapack_path=/usr/lib64
+blas_path=/usr/lib64
+fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
+#testfile1=thwscrt_2.f90
+testfile1=testfish.f90
+#gfortran  -o  poisson-exec-fishpack $testfile1 -L$mudpack_path -lmudpack -L$lapack_path -llapack -lblas -L$fishpack_path -lfishpack
+gfortran -o poisson-exec-fishpack.exe $testfile1 -L$fishpack_path -lfishpack -I$fishpack_path

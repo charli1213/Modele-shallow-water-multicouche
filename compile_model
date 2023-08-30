@@ -18,8 +18,8 @@ then
     mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
     model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
-    case=t2layers_leapfrog
-    #case=t2layers_leapfrog_GSvertical
+    #case=t2layers_leapfrog
+    case=t2layers_beta_debug
     #case=testcase_2layers_newzeta
 fi
 
