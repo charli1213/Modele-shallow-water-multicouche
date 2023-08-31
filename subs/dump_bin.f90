@@ -118,8 +118,8 @@
   !*!   do j = 1,ny-1
   !*!   jp = j+1   
   !*!   do i = 1,nx-1
-  !*!   ip = i+1
-  !*!   faces_array(i,j) = (rhs_u_BT(ip,j)-rhs_u_BT(i,j))/dx   &
+  !*!   ip1 = i+1
+  !*!   faces_array(i,j) = (rhs_u_BT(ip1,j)-rhs_u_BT(i,j))/dx   &
   !*!        &           + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
   !*!   enddo
   !*!   enddo
@@ -171,9 +171,9 @@
      do j = 1, ny-1
         jp = j+1
      do i = 1, nx-1
-        ip = i+1
+        ip1 = i+1
         ! divBT post-Mudpack (while zetaBT is pre-Mudpack)
-        divBT(i,j) = (uBT(ip,j)-uBT(i,j))/dx   &
+        divBT(i,j) = (uBT(ip1,j)-uBT(i,j))/dx   &
         &          + (vBT(i,jp)-vBT(i,j))/dy 
      enddo
      enddo
@@ -185,11 +185,12 @@
         jp = j+1
         jm = j-1
      do i = 2,nx-1
-        ip = i+1
+        ip1 = i+1
         im = i-1
           
-        zetaBT_post(i,j) = (psiBT(ip,j,ilevel)+psiBT(im,j,ilevel)-2.*psiBT(i,j,ilevel))/dx/dx   &
-        &                + (psiBT(i,jp,ilevel)+psiBT(i,jm,ilevel)-2.*psiBT(i,j,ilevel))/dy/dy
+        zetaBT_post(i,j) = &
+        &       (psiBT(ip1,j,ilevel)+psiBT(im,j,ilevel)-2.*psiBT(i,j,ilevel))/dx/dx   &
+        &      +(psiBT(i,jp,ilevel)+psiBT(i,jm,ilevel)-2.*psiBT(i,j,ilevel))/dy/dy
         
      enddo
      enddo

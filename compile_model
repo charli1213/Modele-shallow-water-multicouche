@@ -18,9 +18,10 @@ then
     mudpack_path=/usr/lib/x86_64-linux-gnu/mudpack
     model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+    fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
     #case=t2layers_leapfrog
-    case=t2layers_beta_debug
-    #case=testcase_2layers_newzeta
+    #case=t2layers_beta_debug
+    case=t2layers_beta_tau01
 fi
 
 # >>> Preparing before compilation ::
@@ -32,7 +33,7 @@ echo "!! Parameters file copied from ${model_path} to ${case}"
 
 # >>> Compilation :: 
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-gfortran -o  $case/exec $model_path/main.f90 -L/usr/lib -lblas -llapack -L$mudpack_path -lmudpack
+gfortran -o  $case/exec $model_path/main.f90 -L/usr/lib -lblas -llapack -L$mudpack_path -lmudpack -L$fishpack_path -lfishpack -I$fishpack_path
 
 # >>> Parameter last compiled in model directory ::
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled

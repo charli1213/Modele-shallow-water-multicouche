@@ -18,10 +18,10 @@
           jp = j+1
           jm = j-1
        do i = 1, nx-1
-          ip = i+1
+          ip1 = i+1
           im = i-1
 
-          div(i,j)  = (u(ip,j,k,3)-u(i,j,k,3))/dx + (v(i,jp,k,3)-v(i,j,k,3))/dy 
+          div(i,j)  = (u(ip1,j,k,3)-u(i,j,k,3))/dx + (v(i,jp,k,3)-v(i,j,k,3))/dy 
 
        enddo
        enddo
@@ -31,7 +31,7 @@
           jp = j+1
           jm = j-1
        do i = 1, nx
-          ip = i+1
+          ip1 = i+1
           im = i-1
              
           zeta(i,j) = (v(i,j,k,3)-v(im,j,k,3))/dx - (u(i,j,k,3)-u(i,jm,k,3))/dy

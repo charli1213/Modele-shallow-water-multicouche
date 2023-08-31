@@ -67,10 +67,6 @@
        enddo
        enddo
 
-       ! See MUDPACK documentation for this. It makes solutions
-       ! more trustworthy.
-       correction_zetaBT(:,:) = zetaBT(:,:,ilevel) - zetaBT(:,:,1)
-
        
     ! ######################################################## !
     !                                                          !
@@ -81,9 +77,10 @@
     !      we solve for d_psi_BT instead of pressure gradient  !
     !                                                          !
     ! ######################################################## !
-
-       call mud2(iparm,fparm,workm,coef,bndyc,correction_zetaBT, & 
-            &    PsiBT_correction,mgopt,ierror)
+       ff = DBLE(zetaBT(:,:,ilevel))
+       call hwscrt(xa, xb, nx-1, mbdcnd, bda, bdb, yc, yd, ny-1, nbdcnd, bdc, bdd, &
+            elmbda, ff, nx, pertrb, ierror)
+       PsiBT(:,:,ilevel) = REAL(ff(:,:))
        
     ! ######################################################## !
     !                                                          !
@@ -91,46 +88,7 @@
     !                                                          !   
     ! ######################################################## !
 
-       ! PsiBT updated
-       ! PsiBT(:,:,ilevel) = PsiBT(:,:,1) + PsiBT_correction(:,:)
-
-
-
-
-
-
-    ! >>>> Second MUDPACK cycle for a more precise solution.
-       ! Re-finding laplacian of psi' to compare RHS (curls).
-       DO j = 2,ny-1
-       DO i = 2,nx-1
-          new_RHS(i,j) = (PsiBT_correction(i+1,j)+PsiBT_correction(i-1,j)      &
-          &               -2.*PsiBT_correction(i,j))/dx/dx                     &
-          &            + (PsiBT_correction(i,j+1)+PsiBT_correction(i,j-1)      &
-          &               -2.*PsiBT_correction(i,j))/dy/dy
-       ENDDO
-       ENDDO
-
-       ! Getting differrence between curl(uBT) and Lap(psi') : deltaRHS
-       delta_RHS = correction_zetaBT - new_RHS
-       
-       ! ------------------------ MUDPACK -------------------------- !
-       call mud2(iparm,fparm,workm,coef,bndyc,delta_RHS, & 
-            &    delta_correction ,mgopt,ierror)
-       ! ---------------------- MUDPACK (END) ---------------------- !
-
-       ! Applying second correction to solution
-       PsiBT_correction = PsiBT_correction + delta_correction
-       
-       ! Applying total correction to PsiBT. PsiBT is now updated.
-       PsiBT(:,:,ilevel) = PsiBT(:,:,1) + PsiBT_correction(:,:)
-       
-
-
-
-
-
-
-       
+       ! PsiBT updated       
        ! Note : u = - \curl(\psi \kvec) = k \times \gradient(\psi)
        do j = 1,ny-1
           jp = j+1
@@ -157,19 +115,3 @@
           v(:,:,k,ilevel) = vBC(:,:,k) + vBT(:,:)
        enddo
        ! --- u,v are now updated! (Cheers!)
-
-
-       
-       ! Robert filter
-       zetaBT(:,:,2) = zetaBT(:,:,2) &
-       &             + rf*(zetaBT(:,:,1)+zetaBT(:,:,3)-2*zetaBT(:,:,2))
-       PsiBT(:,:,2)  = PsiBT(:,:,2) &
-       &             + rf*(PsiBT(:,:,1)+PsiBT(:,:,3)-2*PsiBT(:,:,2))
-       
-       
-       ! Updating quantities for next timestep
-       zetaBT(:,:,1) = zetaBT(:,:,2)
-       PsiBT(:,:,1)   = PsiBT(:,:,2)
-
-       zetaBT(:,:,2) = zetaBT(:,:,ilevel)
-       PsiBT(:,:,2)   = PsiBT(:,:,ilevel)

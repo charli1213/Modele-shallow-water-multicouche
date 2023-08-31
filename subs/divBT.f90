@@ -29,9 +29,9 @@
        do j = 1, ny-1
           jp = j+1
        do i = 1, nx-1
-          ip = i+1
+          ip1 = i+1
 
-       faces_array(i,j) = (uh(ip,j)-uh(i,j))/dx   &
+       faces_array(i,j) = (uh(ip1,j)-uh(i,j))/dx   &
        &                + (vh(i,jp)-vh(i,j))/dy 
 
        enddo

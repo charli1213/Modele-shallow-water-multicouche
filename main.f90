@@ -51,6 +51,7 @@
 
       program main
       use data_initial
+      use fishpack
       !!!USE MPI 
       implicit none
       !
@@ -153,7 +154,11 @@
       REAL :: sl, ed
       REAL :: ran2
       REAL :: mean_rhsuBT, mean_rhsvBT
-
+      DOUBLE PRECISION :: ff(nx, ny)      ! Fishpack (Input field)
+      DOUBLE PRECISION :: xa, xb, yc, yd ! Fishpack (Domain)
+      DOUBLE PRECISION :: elmbda, pertrb ! Fishpack (Parameters)
+      DOUBLE PRECISION :: bda(1), bdb(1), bdc(1), bdd(1) ! Fishpack (Newmann bndy)
+      INTEGER          :: mbdcnd, nbdcnd ! Fishpack (boundarys)
       
       
       ! Baroclinic/Barotropic modes with LAPACK ; 
@@ -206,7 +211,7 @@
       !real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
       !real sgn1,tmp2,tmp3
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
-      integer i, j, k, ii, jj, kk, ip, im, jp, jm, kp, km
+      integer i, j, k, ii, jj, kk, ip1, im, jp, jm, kp, km
       integer ilevel, itt,  it, its, imode, ntimes, inkrow
       real*4 tstime(1:ntsrow)
       
@@ -252,7 +257,7 @@
 
       ! SUBROUTINES CALLS
       external coef,bndyc
-
+      
       !include 'fftw_stuff/fft_params.f90'
       !include 'fftw_stuff/fft_init.f90'
       
@@ -329,7 +334,7 @@
 
       ! --- Initializing mudpack
       include 'subs/init_mudpack.f90'
-
+      
       ! --- Initializing each fields and rossby radii
       include 'subs/initialize.f90'
 
@@ -415,10 +420,10 @@
             jp = j+1
             jm = j-1
          do i = 2,nx-1
-            ip = i+1
+            ip1 = i+1
             im = i-1
             
-            zetaBT(i,j,1) = (psiBT(ip,j,1)+psiBT(im,j,1)-2.*psiBT(i,j,1))/dx/dx   &
+            zetaBT(i,j,1) = (psiBT(ip1,j,1)+psiBT(im,j,1)-2.*psiBT(i,j,1))/dx/dx   &
             &             + (psiBT(i,jp,1)+psiBT(i,jm,1)-2.*psiBT(i,j,1))/dy/dy
             
          enddo
@@ -476,7 +481,9 @@
       !
       ilevel = 2
       p_out(:,:) = 0.
-      include 'subs/psiBT_correction.f90'
+      ! include 'subs/psiBT_correction.f90'
+      include 'subs/init_fishpack.f90'
+      include 'subs/psiBT_correction_fishpack.f90'
       ! <<< barotropic correction (End)
 
       time = dt
@@ -594,7 +601,8 @@
          !
          ilevel = 3
          p_out(:,:) = 0.
-         include 'subs/psiBT_correction.f90'
+         !include 'subs/psiBT_correction.f90'
+         include 'subs/psiBT_correction_fishpack.f90'
          ! <<< Barotropic psi-correction (End)
 
          
@@ -880,7 +888,7 @@ FUNCTION gasdev(idum)
  !  real,dimension(0:nnx,0:nny),intent(out) :: matout
  !  integer,intent(in) :: irrt,dirx,diry
  !  real array(0:nnx,0:nny),array1(0:nnx,0:nny),array2(0:nnx,0:nny)
- !  integer ii,i,j,ip,jp
+ !  integer ii,i,j,ip1,jp
  !  if (abs(dirx)<=1.and.abs(diry)<=1) then
  !     array1=matin
  !     array2=0.

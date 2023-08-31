@@ -51,13 +51,13 @@
           jp = j+1
           jm = j-1
        do i = 1,nx-1
-          ip = i+1
+          ip1 = i+1
           im = i-1
           
-          grad2u(i,j) = (uu_old(ip,j)+uu_old(im,j)-2.*uu_old(i,j))/dx/dx   &
+          grad2u(i,j) = (uu_old(ip1,j)+uu_old(im,j)-2.*uu_old(i,j))/dx/dx   &
           &           + (uu_old(i,jp)+uu_old(i,jm)-2.*uu_old(i,j))/dy/dy   
           
-          grad2v(i,j) = (vv_old(ip,j)+vv_old(im,j)-2.*vv_old(i,j))/dx/dx   &
+          grad2v(i,j) = (vv_old(ip1,j)+vv_old(im,j)-2.*vv_old(i,j))/dx/dx   &
           &           + (vv_old(i,jp)+vv_old(i,jm)-2.*vv_old(i,j))/dy/dy   
 
           uh(i,j) = 0.5*(thickness(i,j)+thickness(im,j))*uu(i,j)
@@ -87,12 +87,12 @@
           jp = j+1
           jm = j-1
        do i = 1, nx-1
-          ip = i+1
+          ip1 = i+1
           im = i-1
           
-       grad4u(i,j) = (grad2u(ip,j)+grad2u(im,j)-2.*grad2u(i,j))/dx/dx   &
+       grad4u(i,j) = (grad2u(ip1,j)+grad2u(im,j)-2.*grad2u(i,j))/dx/dx   &
        &           + (grad2u(i,jp)+grad2u(i,jm)-2.*grad2u(i,j))/dy/dy   
-       grad4v(i,j) = (grad2v(ip,j)+grad2v(im,j)-2.*grad2v(i,j))/dx/dx   &
+       grad4v(i,j) = (grad2v(ip1,j)+grad2v(im,j)-2.*grad2v(i,j))/dx/dx   &
        &           + (grad2v(i,jp)+grad2v(i,jm)-2.*grad2v(i,j))/dy/dy
 
        wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
@@ -116,7 +116,7 @@
           jp = j+1
           jm = j-1
        do i = 1, nx-1
-          ip = i+1
+          ip1 = i+1
           im = i-1
 
        rhs_u(i,j,k) = -(B(i,j)-B(im,j))/dx                           &  ! Bernouilli
@@ -128,7 +128,7 @@
        
        rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                           &  ! Bernouilli
        &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))       &  ! Coriolis/Vorticité
-       &            - 0.25*(f(jp)+zeta(ip,j))*(uu(ip,j)+uu(ip,jm))   &  ! coriolis/Vorticité
+       &            - 0.25*(f(jp)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm))   &  ! coriolis/Vorticité
        &            - Ah*grad4v(i,j)                                 &  ! Viscosité
        &            - bot(k)*r_drag*vv_old(i,j)                         ! Frottement au fond
 
@@ -147,12 +147,12 @@
        do j = 1,ny-1
           jp = j+1
        do i = 1,nx-1
-          ip = i+1
+          ip1 = i+1
           
-       rhs_eta(i,j,k) = -(uh(ip,j)-uh(i,j))/dx                       &  ! div(u*h)
+       rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
        &              -  (vh(i,jp)-vh(i,j))/dy                       &  
        &              - top(k)*(                                     &  ! div(uStokes*h)
-       &                (UStokes(ip,j,2)-UStokes(i,j,2))/dx          &
+       &                (UStokes(ip1,j,2)-UStokes(i,j,2))/dx          &
        &              + (VStokes(i,jp,2)-VStokes(i,j,2))/dy  )
 
        enddo

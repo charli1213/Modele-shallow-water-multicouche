@@ -3,9 +3,10 @@ import tools as tls
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+import seaborn as sns
 import cmocean.cm as cmo
 import matplotlib.animation as animation
-from matplotlib.animation import FuncAnimation
+plt.rcParams['animation.ffmpeg_path'] = 'ffmpeg'
 from datetime import date
 today = date.today()
 
@@ -39,8 +40,8 @@ saturation = dict(eta    = 0.9,
                   )
 
 timestamps_dict = {maxday : outt for maxday,outt in
-                   zip([50,250,500,750,850,950,1000,1500,1800,3600],
-                       [1 ,5  ,8  ,10 ,10 ,10 ,  10,15  ,20  ,40]
+                   zip([50,100,250,500,750,850,950,1000,1500,1800,3600],
+                       [1 ,4 ,5  ,8  ,10 ,10 ,10 ,  10,15  ,20  ,40]
                        )
                    }
 
@@ -59,8 +60,8 @@ def hovmoller() :
     klayer  = str(int(input("quelle couche?")))
     fields_to_open = [fname+str(klayer) for fname in ['u','v','zeta','div','eta','zetaBT','uBT','vBT','divBT']]
     fields_to_show = ['zeta','div','eta','unorm']
-    minday_to_show = [0 ,0  ,0  ,0 ,0,0,0,0,0]
-    maxday_to_show = [50] #,250,500,750,850,950,1000,1500,1800,3600]
+    minday_to_show = [0 ,0  ,0  ,0 ,0,0,0,0,0,0]
+    maxday_to_show = [50,100,250,500,750,850,950,1000,1500,1800,3600]
     nrows = len(fields_to_show)
         
     # > Params : 
@@ -217,32 +218,43 @@ def difference (field='eta1') :
 #                                                                   # 
 # ================================================================= #
 
-def anim(dA) :
+def anim(dA, interval = 100) :
+    """ Creates an animation for a chosen Xarray.DataArray (dA). """
+
     # Parameters ::
     nt=len(dA.time)
+    dt = (dA.time.max() - da.time.min())/(nt-1)
+    maxi = dA.max()
+    xx = dA.x.values
+    yy = dA.y.values
     
     # Figure creation :: 
-    fig, axes = plt.subplots(figsize=[6,6]) #Creating the basis for the plot
-    txt = axes.text(-0.95e6, 0.9e6, "Day # {}".format(0*dt), color = 'white')
-    axes.set_title(dA.name)
+    fig, axes = plt.subplots(figsize=[5,5]) #Creating the basis for the plot
+    im = axes.imshow(da.isel(time=0).values.transpose(),
+                     #cmap = sns.color_palette('icefire', as_cmap=True),
+                     cmap = cmo.curl,
+                     vmin = -0.75*maxi,
+                     vmax =  0.75*maxi,
+                     extent=[-1000,1000,-1000,1000],
+                     )
+    axes.set_xlabel("x [km]")
+    axes.set_ylabel("y [km]")
+    txt = axes.text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color = 'black',zorder=1)
+    axes.set_title("Double gyres de Stommel")
     
     # inner animation function ::
     def inner_animate(itime, dA=dA, ax=axes):
-        im = dA.isel(time=itime).plot(x='x',ax=ax, add_colorbar=False, )
-        txt.set_text("Day # {:.2f}".format(dA.time.isel(time=itime)), )
-
+        im.set_data(dA.isel(time=itime).values.transpose())
+        txt.set_text("Day # {:<}".format(int(dA.time.isel(time=itime))), )
         return im, txt
 
     # FuncAnimation :: 
-    ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=100, repeat=True)
+    ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=interval, repeat=True)
 
-    # Show/Save :: 
+    # Show/Save :: (Faut installer imagemagick avant tout)
+    ani.save('./figures/' + 'animation2.gif', writer='imagemagick', fps = 15) #Save animation as
     plt.show()
     
-#ani.save('./figures/' + 'animation1.gif', writer='imagemagick', fps = 10) #Save animation as gif-file
-#ani = FuncAnimation(fig,animate,frames=100)
-#plt.close()
-#HTML(ani.to_jshtml()) #Show the animation in the kernel
         
 if __name__ == "__main__" :
     if input("Sortir Hovmoller? [y/]") == 'y' :
@@ -253,20 +265,12 @@ if __name__ == "__main__" :
         ds = debug(field = 'zetaBT1', outt = 1)
 
     else : 
-        ds = tls.bintods(outt = 1,
+        ds = tls.bintods(outt = 4,
                          minday = 1,
-                         maxday = 100,
-                         fields_to_open = ['zetaBT1','eta1']) #,'zetaBTpost1'],)
+                         maxday = 500,
+                         fields_to_open = ['zetaBT1','eta1']) 
         
-        da = ds['zetaBT1'] #-ds['zetaBTpost1']
-
-        fig,axes = plt.subplots(ncols=3, figsize=(17,5), sharey=True)
-        ds.zetaBT1.isel(time=-1).plot(x='x',ax=axes[0])
-        da.isel(time=-1).plot(x='x',ax=axes[1])
-        ds.zetaBTpost1.isel(time=-1).plot(x='x',ax=axes[2])
-        plt.tight_layout()
-        plt.show()
-
-        anim(da)
+        da = ds['eta1'] #zetaBT1']
+        anim(da, interval=50)
 
 
