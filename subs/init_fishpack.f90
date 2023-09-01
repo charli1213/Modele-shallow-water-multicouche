@@ -5,3 +5,5 @@
   elmbda = 0.
   mbdcnd = 1
   nbdcnd = 1
+  psiBT(:,:) = 0.
+  zetaBT(:,:) = 0.

@@ -142,67 +142,25 @@
   
   ! IO_BT
   if (IO_BT) then
-     ! Finding thicknesses
-     !***!uBT(:,:) = 0.
-     !***!vBT(:,:) = 0.
-     !***!divBT(:,:) = 0.
-     !***!do k = 1,nz
-     !***!   uu(:,:) = u(:,:,k,3) 
-     !***!   vv(:,:) = v(:,:,k,3)
-     !***!   if (k.eq.1) then
-     !***!      thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
-     !***!   elseif(k.eq.nz) then
-     !***!      thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
-     !***!   else
-     !***!      thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
-     !***!           &             -  eta(:,:,k+1,ilevel)
-     !***!   endif
-     !***!   ! Finding each divergence of barotropic transport 
-     !***!   include 'subs/divBT.f90'
-     !***!   include 'subs/zetaBT.f90'
-     !***!
-     !***!   ! Summing those to get the divergence of barotropic current
-     !***!   divBT(:,:) = divBT(:,:) + faces_array(:,:)/Htot
-     !***!   zetaBT(:,:) = zetaBT(:,:) + array(1:nx,1:ny)/Htot        
-     !***!   uBT(:,:) = uBT(:,:) + uh(:,:)/Htot
-     !***!   vBT(:,:) = vBT(:,:) + vh(:,:)/Htot
-     !***!enddo
+
      divBT(:,:) = 0.
+     
      do j = 1, ny-1
         jp = j+1
      do i = 1, nx-1
         ip1 = i+1
-        ! divBT post-Mudpack (while zetaBT is pre-Mudpack)
+        ! ZetaBT is already calculated in psiBT_correction_fishpack.f90
+        ! divBT post-Mudpack (while zetaBT is calculated pre-Fishpack)
         divBT(i,j) = (uBT(ip1,j)-uBT(i,j))/dx   &
         &          + (vBT(i,jp)-vBT(i,j))/dy 
      enddo
      enddo
-
-     ! On calcule le laplacien de psiBT pour avoir zetaBT
-     zetaBT_post(:,:) = 0.
-     ! Pas besoin d'update les contours de zeta ou psi.
-     do j = 2,ny-1
-        jp = j+1
-        jm = j-1
-     do i = 2,nx-1
-        ip1 = i+1
-        im = i-1
-          
-        zetaBT_post(i,j) = &
-        &       (psiBT(ip1,j,ilevel)+psiBT(im,j,ilevel)-2.*psiBT(i,j,ilevel))/dx/dx   &
-        &      +(psiBT(i,jp,ilevel)+psiBT(i,jm,ilevel)-2.*psiBT(i,j,ilevel))/dy/dy
-        
-     enddo
-     enddo
-
+     
      ! Out block
      divBT_out(:,:)  = divBT(isubx,isuby)
-     zetaBT_out(:,:) = zetaBT(isubx,isuby,ilevel)
-     zetaBT_post_out(:,:) = zetaBT_post(isubx,isuby)
+     zetaBT_out(:,:) = zetaBT(isubx,isuby)
      uBT_out(:,:) = uBT(isubx,isuby)
      vBT_out(:,:) = vBT(isubx,isuby)
-     correction_zetaBT_out(:,:) = correction_zetaBT(isubx,isuby)
-     PsiBT_correction_out(:,:) = PsiBT_correction(isubx,isuby)
      
      ! Outputing the divergence of the baroclinic current (Should be zero).
      string8 =  './data/divBT' // '1' // '_' // trim(which)
@@ -211,43 +169,23 @@
      write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
      close(108)
 
-     !%%%!! Outputing the barotropic currents (after the divergence correction)
-     !%%%!string9 =  './data/uBT' // '1' // '_' // trim(which)
-     !%%%!open(unit=109,file=string9,access='DIRECT',&
-     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !%%%!write(109,REC=1) ((uBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     !%%%!close(109)
-     !%%%!
-     !%%%!string10 =  './data/vBT' // '1' // '_' // trim(which)
+     string9 =  './data/zetaBT' // '1' // '_' // trim(which)
+     open(unit=109,file=string9,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(109,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     close(109)
+
+     !%%%!string10 =  './data/uBT' // '1' // '_' // trim(which)
      !%%%!open(unit=110,file=string10,access='DIRECT',&
      !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !%%%!write(110,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     !%%%!write(110,REC=1) ((uBT_out(i,j),i=1,szsubx),j=1,szsuby)
      !%%%!close(110)
-
-     string11 =  './data/zetaBT' // '1' // '_' // trim(which)
-     open(unit=111,file=string11,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(111,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(111)
-
-     string12 =  './data/zetaBTpost' // '1' // '_' // trim(which)
-     open(unit=112,file=string12,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(112,REC=1) ((zetaBT_post_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(112)
-
-     string13 =  './data/PsiBTcorrection' // '1' // '_' // trim(which)
-     open(unit=113,file=string13,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(113,REC=1) ((PsiBT_correction_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(113)
-
-     string14 =  './data/zetaBTcorrection' // '1' // '_' // trim(which)
-     open(unit=114,file=string14,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(114,REC=1) ((correction_zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(114)
-
+     !%%%!
+     !%%%!string11 =  './data/vBT' // '1' // '_' // trim(which)
+     !%%%!open(unit=111,file=string11,access='DIRECT',&
+     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !%%%!write(111,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
+     !%%%!close(111)
      
   endif !IO_BT
 
@@ -334,35 +272,37 @@
   end if !IO_QGAG
 
   if(IO_psivort) then
-    ! ETA-G
-      string17 =  './data/eta_qg'  // '_' // trim(which)
-      open(unit=117,file=string17,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-      write(117,REC=1) ((eta_qg(i,j),i=1,szsubx),j=1,szsuby)
-      close(117)
 
-  !  string18 = './data/eta_ag'  // '_' // trim(which)
+     ! ETA-G
+     string17 =  './data/eta_qg'  // '_' // trim(which)
+     open(unit=117,file=string17,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+     write(117,REC=1) ((eta_qg(i,j),i=1,szsubx),j=1,szsuby)
+     close(117)
 
-    ! ZETA-G
-    string20 =  './data/zeta_G' // '_' // trim(which)
-    open(unit=120,file=string20,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(120,REC=1) (((zeta_G(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
-    close(120)
+     !  string18 = './data/eta_ag'  // '_' // trim(which)
 
-    ! ZETA-AG
-    string21 =  './data/zeta_AG' // '_' // trim(which)
-    open(unit=121,file=string21,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(121,REC=1) (((zeta_AG(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
-    close(121)
+     ! ZETA-G
+     string20 =  './data/zeta_G' // '_' // trim(which)
+     open(unit=120,file=string20,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+     write(120,REC=1) (((zeta_G(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
+     close(120)
 
-    
-    ! PSI
-    string22 =  './data/PSImode' // '_' // trim(which)
-    open(unit=122,file=string22,access='DIRECT',&
-    & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-    write(122,REC=1) (((psimode(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
-    close(122)
+     ! ZETA-AG
+     string21 =  './data/zeta_AG' // '_' // trim(which)
+     open(unit=121,file=string21,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+     write(121,REC=1) (((zeta_AG(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
+     close(121)
+
+
+     ! PSI
+     string22 =  './data/PSImode' // '_' // trim(which)
+     open(unit=122,file=string22,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
+     write(122,REC=1) (((psimode(i,j,k),i=1,szsubx),j=1,szsuby),k=1,dummy_int)
+     close(122)
+     
   end if !IO_psivort
 

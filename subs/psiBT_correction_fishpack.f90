@@ -7,6 +7,8 @@
        vBT(:,:) = 0.
        uBC(:,:,:) = 0.
        vBC(:,:,:) = 0.
+
+       zetaBT(:,:) = 0.
        
        ! Barotropic loop :
        ! 1st timestep : ilevel = 2
@@ -62,8 +64,8 @@
        do i = 2,nx-1
           im = i-1
           
-          zetaBT(i,j,ilevel) =  (vBT(i,j) - vBT(im,j))/dx    &
-          &                  -  (uBT(i,j) - uBT(i,jm))/dy           
+          zetaBT(i,j) =  (vBT(i,j) - vBT(im,j))/dx    &
+          &           -  (uBT(i,j) - uBT(i,jm))/dy           
        enddo
        enddo
 
@@ -77,10 +79,10 @@
     !      we solve for d_psi_BT instead of pressure gradient  !
     !                                                          !
     ! ######################################################## !
-       ff = DBLE(zetaBT(:,:,ilevel))
+       ff = DBLE(zetaBT(:,:))
        call hwscrt(xa, xb, nx-1, mbdcnd, bda, bdb, yc, yd, ny-1, nbdcnd, bdc, bdd, &
             elmbda, ff, nx, pertrb, ierror)
-       PsiBT(:,:,ilevel) = REAL(ff(:,:))
+       PsiBT(:,:) = REAL(ff(:,:))
        
     ! ######################################################## !
     !                                                          !
@@ -95,8 +97,8 @@
        do i = 1,nx-1
           ip1 = i+1
 
-          uBT(i,j) =  - (psiBT(i,jp,ilevel) - psiBT(i,j,ilevel))/dy  ! barotropic part-x
-          vBT(i,j) =    (psiBT(ip1,j,ilevel) - psiBT(i,j,ilevel))/dx  ! barotropic part-y
+          uBT(i,j) =  - (psiBT(i,jp) - psiBT(i,j))/dy  ! barotropic part-x
+          vBT(i,j) =    (psiBT(ip1,j) - psiBT(i,j))/dx  ! barotropic part-y
        enddo
        enddo
        

@@ -1,11 +1,11 @@
 
 
-  ! >>> Coupling quantities >>>
+     ! Coupling quantities (WAVEWATCH III) >>>
        taux_ocean(:,:,:) = 0.
        tauy_ocean(:,:,:) = 0.
        UStokes(:,:,:) = 0.
-       VStokes(:,:,:) = 0.
-  ! <<< Coupling quantities (END) <<<
+       VStokes(:,:,:) = 0. 
+     ! Model arrays >>>
        u(:,:,:,:) = 0.
        v(:,:,:,:) = 0.
        eta(:,:,:,:) = 0.
@@ -25,15 +25,17 @@
        grad2v(:,:) = 0.
        grad4u(:,:) = 0.
        grad4v(:,:) = 0.
-       array(:,:) = 0.
-       array_x(:,:) = 0.
-       array_y(:,:) = 0.
-       faces_array(:,:) = 0.
        thickness(:,:) = H1
        rhs_u(:,:,:) = 0.
        rhs_v(:,:,:) = 0.
        rhs_eta(:,:,:) = 0.
-
+     ! Dummy arrays
+       array(:,:) = 0.
+       array_x(:,:) = 0.
+       array_y(:,:) = 0.
+       faces_array(:,:) = 0.
+  
+     ! Kronecker deltas arrays 
        top(:) = 0.
        bot(:) = 0.
        top(1) = 1.
@@ -61,8 +63,9 @@
           H(k) = H_bin(k)
           Htot = Htot + H(k)
        end do
-       
-       ! On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
+
+     ! >>> Setting densities :
+       !On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
        g = 10.00
        rho(1) = 1000.00
        if (nz.gt.1) then
@@ -72,7 +75,7 @@
           end if
        end if
        
-       !!! >>> Printing Diagnostics
+     ! >>> Printing Diagnostics :
        print *, " >>> Diagnostics for initialize.f90 sub-routine : "
 
        ! gprime [x]
@@ -87,8 +90,8 @@
        end if
        
        ! --- Finding baroclinic streamfunc :
-       ! > "Stolen" from Louis-Philippe "Naydo".
-       ! > N.B. Here g(k) is defined for ceiling of layer k (not floor like in Vallis)
+       ! > "Stolen" from Louis-Philippe "Naydo" (See David for reference to the name).
+       ! > N.B. Here g(k) is defined for ceiling of layer k (NOT THE BOTTOM of layer k)
        ! > (Which is why it's also different than LP's code)
        if (nz.gt.1) then
        do k=1,nz-1

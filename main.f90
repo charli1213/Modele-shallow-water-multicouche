@@ -98,18 +98,11 @@
       
       ! Noeuds/Nodes [x] :
       REAL :: zeta(0:nnx,0:nny)
-      REAL :: zetaBT(1:nx,1:ny,3) ! mudpack
-      REAL :: zetaBT_post(1:nx,1:ny) ! mudpack
+      REAL :: zetaBT(1:nx,1:ny) ! fishpack
+      REAL :: psiBT(1:nx,1:ny)  ! fishpack
       REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
       REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
       REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
-      REAL :: correction_zetaBT(1:nx,1:ny) ! mudpack psiBT_corr
-      REAL :: PsiBT_correction(1:nx,1:ny) ! mudpack psiBT_corr
-      REAL :: psiBT(1:nx,1:ny,3) ! mudpack
-
-      REAL :: new_RHS(1:nx,1:ny) ! mudpack
-      REAL :: delta_RHS(1:nx,1:ny) ! mudpack
-      REAL :: delta_correction(1:nx,1:ny) ! mudpack
       
       REAL :: array(0:nnx,0:nny) ! dummy
       
@@ -124,15 +117,11 @@
       ! *** same as FFT model 
       ! Sides :
       REAL :: u_out(1:szsubx,1:szsuby,nz)
-      REAL :: rhsuBT_out(1:szsubx,1:szsuby)
-      REAL :: rhsuBC_out(1:szsubx,1:szsuby,nz)
       REAL :: uBT_out(1:szsubx,1:szsuby)
       REAL :: UStokes_out(1:szsubx,1:szsuby)
       REAL :: taux_ocean_out(1:szsubx,1:szsuby)
       ! >
       REAL :: v_out(1:szsubx,1:szsuby,nz)
-      REAL :: rhsvBT_out(1:szsubx,1:szsuby)
-      REAL :: rhsvBC_out(1:szsubx,1:szsuby,nz)
       REAL :: vBT_out(1:szsubx,1:szsuby)
       REAL :: VStokes_out(1:szsubx,1:szsuby)
       REAL :: tauy_ocean_out(1:szsubx,1:szsuby)
@@ -146,9 +135,7 @@
       REAL :: zeta_out(1:szsubx,1:szsuby)
       REAL :: psiBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_out(1:szsubx,1:szsuby)
-      REAL :: zetaBT_post_out(1:szsubx,1:szsuby)
-      REAL :: PsiBT_correction_out(1:szsubx,1:szsuby)
-      REAL :: correction_zetaBT_out(1:szsubx,1:szsuby)
+
       
       !!! ---------- Other quantities ---------- 
       REAL :: sl, ed
@@ -331,9 +318,6 @@
       write(*,*) 'one day = ', 86400/dt, 'time steps'
       write(*,*) 'Spectrum time series has', ntsrow, 'lines'
       write(*,*) 'dx = ', dx
-
-      ! --- Initializing mudpack
-      include 'subs/init_mudpack.f90'
       
       ! --- Initializing each fields and rossby radii
       include 'subs/initialize.f90'
@@ -391,25 +375,25 @@
 
          ! Adding random noise from a psiBT
          if (restart .eqv. .false.) then
-            psiBT(:,:,1) = 0.
-            !CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1,1))
+            psiBT(:,:) = 0.
+            !CALL RANDOM_NUMBER(psiBT(2:nx-1,2:ny-1))
             do j = 1,ny
                jm=j-1
             do i = 1,nx
                im=i-1
-               psiBT(i,j,1) = SIN(2*twopi*im/(nx-1))*SIN(2*twopi*jm/(ny-1))/1e10
+               psiBT(i,j) = SIN(2*twopi*im/(nx-1))*SIN(2*twopi*jm/(ny-1))/1e10
             enddo
             enddo
 
-            psiBT(1,:,1)  = 0.
-            psiBT(nx,:,1) = 0.
-            psiBT(:,1,1)  = 0.
-            psiBT(:,ny,1) = 0.
+            psiBT(1,:)  = 0.
+            psiBT(nx,:) = 0.
+            psiBT(:,1)  = 0.
+            psiBT(:,ny) = 0.
             
             do j = 1,ny-1
             do i = 1,nx-1
-               uu(i,j) =  - (psiBT(i,j+1,1) - psiBT(i,j,1))/dy  ! barotropic part-x
-               vv(i,j) =    (psiBT(i+1,j,1) - psiBT(i,j,1))/dx  ! barotropic part-y
+               uu(i,j) =  - (psiBT(i,j+1) - psiBT(i,j))/dy  ! barotropic part-x
+               vv(i,j) =    (psiBT(i+1,j) - psiBT(i,j))/dx  ! barotropic part-y
             enddo
             enddo
          endif
@@ -423,8 +407,8 @@
             ip1 = i+1
             im = i-1
             
-            zetaBT(i,j,1) = (psiBT(ip1,j,1)+psiBT(im,j,1)-2.*psiBT(i,j,1))/dx/dx   &
-            &             + (psiBT(i,jp,1)+psiBT(i,jm,1)-2.*psiBT(i,j,1))/dy/dy
+            zetaBT(i,j) = (psiBT(ip1,j)+psiBT(im,j)-2.*psiBT(i,j))/dx/dx   &
+            &             + (psiBT(i,jp)+psiBT(i,jm)-2.*psiBT(i,j))/dy/dy
             
          enddo
          enddo
@@ -495,8 +479,8 @@
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
       eta(:,:,1,3) = p_out(:,:)
-      ! Eta is barotropic streamfunction.
-      eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny,ilevel)
+      ! Eta1 is barotropic streamfunction (psiBT).
+      eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
 
       !
       
@@ -665,7 +649,7 @@
             icount = icount + 1
 
             ! Eta is barotropic streamfunction.
-            eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny,3)
+            eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
 
             include 'subs/dump_bin.f90'
 
