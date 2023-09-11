@@ -7,13 +7,13 @@
  
    parameter ( Lx = 2e6, Ly = Lx )
    
-   parameter ( H1 = 1.0e3, H2 = 3.0e3, H3 = 1.0e3 )
+   parameter ( H1 = 1.0e2, H2 = 3.0e2, H3 = 6.0e2, H4 = 1.0e3, H5 = 2.0e3, H6 = 4.0e3 )
    
    parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
       
    parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
       
-   parameter ( nz = 2 )
+   parameter ( nz = 5 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
@@ -65,9 +65,9 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true.,  IO_RHS_uv =.false., IO_forcing =.false.)
+   parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.false.)
    parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.false.)
-   parameter ( IO_BT   =.true. )
+   parameter ( IO_BT   =.false. , IO_psimodes=.true.)
    
  ! --- Slab model/coupling switches --- 
    parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)

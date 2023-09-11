@@ -57,7 +57,7 @@
 
 
        ! Thicknesses parameters :
-       H_bin = (/H1, H2, H3 /)
+       H_bin = (/H1, H2, H3, H4, H5, H6 /)
        Htot = 0
        do k = 1,nz
           H(k) = H_bin(k)
@@ -68,15 +68,22 @@
        !On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
        g = 10.00
        rho(1) = 1000.00
+       print *, '     rho(1) = ', rho(1)
        if (nz.gt.1) then
           rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
+          print *, '     rho(2) = ', rho(2)
           if (nz.gt.2) then
-             rho(3) = 2*rho(2) - rho(1)
+             do k = 3,nz
+                rho(k) = rho(k-1) + rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
+                WRITE (k_str,'(I0)') k
+                print *, '     rho(',TRIM(k_str),') = ', rho(k)
+             enddo
           end if
        end if
        
-     ! >>> Printing Diagnostics :
-       print *, " >>> Diagnostics for initialize.f90 sub-routine : "
+       ! >>> Printing Diagnostics :
+       print *, '| -------------------------------------------------- |'
+       print *, " >>> Diagnostics from initialize.f90 subroutine : "
 
        ! gprime [x]
        gprime(1) = g
@@ -91,7 +98,7 @@
        
        ! --- Finding baroclinic streamfunc :
        ! > "Stolen" from Louis-Philippe "Naydo" (See David for reference to the name).
-       ! > N.B. Here g(k) is defined for ceiling of layer k (NOT THE BOTTOM of layer k)
+       ! > ***N.B. Here g(k) is defined for ceiling of layer k (NOT THE BOTTOM of layer k)
        ! > (Which is why it's also different than LP's code)
        if (nz.gt.1) then
        do k=1,nz-1
@@ -125,6 +132,7 @@
        !        q_mode = laplacian(psi_mode)+F*psi_mode
        CALL SGEEV('N','V', nz,A,nz, Fmodes,WI, VL,nz, L2M,nz, WORKL, size(workl,1), INFO )
 
+       
        ! LAPACK eigenvalues
        PRINT *, ' > LAPACK Eigenvalues : '
        do k=1,nz
@@ -135,20 +143,33 @@
           print *, '     lambda_',TRIM(k_str),' =', Fmodes(k)
        end do
 
+
+       
+       ! Printing eigenvectors (baroclinic modes)
+       print *, " > Eigenvectors"
+       do k=1,nz
+          WRITE (k_str,'(I0)') k
+          dummy = 0.
+          do i=1,nz
+             dummy = dummy + L2M(i,k)**2
+          enddo
+          write (*,*) "     v(",trim(k_str),"  =  [",L2M(:,k),"]   and   |v| = ", dummy
+       end do
+
        ! Analytic equal 3-layers eigenvalues (test)
-       print *, ' > Analytic Eigenvalues (3 equal layer, linear density): '
-       print *, '     lambda_1 =', 1*f0**2/gprime(2)/H(1)
-       print *, '     lambda_2 =', 3*f0**2/gprime(2)/H(1)
-       print *, '     lambda_3 =', 0.                    
+       ! print *, ' > Analytic Eigenvalues (3 equal layer, linear density): '
+       ! print *, '     lambda_1 =', 1*f0**2/gprime(2)/H(1)
+       ! print *, '     lambda_2 =', 3*f0**2/gprime(2)/H(1)
+       ! print *, '     lambda_3 =', 0.                    
        
        ! Deformation radii
        print *, ' > Deformation Radii :'
        do k=1,nz
           WRITE (k_str,  '(I0)'  ) k
           WRITE (ministr,'(F8.2)') 1/SQRT(Fmodes(k))
-          PRINT *, '     Ld(', TRIM(k_str), ') = ', ministr, ' [m]'
+          PRINT *, '     Ld(', TRIM(k_str), ') = 1/SQRT[lambda(',trim(k_str),')] = ', ministr, ' [m]'
        end do
-       
+       print *, '| -------------------------------------------------- |'
 
        do j = 0,nny
           f(j) = f0 + beta*(j-1)*dy

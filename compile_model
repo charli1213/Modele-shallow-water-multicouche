@@ -19,8 +19,9 @@ then
     model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
-    case=t2layers_beta_debug
+    #case=t2layers_beta_debug
     #case=t2layers_beta_tau01
+    case=Nlayer_beta
 fi
 
 # >>> Preparing before compilation ::

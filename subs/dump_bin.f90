@@ -151,8 +151,8 @@
         ip1 = i+1
         ! ZetaBT is already calculated in psiBT_correction_fishpack.f90
         ! divBT post-Mudpack (while zetaBT is calculated pre-Fishpack)
-        divBT(i,j) = (uBT(ip1,j)-uBT(i,j))/dx   &
-        &          + (vBT(i,jp)-vBT(i,j))/dy 
+        divBT(i,j) = (uBT(ip1,j)- uBT(i,j))/dx   &
+        &          + (vBT(i,jp) - vBT(i,j))/dy 
      enddo
      enddo
      
@@ -306,3 +306,34 @@
      
   end if !IO_psivort
 
+  if(IO_psimodes) then
+     
+     ! Baroclinic decomposition : 
+     include './subs/BCdecomp.f90'
+     psimode_out(:,:,:)   = psimode(isubx,isuby,:)
+     zetamode_out(:,:,:)  = zetamode(isubx,isuby,:)
+     Do k = 1,nz
+
+        ! String : 
+        WRITE (k_str,'(I0)') k
+        string21 =  './data/zetamode' // trim(k_str) // '_' // trim(which)
+        string22 =  './data/PSImode' // trim(k_str) // '_' // trim(which)
+        
+     
+     ! ZETA_BT/BC
+     open(unit=121,file=string21,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(121,REC=1) ((zetamode_out(i,j,k),i=1,szsubx),j=1,szsuby)
+     close(121)
+
+
+     ! PSI BT/BC
+     open(unit=122,file=string22,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(122,REC=1) ((psimode_out(i,j,k),i=1,szsubx),j=1,szsuby)
+     close(122)
+
+     ENDDO ! End of k-loop
+     
+  endif
+  

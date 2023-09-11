@@ -4,7 +4,7 @@
       integer nx, ny, nz, nnx, nny
       integer ixp, jyq, iex, jey
       integer i_diags
-      double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3
+      double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6
       real f0, beta, r_drag, Ah, r_invLap, rf, g
       real tau0, tau1
       real fileperday, daysperrestart
@@ -22,7 +22,7 @@
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical   IO_field, IO_forcing, IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
-      logical  IO_BT
+      logical  IO_BT, IO_psimodes
 
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
@@ -97,12 +97,13 @@
       REAL :: faces_array(0:nx,0:ny) ! dummy
       
       ! Noeuds/Nodes [x] :
-      REAL :: zeta(0:nnx,0:nny)
+      REAL :: zeta(1:nx,1:ny)
       REAL :: zetaBT(1:nx,1:ny) ! fishpack
       REAL :: psiBT(1:nx,1:ny)  ! fishpack
-      REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz)
-      REAL :: q(0:nnx,0:nny,nz), psi(0:nnx,0:nny,nz)
-      REAL :: qmode(0:nnx,0:nny,nz), psimode(0:nnx,0:nny,nz)
+      REAL :: zeta_G(0:nnx,0:nny,nz), zeta_AG(0:nnx,0:nny,nz) !AGdecomp.f90
+      REAL :: q(1:nx,1:ny,nz), psi(1:nx,1:ny,nz) ! BCdecomp.f90
+      REAL :: qmode(1:nx,1:ny,nz), psimode(1:nx,1:ny,nz) ! BCdecomp.f90
+      REAL :: zeta_k(1:nx,1:ny,nz), zetamode(1:nx,1:ny,nz) ! BCdecomp.f90
       
       REAL :: array(0:nnx,0:nny) ! dummy
       
@@ -135,6 +136,8 @@
       REAL :: zeta_out(1:szsubx,1:szsuby)
       REAL :: psiBT_out(1:szsubx,1:szsuby)
       REAL :: zetaBT_out(1:szsubx,1:szsuby)
+      REAL :: psimode_out(1:szsubx,1:szsuby,nz)
+      REAL :: zetamode_out(1:szsubx,1:szsuby,nz)
 
       
       !!! ---------- Other quantities ---------- 
@@ -161,7 +164,7 @@
       
       ! Initialize qties
       real f(0:nny)
-      real gprime(nz), Htot, H(nz), H_bin(3), rho(nz+1) ! +1 because see initialise.f90
+      real gprime(nz), Htot, H(nz), H_bin(6), rho(nz+1) ! +1 because see initialise.f90
       real top(nz), bot(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today

@@ -1,13 +1,18 @@
 # ---- Modules ----
-import tools as tls
-import matplotlib.pyplot as plt
+# Maths
 import numpy as np
 import xarray as xr
+from datetime import date
+# Plot
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import matplotlib as mpl
+plt.rcParams['animation.ffmpeg_path'] = 'ffmpeg'
+# Cmaps
 import seaborn as sns
 import cmocean.cm as cmo
-import matplotlib.animation as animation
-plt.rcParams['animation.ffmpeg_path'] = 'ffmpeg'
-from datetime import date
+# My own modules
+import tools as tls
 today = date.today()
 
 
@@ -149,7 +154,7 @@ def debug(field='zetaBT1', outt=1, minday = 0, maxday = 50) :
                      fields_to_open = ['zetaBT1','eta1','u1','v1','zeta1','eta2',
                                        'zetaBTpost1','divBT1','PsiBTcorrection1',
                                        'zetaBTcorrection1'])
-
+    
     # Figure :
     fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
     for t,ax in enumerate(axes.flat) :
@@ -162,53 +167,30 @@ def debug(field='zetaBT1', outt=1, minday = 0, maxday = 50) :
     return ds
 
 # ================================================================= #
-def mudpack(init_field = 'zetaBT1', final_field = 'zetaBTpost1', t0=0 ) : 
+def eight_pannels(field = 'zetaBT1', t0=0, maxday = 500,dt=40, title = r"Zeta Barotrope ($\zeta_{BT}$)" ) : 
     # Opening data ::
-    ds = tls.bintods(outt = 1,
-                     minday = 0,
-                     maxday = 50,
-                     fields_to_open = [init_field, final_field],
+    ds = tls.bintods(outt = 4,
+                     minday = t0,
+                     maxday = maxday,
+                     fields_to_open = [field],
                      )
 
-    # Finding delta ::
-    ds['delta'] = ds[final_field] - ds[init_field]
-    
     # Figure ::
-    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
+    fig, axes = plt.subplots(nrows=2,ncols=4, figsize = (14,7), sharex=True, sharey=True)
     
-    for t,ax in enumerate(axes.transpose()) :
-        ds[init_field].isel(time=t0+t).plot(ax=ax[0],x='x')
-        ds[final_field].isel(time=t0+t).plot(ax=ax[1],x='x')
-        ds['delta'].isel(time=t0+t).plot(ax=ax[2],x='x')
-        plt.tight_layout()
-    plt.show()
-    return ds
-
-
-
-
-def difference (field='eta1') : 
-    """ Sort 8 plot-imshow pour les 8 premiers pas de temps."""
-    # Opening data : 
-    ds = tls.bintods(outt = 1,
-                     minday = 0,
-                     maxday = 100,
-                     fields_to_open = ['zetaBT1','eta1','u1','v1','zetaBT1',
-                                       'zeta1','eta2','zetaBTpost1','divBT1'])
-    
-    da = ds[field]
-    # Figure :
-    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
     for t,ax in enumerate(axes.flat) :
-        try :
-            da_diff  = (da.isel(time=t+1)-da.isel(time=t))
-            da_diff.plot(x='x',ax=ax)
-            ax.set_title('delta Psi BT, it = {}'.format(t))
-            del da_diff
-        except : print('Field Missing')
+        maxi = ds[field].isel(time=t*dt).max()    
+        ds[field].isel(time=t*dt).plot(ax=ax,
+                                       x='x',
+                                       vmin = -0.75*maxi,
+                                       vmax =  0.75*maxi,
+                                       cmap =  cmo.curl,
+                                       cbar_kwargs = {"label":""},
+                                       )
+    # Fine tunning ::
+    fig.suptitle(title)
     plt.tight_layout()
     plt.show()
-
     return ds
         
 
@@ -218,59 +200,90 @@ def difference (field='eta1') :
 #                                                                   # 
 # ================================================================= #
 
-def anim(dA, interval = 100) :
+def anim(dS, interval = 100, title = "Double gyres de Stommel",cbar=True) :
     """ Creates an animation for a chosen Xarray.DataArray (dA). """
 
     # Parameters ::
-    nt=len(dA.time)
-    dt = (dA.time.max() - da.time.min())/(nt-1)
-    maxi = dA.max()
-    xx = dA.x.values
-    yy = dA.y.values
-    
+    nt = len(ds.time)
+    dt = (ds.time.max() - ds.time.min())/(nt-1)
+    xx = ds.x.values
+    yy = ds.y.values
+    nbitems = len(ds)
+    satu = 0.75   # saturation
+
     # Figure creation :: 
-    fig, axes = plt.subplots(figsize=[5,5]) #Creating the basis for the plot
-    im = axes.imshow(da.isel(time=0).values.transpose(),
-                     #cmap = sns.color_palette('icefire', as_cmap=True),
-                     cmap = cmo.curl,
-                     vmin = -0.75*maxi,
-                     vmax =  0.75*maxi,
-                     extent=[-1000,1000,-1000,1000],
-                     )
-    axes.set_xlabel("x [km]")
-    axes.set_ylabel("y [km]")
-    txt = axes.text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color = 'black',zorder=1)
-    axes.set_title("Double gyres de Stommel")
+    fig, axes = plt.subplots(ncols=nbitems, figsize=[5*nbitems,5], sharey=True)
+    maxi = max([ds[key].max() for key in ds.keys()])
+    im = []
+    txt = []
+    # Adding colorbar
+    if cbar == True : 
+        ax = fig.add_axes([0.93,0.12,0.015,0.75])
+        cb = mpl.colorbar.ColorbarBase(ax, orientation="vertical", cmap=cmo.curl,
+                                       extend = 'both',
+                                       norm=mpl.colors.Normalize(-satu*maxi,
+                                                                 satu*maxi),
+                                       )
+
+    
+    # Main loop ::
+    for i,key in enumerate(ds.keys()) : 
+        # Inner params 
+        dA   = ds[key]
+
+        
+        im += [axes[i].imshow(dA.isel(time=0).values.transpose(),
+                              cmap = cmo.curl,
+                              vmin = -satu*maxi,
+                              vmax =  satu*maxi,
+                              extent=[-1000,1000,-1000,1000],
+                              )]
+        axes[i].set_xlabel("x [km]")
+        axes[i].set_ylabel("y [km]")
+        if dA.name == 'eta1' : axes[i].set_title('PsiBT')
+        else : axes[i].set_title(dA.name)
+        txt += [axes[i].text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color = 'black',zorder=1)]
     
     # inner animation function ::
-    def inner_animate(itime, dA=dA, ax=axes):
-        im.set_data(dA.isel(time=itime).values.transpose())
-        txt.set_text("Day # {:<}".format(int(dA.time.isel(time=itime))), )
-        return im, txt
+    def inner_animate(itime, ds=ds, ax=axes):
+        for i,key in enumerate(ds.keys()) :
+            im[i].set_data(ds[key].isel(time=itime).values.transpose())
+            txt[i].set_text("Day # {:<}".format(int(dA.time.isel(time=itime))), )
+        return im+txt
 
     # FuncAnimation :: 
     ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=interval, repeat=True)
 
     # Show/Save :: (Faut installer imagemagick avant tout)
-    ani.save('./figures/' + 'animation2.gif', writer='imagemagick', fps = 15) #Save animation as
+    #ani.save('./figures/' + 'animation2.gif', writer='imagemagick', fps = 15) #Save animation as
     plt.show()
     
         
 if __name__ == "__main__" :
-    if input("Sortir Hovmoller? [y/]") == 'y' :
-        ds = hovmoller()
+    if input("Sortir 8pannels? [y/]") == 'y' :
+        ds = eight_pannels(field = 'zetaBT1',dt=50)
 
     elif input("Debugg?? [y/]") == 'y' :
         #ds = mudpack()
         ds = debug(field = 'zetaBT1', outt = 1)
 
     else : 
+        # Zeta
         ds = tls.bintods(outt = 4,
                          minday = 1,
-                         maxday = 500,
-                         fields_to_open = ['zetaBT1','eta1']) 
+                         maxday = 1000,
+                         fields_to_open = ['zeta1','zeta2','zetamode1','zetamode2'],
+                         )
         
-        da = ds['eta1'] #zetaBT1']
-        anim(da, interval=50)
+        anim(ds, interval=50)
 
+        # Psi
+        ds = tls.bintods(outt = 4,
+                         minday = 1,
+                         maxday = 1000,
+                         fields_to_open = ['eta1','PSImode1','PSImode2'],
+                         )
+        
+        anim(ds, interval=50)
 
+        

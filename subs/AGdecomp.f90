@@ -72,7 +72,8 @@
        psimode(:,:,k) = array(:,:)
 
        enddo
-
+    
+       ! p231 (Vallis)
        psi(:,:,1) = psimode(:,:,1) - H(2)*psimode(:,:,2)/Htot
        psi(:,:,2) = psimode(:,:,1) + H(1)*psimode(:,:,2)/Htot
 
