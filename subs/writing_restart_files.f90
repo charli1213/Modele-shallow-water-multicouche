@@ -73,16 +73,34 @@
          u(:,:,k,3) = array_x
          v(:,:,k,3) = array_y
       end do
-   
-      do j = 1,ny
-      do i = 1,nx
-         write(0,*) u(i,j,1,3),u(i,j,2,3),                &
-            &       v(i,j,1,3),v(i,j,2,3),                &
-            &       eta(i,j,2,3),                         &
-            &       UStokes(i,j,2),VStokes(i,j,2),        &
-            &       taux_ocean(i,j,2), tauy_ocean(i,j,2)
-      enddo
-      enddo
+
+      ! Two layers
+      !#!if (nz.eq.2) then
+         do j = 1,ny
+         do i = 1,nx
+            write(0,*) u(i,j,:,3),                           &
+                 &     v(i,j,:,3),                           &
+                 &     eta(i,j,:,3),                         &
+                 &     UStokes(i,j,2),VStokes(i,j,2),        &
+                 &     taux_ocean(i,j,2), tauy_ocean(i,j,2)
+         enddo
+         enddo
+      ! 5 layers 
+      !#!else if (nz.eq.5) then
+      !#!   do j = 1,ny
+      !#!   do i = 1,nx             
+      !#!      write(0,*) u(i,j,1,1),u(i,j,2,1),u(i,j,3,1),u(i,j,4,1),u(i,j,5,1),    &
+      !#!           &     v(i,j,1,1),v(i,j,2,1),v(i,j,3,1),v(i,j,4,1),v(i,j,5,1),    &
+      !#!           &     eta(i,j,2,1),eta(i,j,3,1),eta(i,j,4,1),eta(i,j,5,1),       &
+      !#!           &     UStokes(i,j,1),VStokes(i,j,1),                             &
+      !#!           &     taux_ocean(i,j,1),tauy_ocean(i,j,1)
+      !#!   enddo
+      !#!   enddo
+      !#!else ! Number of layers doesn't fit. 
+      !#!   print*, 'Cannot create restart file : need to implement for ',k,'layers.'
+      !#!   stop
+      !#!end if
+         
       write(0,*) icount+icount_srt,time,nspecfile,iftcount+iftcount_srt
       close(0)
        
