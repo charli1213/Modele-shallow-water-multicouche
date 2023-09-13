@@ -64,35 +64,37 @@
           Htot = Htot + H(k)
        end do
 
-     ! >>> Setting densities :
+       WRITE (*,*) ''
+       print *, '| --------> Diagno. from initialize.f90 <-------- |'
+       
+       ! >>> Setting densities :
+       print *, 'Density parameters :'
        !On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
        g = 10.00
        rho(1) = 1000.00
-       print *, '     rho(1) = ', rho(1)
+       print *, ' rho(1)    = ', rho(1)
        if (nz.gt.1) then
           rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
-          print *, '     rho(2) = ', rho(2)
+          print *, ' rho(2)    = ', rho(2)
           if (nz.gt.2) then
              do k = 3,nz
                 rho(k) = rho(k-1) + rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
                 WRITE (k_str,'(I0)') k
-                print *, '     rho(',TRIM(k_str),') = ', rho(k)
+                print *, ' rho(',TRIM(k_str),')   =  ', rho(k)
              enddo
           end if
        end if
        
        ! >>> Printing Diagnostics :
-       print *, '| -------------------------------------------------- |'
-       print *, " >>> Diagnostics from initialize.f90 subroutine : "
 
-       ! gprime [x]
+       ! gprime
        gprime(1) = g
-       print *, '     gprime(1) = ', gprime(1)
+       print *, ' gprime(1) = ', gprime(1)
        if (nz.gt.1) then
        do k = 2,nz
           WRITE (k_str,'(I0)') k
           gprime(k) = g*(rho(k) - rho(k-1))/rho(1)
-          print *, '     gprime(',TRIM(k_str),') = ', gprime(k)
+          print *, ' gprime(',TRIM(k_str),') = ', gprime(k)
        enddo
        end if
        
@@ -122,9 +124,9 @@
        A(nz,nz)   =   F_layer(nz,nz)
 
        ! Printing diagnostic :
-       print *, ' > A matrix'
+       print *, 'A matrix (buyancy linear operator into matrix form) :'
        do k = 1,nz
-          print *, '     [', A(k,:),']'
+          print *, ' [', A(k,:),']'
        end do
 
        ! > Solving Eigenvalues problem : A.psi = lambda.psi
@@ -134,42 +136,45 @@
 
        
        ! LAPACK eigenvalues
-       PRINT *, ' > LAPACK Eigenvalues : '
+       PRINT *, 'LAPACK Eigenvalues of A matrix : '
        do k=1,nz
           WRITE (k_str,'(I0)') k
           IF (Fmodes(k) .lt. 1e-15) THEN
              Fmodes(k) = 0.
           ENDIF
-          print *, '     lambda_',TRIM(k_str),' =', Fmodes(k)
+          print *, ' lambda_',TRIM(k_str),' =', Fmodes(k)
        end do
 
 
        
        ! Printing eigenvectors (baroclinic modes)
-       print *, " > Eigenvectors"
+       print *, "Eigenvectors (barotropic and baroclinic modes) :"
        do k=1,nz
-          WRITE (k_str,'(I0)') k
-          dummy = 0.
-          do i=1,nz
-             dummy = dummy + L2M(i,k)**2
-          enddo
-          write (*,*) "     v(",trim(k_str),"  =  [",L2M(:,k),"]   and   |v| = ", dummy
+          write (k_str,'(I0)') k
+          write (*,*) " v(",trim(k_str),")  =  [",L2M(:,k),"]"
        end do
 
        ! Analytic equal 3-layers eigenvalues (test)
        ! print *, ' > Analytic Eigenvalues (3 equal layer, linear density): '
-       ! print *, '     lambda_1 =', 1*f0**2/gprime(2)/H(1)
-       ! print *, '     lambda_2 =', 3*f0**2/gprime(2)/H(1)
-       ! print *, '     lambda_3 =', 0.                    
+       ! print *, '   lambda_1 =', 1*f0**2/gprime(2)/H(1)
+       ! print *, '   lambda_2 =', 3*f0**2/gprime(2)/H(1)
+       ! print *, '   lambda_3 =', 0.                    
        
        ! Deformation radii
-       print *, ' > Deformation Radii :'
+       print *, 'Deformation Radii :'
        do k=1,nz
           WRITE (k_str,  '(I0)'  ) k
-          WRITE (ministr,'(F8.2)') 1/SQRT(Fmodes(k))
-          PRINT *, '     Ld(', TRIM(k_str), ') = 1/SQRT[lambda(',trim(k_str),')] = ', ministr, ' [m]'
+          WRITE (ministr,'(F8.3)') 1/SQRT(Fmodes(k))/1000
+          PRINT *, ' Ld(', TRIM(k_str), ') = 1/SQRT[lambda(',trim(k_str),')] = ', ministr, ' km'
        end do
+       do k=1,nz
+          WRITE (k_str,  '(I0)'  ) k
+          WRITE (ministr,'(F8.6)') 1/SQRT(Fmodes(k))/dx
+          PRINT *, ' Ld(', TRIM(k_str), ') over dx = ', ministr
+       end do
+       
        print *, '| -------------------------------------------------- |'
+       WRITE (*,*) ''
 
        do j = 0,nny
           f(j) = f0 + beta*(j-1)*dy
@@ -201,19 +206,37 @@
 
        else !if restart
           open(0,file='restart')
-          do j = 1,ny
-          do i = 1,nx             
-             read(0,*)   u(i,j,1,1),u(i,j,2,1),                &
-                  &      v(i,j,1,1),v(i,j,2,1),                &
-                  &      eta(i,j,2,1),                         &
-                  &      UStokes(i,j,1),VStokes(i,j,1),        &
-                  &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
-          enddo
-          enddo
-         read(0,*) icount_srt,time,nspecfile,iftcount_srt
-         close(0)
-         restart_from=time/86400
-         print*, 'Restart from', restart_from, 'day'
+          ! Two layers 
+          !#!if (nz.eq.2) then
+             do j = 1,ny
+             do i = 1,nx             
+                read(0,*)   u(i,j,:,1), &
+                     &      v(i,j,:,1), &
+                     &      eta(i,j,:,1),                         &
+                     &      UStokes(i,j,1),VStokes(i,j,1),        &
+                     &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
+             enddo
+             enddo
+          ! 5 layers
+          !#!else if (nz.eq.5) then
+          !#!   do j = 1,ny
+          !#!   do i = 1,nx             
+          !#!      read(0,*)   u(i,j,1,1),u(i,j,2,1),u(i,j,3,1),u(i,j,4,1),u(i,j,5,1),    &
+          !#!           &      v(i,j,1,1),v(i,j,2,1),v(i,j,3,1),v(i,j,4,1),v(i,j,5,1),    &
+          !#!           &      eta(i,j,2,1),eta(i,j,3,1),eta(i,j,4,1),eta(i,j,5,1),       &
+          !#!           &      UStokes(i,j,1),VStokes(i,j,1),                             &
+          !#!           &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
+          !#!   enddo
+          !#!   enddo
+          !#!else ! Number of layers doesn't fit
+          !#!   print*, 'Cannot read restart file : need to implement for ',k,'layers.'
+          !#!   stop
+          !#!end if
+          
+          read(0,*) icount_srt,time,nspecfile,iftcount_srt
+          close(0)
+          restart_from=time/86400
+          print*, 'Restart from', restart_from, 'day'
  
 !         if (restart_from == 999 ) then
 !            time = 0

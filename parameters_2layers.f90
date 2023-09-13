@@ -22,7 +22,7 @@
    
    ! --- Physical parameters ---
  
-   parameter ( tau0 = 0.1, tau1 = 1.e-5 ) !tau0 as the classical definition [N/m^2]
+   parameter ( tau0 = 0.1, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2],
  
    parameter ( f0 = 7.e-5, beta = 1.e-11 )
    
