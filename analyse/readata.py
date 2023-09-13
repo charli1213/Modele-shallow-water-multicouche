@@ -8,9 +8,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib as mpl
 plt.rcParams['animation.ffmpeg_path'] = 'ffmpeg'
+from matplotlib.animation import PillowWriter
 # Cmaps
 import seaborn as sns
 import cmocean.cm as cmo
+import cmasher as cmr
 # My own modules
 import tools as tls
 today = date.today()
@@ -196,66 +198,78 @@ def eight_pannels(field = 'zetaBT1', t0=0, maxday = 500,dt=40, title = r"Zeta Ba
 
 # ================================================================= #
 #                                                                   #
-#                        4-PANNELS ANIMATION                        #
+#                             ANIMATION                             #
 #                                                                   # 
 # ================================================================= #
 
-def anim(dS, interval = 100, title = "Double gyres de Stommel",cbar=True) :
+def anim(dS,
+         interval = 100,
+         title = "Double gyres de Stommel",
+         filename='animation.gif',
+         cbar = True,
+         satur = 0.25,
+         cmap = cmo.curl,
+         textcolor = 'black',
+         darkmode = False 
+         ) :
     """ Creates an animation for a chosen Xarray.DataArray (dA). """
 
-    # Parameters ::
+    # >> Darkmode On/Off
+    if darkmode : 
+        textcolor = 'white'
+        cmap = cmr.wildfire
+
+    # >> Parameters ::
     nt = len(ds.time)
     dt = (ds.time.max() - ds.time.min())/(nt-1)
     xx = ds.x.values
     yy = ds.y.values
-    nbitems = len(ds)
-    satu = 0.75   # saturation
-
-    # Figure creation :: 
-    fig, axes = plt.subplots(ncols=nbitems, figsize=[5*nbitems,5], sharey=True)
+    
+    # >> Figure creation :: 
+    fig, axes = plt.subplots(ncols=len(ds), figsize=[8*len(ds),6], sharey=True)
+    if (type(axes) != 'list') : axes=[axes]
     maxi = max([ds[key].max() for key in ds.keys()])
     im = []
     txt = []
-    # Adding colorbar
-    if cbar == True : 
-        ax = fig.add_axes([0.93,0.12,0.015,0.75])
-        cb = mpl.colorbar.ColorbarBase(ax, orientation="vertical", cmap=cmo.curl,
-                                       extend = 'both',
-                                       norm=mpl.colors.Normalize(-satu*maxi,
-                                                                 satu*maxi),
-                                       )
 
+    # >> Adding colorbar
+    if cbar == True : 
+        ax = fig.add_axes([0.85,0.10,0.025,0.8])
+        cb = mpl.colorbar.ColorbarBase(ax, cmap=cmap, extend = 'both',
+                                       norm=mpl.colors.Normalize(-satur*maxi,satur*maxi),
+                                       )
     
-    # Main loop ::
+    # >> Main loop ::
     for i,key in enumerate(ds.keys()) : 
         # Inner params 
         dA   = ds[key]
 
         
         im += [axes[i].imshow(dA.isel(time=0).values.transpose(),
-                              cmap = cmo.curl,
-                              vmin = -satu*maxi,
-                              vmax =  satu*maxi,
+                              cmap = cmap,
+                              vmin = -satur*maxi,
+                              vmax =  satur*maxi,
                               extent=[-1000,1000,-1000,1000],
                               )]
         axes[i].set_xlabel("x [km]")
         axes[i].set_ylabel("y [km]")
         if dA.name == 'eta1' : axes[i].set_title('PsiBT')
         else : axes[i].set_title(dA.name)
-        txt += [axes[i].text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color = 'black',zorder=1)]
+        txt += [axes[i].text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color=textcolor)]
     
-    # inner animation function ::
+    # >> inner animation function ::
     def inner_animate(itime, ds=ds, ax=axes):
         for i,key in enumerate(ds.keys()) :
             im[i].set_data(ds[key].isel(time=itime).values.transpose())
             txt[i].set_text("Day # {:<}".format(int(dA.time.isel(time=itime))), )
         return im+txt
 
-    # FuncAnimation :: 
+    # >> FuncAnimation :: 
     ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=interval, repeat=True)
 
     # Show/Save :: (Faut installer imagemagick avant tout)
-    #ani.save('./figures/' + 'animation2.gif', writer='imagemagick', fps = 15) #Save animation as
+    #ani.save('./figures/' + filename, writer=PillowWriter(fps=20)) #Save animation as
+    plt.tight_layout()
     plt.show()
     
         
@@ -269,21 +283,21 @@ if __name__ == "__main__" :
 
     else : 
         # Zeta
-        ds = tls.bintods(outt = 4,
+        ds = tls.bintods(outt = 2,
                          minday = 1,
                          maxday = 1000,
-                         fields_to_open = ['zeta1','zeta2','zetamode1','zetamode2'],
+                         fields_to_open = ['zeta1'],
                          )
         
-        anim(ds, interval=50)
+        anim(ds, interval=25, filename="zeta1.gif",satur = 0.4, darkmode=True)
 
         # Psi
-        ds = tls.bintods(outt = 4,
+        ds = tls.bintods(outt = 2,
                          minday = 1,
                          maxday = 1000,
-                         fields_to_open = ['eta1','PSImode1','PSImode2'],
+                         fields_to_open = ['eta1'],
                          )
         
-        anim(ds, interval=50)
+        anim(ds, interval=25, filename="psiBT.gif",satur = 0.75, darkmode=True)
 
         
