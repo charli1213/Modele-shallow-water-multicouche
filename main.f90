@@ -6,7 +6,7 @@
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6
       real f0, beta, r_drag, Ah, r_invLap, rf, g
-      real tau0, tau1
+      real tau0, tau1, wind_t0, variance ! CE modification
       real fileperday, daysperrestart
       integer nsteps,start_spec
       real ndays,totaltime,dt
@@ -20,9 +20,9 @@
 
       !
       ! I/O instruction for diognostics, to override, change parameters.f90
-      logical   IO_field, IO_forcing, IO_QGAG
+      logical  IO_field,   IO_forcing,  IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
-      logical  IO_BT, IO_psimodes
+      logical  IO_BT,      IO_psimodes
 
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
@@ -58,7 +58,7 @@
 
 
       
-    !!! ---------- Physical quantities definition [x] ---------- !!!
+    !!! ---------- Physical quantities definition ---------- !!!
       ! Mailles/Sides :
       REAL :: u(0:nnx,0:ny,nz,3), v(0:nx,0:nny,nz,3)
       REAL :: u_ag(0:nnx,0:ny,nz), v_ag(0:nx,0:nny,nz)
@@ -82,7 +82,7 @@
       REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3
       REAL :: array_x(0:nnx,0:ny), array_y(0:nx,0:nny) ! dummy
       
-      ! Centres/Centers [x] :
+      ! Centres/Centers :
       REAL :: eta(0:nx,0:ny,nz,3)
       REAL :: rhs_eta(0:nx,0:ny,nz)
       REAL :: div(0:nx,0:ny)
@@ -96,7 +96,7 @@
       REAL :: p_out(0:nx,0:ny)
       REAL :: faces_array(0:nx,0:ny) ! dummy
       
-      ! Noeuds/Nodes [x] :
+      ! Noeuds/Nodes :
       REAL :: zeta(1:nx,1:ny)
       REAL :: zetaBT(1:nx,1:ny) ! fishpack
       REAL :: psiBT(1:nx,1:ny)  ! fishpack
@@ -114,8 +114,8 @@
 
       
       
-     !!! ---------- Outputs quantities definition ---------- !!!
-      ! *** same as FFT model 
+     !!! ---------- I/O qties definition ---------- !!!
+      ! *** same as the old FFTW model 
       ! Sides :
       REAL :: u_out(1:szsubx,1:szsuby,nz)
       REAL :: uBT_out(1:szsubx,1:szsuby)
@@ -144,31 +144,30 @@
       REAL :: sl, ed
       REAL :: ran2
       REAL :: mean_rhsuBT, mean_rhsvBT
-      DOUBLE PRECISION :: ff(nx, ny)      ! Fishpack (Input field)
+      DOUBLE PRECISION :: ff(nx, ny)     ! Fishpack (Input field)
       DOUBLE PRECISION :: xa, xb, yc, yd ! Fishpack (Domain)
       DOUBLE PRECISION :: elmbda, pertrb ! Fishpack (Parameters)
       DOUBLE PRECISION :: bda(1), bdb(1), bdc(1), bdd(1) ! Fishpack (Newmann bndy)
-      INTEGER          :: mbdcnd, nbdcnd ! Fishpack (boundarys)
+      INTEGER          :: mbdcnd, nbdcnd ! Fishpack (boundary type)
       
       
-      ! Baroclinic/Barotropic modes with LAPACK ; 
+      ! Baroclinic/Barotropic modes/solutions with LAPACK (see initialise.f90) : 
       REAL :: F_layer(1:nz,1:nz), A(1:nz,1:nz), A2(1:nz,1:nz), Fmodes(nz)
       REAL :: WI(1:nz), VL(1:nz,1:nz)
       REAL :: L2M(1:nz,1:nz),M2L(1:nz,1:nz)
       INTEGER WORKL(1:4*nz), INFO
-      CHARACTER(8) :: ministr      
+      CHARACTER(8) :: ministr
       
       REAL :: forcing_qg(0:nnx,0:nny), forcing_ag(0:nnx,0:nny)
       REAL :: forcing_total(0:nnx,0:nny)
       REAL :: tmp(0:10)
       
-      ! Initialize qties
+      ! Initialize qties (see initialise.f90)
       real f(0:nny)
       real gprime(nz), Htot, H(nz), H_bin(6), rho(nz+1) ! +1 because see initialise.f90
       real top(nz), bot(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
-      real Lrossby
 
       ! real amp_matrix(864000) !3000 days
       real amp_forcing, amp, rms_amp, ampfactor, Omgrange !initialize_forcing
@@ -312,10 +311,6 @@
       !set icount and time based on if restart is true or false !moved to initialize
       !  icount = 0 !for  output file index
       !  time = 0.  !in second
-      Lrossby = c_bc/f0
-      write(*,*) 'Lrossby over Lx/2pi = ', twopi*Lrossby/Lx
-      write(*,*) 'Lrossby over dx = ', Lrossby/dx
-      write(*,*) 'Lrossby  = ', Lrossby/1000. , 'km'
       write(*,*) 'total step, nstep= ', nsteps
       write(*,*) 'write output data for every',iout, 'steps, for ndays=', ndays
       write(*,*) 'one day = ', 86400/dt, 'time steps'
@@ -623,12 +618,6 @@
          write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
-         !-!if (mod(its,10000).eq.0 ) then
-         !-!   ilevel = 2
-         !-!   print *, '<CEL-CALL> Strong divergence correction. its = ', its
-         !-!   include 'subs/strong_correction.f90'
-         !-!end if
-         
          !if(nsteps.lt.1.and.save_movie) then
          !   if ( mod(its,iout).eq.0 ) then  ! output 
          !      include 'subs/div_vort.f90'
@@ -651,7 +640,7 @@
          if (save_movie.and. mod(its,iout).eq.0 ) then  ! output 
             icount = icount + 1
 
-            ! Eta is barotropic streamfunction.
+            ! *** Eta(z=1) is the barotropic streamfunction (since eta(0) = 0 because of rigid lid)
             eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
 
             include 'subs/dump_bin.f90'
@@ -713,10 +702,6 @@
          !endif
 
 
-         ! ========= From the original code
-         !          if ( mod(its,i_diags).eq.0 ) then
-         !             include 'subs/diags.f90'
-         !          endif
         ! writing back-up restarting files for
         if(mod(its,int(daysperrestart*86400/dt))==0) then
                 include 'subs/writing_restart_files.f90'
@@ -724,12 +709,17 @@
         if(its==nsteps) then
          include 'subs/writing_restart_files.f90'
       end if
-      enddo ! its
-      !===== time loop ends here
+      
+     enddo ! its
+     !===== time loop ends here
 
-      !include 'fftw_stuff/fft_destroy.f90'
+     !include 'fftw_stuff/fft_destroy.f90'
     end program main
 
+
+
+
+    
 function ran2(idum)
    use data_initial
    integer :: idum,IM1,IM2,IMM1,IA1,IA2,IQ1,IQ2,IR1,IR2,NTAB,NDIV
@@ -905,48 +895,3 @@ FUNCTION gasdev(idum)
  !  matout=array2
  !
  !END SUBROUTINE interp_matrix
-
-
-
-
-
-
-
-
-
-
-
-!!! --- SOUS-ROUTINES POUR MUDPACK --- 
-
- SUBROUTINE bndyc(kbdy,xory,alfa,gbdy)
-  ! ***************************************************************** !
-  !                                                                   ! 
-  !   >>> Dummy function to define mixed boundary conditions (NONE)   !
-  !                                                                   !
-  ! ***************************************************************** !
-  implicit none
-  INTEGER            :: kbdy
-  REAL               :: xory,alfa,gbdy
-  return
-end SUBROUTINE bndyc
-
-
-SUBROUTINE coef(x,y,cxx,cyy,cx,cy,ce)
-  ! ********************************************************************** !
-  !                                                                        !
-  !   >>> Sous-routine des coefficients :                                  ! 
-  !                                                                        !
-  !          cxx(x,y)*pxx + cyy(x,y)*pyy + cx(x,y)*px + cy(x,y)*py +       !
-  !                                                                        !
-  !          ce(x,y)*p(x,y) = r(x,y).                                      ! 
-  !                                                                        ! 
-  ! ********************************************************************** !
-  implicit none
-  REAL x,y,cxx,cyy,cx,cy,ce
-  cxx = 1.
-  cyy = 1.
-  cx  = 0.
-  cy  = 0.
-  ce  = 0.
-  return
-end SUBROUTINE coef
