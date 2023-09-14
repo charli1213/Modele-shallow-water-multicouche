@@ -236,7 +236,7 @@
       character(88) string99,string98,fmtstr,fmtstr1
 
       INTEGER :: dummy_int
-      REAL :: dummy !Usep this for anything
+      REAL ::  dummy !Usep this for anything
       
       ! MUDPACK solver
       INTEGER            :: iparm(17), mgopt(4), length
@@ -398,6 +398,11 @@
          endif
          !
 
+         ! Ramp :
+         ! ramp0 is the slope of the ramp. Such that ramp = ramp0*its
+         ramp0 = real(1/(365*86400))
+
+         
          ! Pas besoin d'update les contours de zeta ou psi.
          do j = 2,ny-1
             jp = j+1
@@ -420,7 +425,14 @@
          include 'subs/free_slip.f90'
          uu = array_x
          vv = array_y
-         
+
+         ! Ramp : 
+         if (its.gt.int(86400*365)) then 
+            ramp =1.
+         else
+            ramp = ramp0*float(its)
+         endif
+
 
          ! Finding thickness locally
          if (k.eq.1) then
@@ -534,6 +546,14 @@
          !END IF
          ! <<< Modification CEL <<<
          !
+
+         ! Ramp : 
+         if (its.gt.int(86400*365)) then 
+            ramp =1.
+         else
+            ramp = ramp0*float(its)
+         endif
+
                   
          pressure(:,:) =  0.
          do k = 1,nz

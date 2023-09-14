@@ -78,7 +78,7 @@
           print *, ' rho(2)    = ', rho(2)
           if (nz.gt.2) then
              do k = 3,nz
-                rho(k) = rho(k-1) + 0.5*rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
+                rho(k) = rho(k-1) + rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
                 WRITE (k_str,'(I0)') k
                 print *, ' rho(',TRIM(k_str),')   =  ', rho(k)
              enddo

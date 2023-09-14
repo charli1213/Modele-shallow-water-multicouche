@@ -82,7 +82,6 @@
        uh = array_x
        vh = array_y
 
-
        ! Grad 4
        do j = 1, ny-1
           jp = j+1
@@ -97,7 +96,7 @@
        &           + (grad2v(i,jp)+grad2v(i,jm)-2.*grad2v(i,j))/dy/dy
 
        wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
-       wind_x(i,j) = wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
+       wind_x(i,j) = ramp*wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
 
        !!! > coup de vent : 
        !wind_x(i,j) = wind_x(i,j)*(1+exp(-((its - wind_t0)**2)/variance))
