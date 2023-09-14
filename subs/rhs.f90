@@ -3,7 +3,8 @@
        if(tmp(1).le.0.02) then
           print*, 'its',its
           print*, k,'thickness too small'
-       stop
+          print*, 'thickness', tmp(1)
+          stop
        endif
 
        ! Boundaries :

@@ -78,7 +78,7 @@
           print *, ' rho(2)    = ', rho(2)
           if (nz.gt.2) then
              do k = 3,nz
-                rho(k) = rho(k-1) + rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
+                rho(k) = rho(k-1) + 0.5*rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
                 WRITE (k_str,'(I0)') k
                 print *, ' rho(',TRIM(k_str),')   =  ', rho(k)
              enddo
@@ -88,6 +88,7 @@
        ! >>> Printing Diagnostics :
 
        ! gprime
+       write (*,*) 'Reduced gravities'
        gprime(1) = g
        print *, ' gprime(1) = ', gprime(1)
        if (nz.gt.1) then
@@ -167,10 +168,17 @@
           WRITE (ministr,'(F8.3)') 1/SQRT(Fmodes(k))/1000
           PRINT *, ' Ld(', TRIM(k_str), ') = 1/SQRT[lambda(',trim(k_str),')] = ', ministr, ' km'
        end do
+       print *, 'Deformation Radii over dx:'
        do k=1,nz
           WRITE (k_str,  '(I0)'  ) k
-          WRITE (ministr,'(F8.6)') 1/SQRT(Fmodes(k))/dx
+          WRITE (ministr,'(F8.3)') 1/SQRT(Fmodes(k))/dx
           PRINT *, ' Ld(', TRIM(k_str), ') over dx = ', ministr
+       end do
+       print *, 'Baroclinic wave speed'
+       do k=1,nz
+          WRITE (k_str,  '(I0)'  ) k
+          WRITE (ministr,'(F8.1)') f0/SQRT(Fmodes(k))
+          PRINT *, ' c_bc(',TRIM(k_str),') = f0/Ld(', TRIM(k_str), ') = ', ministr
        end do
        
        print *, '| -------------------------------------------------- |'

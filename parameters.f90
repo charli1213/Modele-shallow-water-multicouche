@@ -5,15 +5,15 @@
 
   ! ---  Grid ---
  
-   parameter ( Lx = 2e6, Ly = Lx )
+   parameter ( Lx = 4e6, Ly = Lx )
    
-   parameter ( H1 = 1.0e3, H2 = 3.0e3, H3 = 6.0e2, H4 = 1.0e3, H5 = 2.0e3, H6 = 4.0e3 )
+   parameter ( H1 = 1.0e2, H2 = 3.0e2, H3 = 6.0e2, H4 = 1.0e3, H5 = 2.0e3, H6 = 4.0e3 )
    
    parameter ( iex = 9, jey = 9, ixp = 2, jyq = 2 )
       
    parameter ( nx = ixp*2**(iex-1)+1,  ny = jyq*2**(jey-1)+1 ) ! 513
       
-   parameter ( nz = 2 )
+   parameter ( nz = 5 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
@@ -24,7 +24,7 @@
  
    parameter ( tau0 = 0.1, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2], wind_t0 [timestep]
  
-   parameter ( f0 = 7.e-5, beta = 1.e-11 )
+   parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
    parameter ( r_drag = 1.e-7 )
  

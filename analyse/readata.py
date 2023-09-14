@@ -203,101 +203,183 @@ def eight_pannels(field = 'zetaBT1', t0=0, maxday = 500,dt=40, title = r"Zeta Ba
 # ================================================================= #
 
 def anim(dS,
-         interval = 100,
+         interval = 50,
          title = "Double gyres de Stommel",
          filename='animation.gif',
-         cbar = True,
-         satur = 0.25,
-         cmap = cmo.curl,
+         satu = 0.25,
          textcolor = 'black',
+         cmap = cmo.curl,
+         add_colorbar = False,
          darkmode = False 
          ) :
     """ Creates an animation for a chosen Xarray.DataArray (dA). """
 
     # >> Darkmode On/Off
+
     if darkmode : 
         textcolor = 'white'
         cmap = cmr.wildfire
 
     # >> Parameters ::
-    nt = len(ds.time)
-    dt = (ds.time.max() - ds.time.min())/(nt-1)
-    xx = ds.x.values
-    yy = ds.y.values
+    nt = len(dS.time)
+    dt = (dS.time.max() - dS.time.min())/(nt-1)
+    xx = dS.x.values
+    yy = dS.y.values
     
-    # >> Figure creation :: 
-    fig, axes = plt.subplots(ncols=len(ds), figsize=[8*len(ds),6], sharey=True)
-    if (type(axes) != 'list') : axes=[axes]
-    maxi = max([ds[key].max() for key in ds.keys()])
+    # >> Figure creation ::
+    if len(dS) > 4    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[13.5,7.5], sharey=True)
+    elif len(dS) == 4 : fig, axes = plt.subplots(ncols=2, nrows=2, figsize=[9,7.5], sharey=True)
+    else : fig, axes = plt.subplots(ncols=len(dS), figsize=(4.5*len(dS),3.75), sharey=True)
+    if not isinstance(axes,np.ndarray) : axes = [axes]    
     im = []
     txt = []
+    
+    # >> Colormap boundaries : 
+    mini = [dS[key].min() for key in dS.keys()]
+    maxi = [dS[key].max() for key in dS.keys()]
+    if min(mini)< 0 : # Saturation is applied.
+        mini = [-satu*maximum for maximum in maxi]
+        maxi = [ satu*maximum for maximum in maxi]
 
     # >> Adding colorbar
-    if cbar == True : 
-        ax = fig.add_axes([0.85,0.10,0.025,0.8])
+    if add_colorbar : 
+        maxi = [max(maxi) for value in maxi] # All maxima are the same if cbar.
+        mini = [min(mini) for value in mini] # All minima are the same if cbar.
+        ax = fig.add_axes([0.85,0.10,0.025,0.8]) # Colorbar position.
         cb = mpl.colorbar.ColorbarBase(ax, cmap=cmap, extend = 'both',
-                                       norm=mpl.colors.Normalize(-satur*maxi,satur*maxi),
+                                       norm=mpl.colors.Normalize(min(mini),
+                                                                 max(maxi)),
                                        )
-    
-    # >> Main loop ::
-    for i,key in enumerate(ds.keys()) : 
-        # Inner params 
-        dA   = ds[key]
 
-        
-        im += [axes[i].imshow(dA.isel(time=0).values.transpose(),
-                              cmap = cmap,
-                              vmin = -satur*maxi,
-                              vmax =  satur*maxi,
-                              extent=[-1000,1000,-1000,1000],
-                              )]
-        axes[i].set_xlabel("x [km]")
-        axes[i].set_ylabel("y [km]")
-        if dA.name == 'eta1' : axes[i].set_title('PsiBT')
-        else : axes[i].set_title(dA.name)
-        txt += [axes[i].text(-0.95e3, 0.9e3, "Day # {}".format(0*dt), color=textcolor)]
+    print('len',len(axes.flat))
+    print('axes',axes)
+    print('axes',axes.flat)
+    print('flat',axes.flat[1])
+    # >> Main loop ::
+    for i,var in enumerate(dS) : 
+        # Inner params 
+        dA   = dS[var]
+        im += [dA.isel(time=0).plot.imshow(cmap=cmap,
+                                           vmin = mini[i],
+                                           vmax = maxi[i],
+                                           ax=axes.flat[i],
+                                           x='x', add_colorbar = (not add_colorbar))]
+        #axes.flat[i].set_xlabel("x [km]")
+        #axes.flat[i].set_ylabel("y [km]")
+        if dA.name == 'eta1' : axes.flat[i].set_title('PsiBT')
+        else : axes.flat[i].set_title(dA.name)
+        txt += [axes.flat[i].text(-0.95e6, 0.9e6, "Day # {}".format(0*dt), color=textcolor)]
     
     # >> inner animation function ::
-    def inner_animate(itime, ds=ds, ax=axes):
-        for i,key in enumerate(ds.keys()) :
-            im[i].set_data(ds[key].isel(time=itime).values.transpose())
+    def inner_animate(itime, dS=dS, ax=axes):
+        for i,var in enumerate(dS) :
+            im[i].set_data(dS[var].isel(time=itime).values.transpose())
             txt[i].set_text("Day # {:<}".format(int(dA.time.isel(time=itime))), )
         return im+txt
 
     # >> FuncAnimation :: 
+    plt.tight_layout()
     ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=interval, repeat=True)
 
     # Show/Save :: (Faut installer imagemagick avant tout)
     #ani.save('./figures/' + filename, writer=PillowWriter(fps=20)) #Save animation as
-    plt.tight_layout()
-    plt.show()
     
+    plt.show()
+
+
+# ================================================================= #
+#                                                                   #
+#                               (END)                               #
+#                                                                   # 
+# ================================================================= #
+
+
+
+
+
+
+# ================================================================= #
+#                                                                   #
+#                             PROGRAM                               #
+#                                                                   # 
+# ================================================================= #
         
 if __name__ == "__main__" :
     if input("Sortir 8pannels? [y/]") == 'y' :
         ds = eight_pannels(field = 'zetaBT1',dt=50)
-
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
     elif input("Debugg?? [y/]") == 'y' :
         #ds = mudpack()
         ds = debug(field = 'zetaBT1', outt = 1)
-
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
     else : 
-        # Zeta
-        ds = tls.bintods(outt = 2,
-                         minday = 1,
-                         maxday = 1000,
-                         fields_to_open = ['zeta1'],
-                         )
-        
-        anim(ds, interval=25, filename="zeta1.gif",satur = 0.4, darkmode=True)
 
-        # Psi
-        ds = tls.bintods(outt = 2,
-                         minday = 1,
+        # psi
+        ds = tls.bintods(outt = 1,
+                         minday = 0,
                          maxday = 1000,
-                         fields_to_open = ['eta1'],
+                         fields_to_open = ['div1','div2','div3','div4','div5'],
                          )
-        
-        anim(ds, interval=25, filename="psiBT.gif",satur = 0.75, darkmode=True)
+        # Animation : 
+        anim(ds,
+             filename="div.gif",
+             satu=1,interval=100)
 
         
+        # psi
+        ds = tls.bintods(outt = 1,
+                         minday = 0,
+                         maxday = 1000,
+                         fields_to_open = ['eta2','eta3','eta4','eta5'],
+                         )
+        # Animation : 
+        anim(ds,
+             filename="eta.gif",
+             satu=1,
+             interval=50)
+
+
+        
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+        # Paramètres du diagnostique : 
+        cmap = cmo.curl
+        it = -2
+        figsize = (9,7.5)
+        
+        # Eta
+        ###fig1,axes1 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
+        ###for ax,var in zip(axes1.flat,ds) :
+        ###    ds[var].isel(time=-1).plot(x='x',ax=ax,cmap='seismic')
+        ###plt.tight_layout()
+        ###plt.show()
+
+        # Épaisseurs
+        dh = xr.Dataset()
+        #fig2,axes2 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
+        for var,h  in zip(ds,[100,300,600,1000]) : 
+            try :
+                dh['thickness{}'.format(h)] = (h - ds[var] + da) # Other layers 
+            except :
+                dh['thickness{}'.format(h)] = (h - ds[var]) # first layer
+            # Plotting : 
+            #dh['thickness{}'.format(h)].isel(time=it).plot(x='x',ax=ax,cmap=cmap)
+            da = ds[var]        
+        #fig2.tight_layout()
+        #plt.close()
+        dh['thickness{}'.format(3000)] = (ds.eta5+3000) # first layer
+
+
+        # naime épaisseur
+        anim(dh,
+             filename="thicknesses.gif",
+             satu=0.9,
+             interval=50)
+
+
+        
+        # différences :
+        ####fig3,axes3 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
+        ####for var,ax in zip(dh,axes3.flat) :
+        ####    (dh[var].isel(time=-1) - dh[var].isel(time=-2)).plot(x='x',ax=ax,cmap=cmap)
+        ####plt.tight_layout()
+        ####plt.show()

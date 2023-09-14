@@ -316,6 +316,7 @@
       write(*,*) 'one day = ', 86400/dt, 'time steps'
       write(*,*) 'Spectrum time series has', ntsrow, 'lines'
       write(*,*) 'dx = ', dx
+      write(*,*) 'CFL = ', dx/dt
       
       ! --- Initializing each fields and rossby radii
       include 'subs/initialize.f90'

@@ -10,8 +10,9 @@ then
     lapack_path=/usr/lib64/
     fishpack_path=/aos/home/celizotte/fishpack-master/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
-    #case=/storage/celizotte/5layers_beta
-    case=/storage/celizotte/2layers_beta
+    case=/storage/celizotte/5layers_beta
+    #case=/storage/celizotte/2layers_beta
+    #case=/storage/celizotte/test_5couches
 elif [ "${pcid}" == "2" ]
 then
     machine_name=Bepsi
