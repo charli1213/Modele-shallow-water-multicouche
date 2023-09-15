@@ -400,7 +400,7 @@
 
          ! Ramp :
          ! ramp0 is the slope of the ramp. Such that ramp = ramp0*its
-         ramp0 = real(1/(365*86400))
+         ramp0 = real(dt/(365*86400))
 
          
          ! Pas besoin d'update les contours de zeta ou psi.
@@ -427,7 +427,7 @@
          vv = array_y
 
          ! Ramp : 
-         if (its.gt.int(86400*365)) then 
+         if (its.gt.int(86400*365/dt)) then 
             ramp =1.
          else
             ramp = ramp0*float(its)

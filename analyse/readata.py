@@ -316,19 +316,19 @@ if __name__ == "__main__" :
 
         # psi
         ds = tls.bintods(outt = 1,
-                         minday = 0,
+                         minday = 800,
                          maxday = 1000,
                          fields_to_open = ['div1','div2','div3','div4','div5'],
                          )
         # Animation : 
         anim(ds,
              filename="div.gif",
-             satu=1,interval=100)
+             satu=1,interval=40)
 
         
         # psi
         ds = tls.bintods(outt = 1,
-                         minday = 0,
+                         minday = 800,
                          maxday = 1000,
                          fields_to_open = ['eta2','eta3','eta4','eta5'],
                          )
@@ -336,7 +336,7 @@ if __name__ == "__main__" :
         anim(ds,
              filename="eta.gif",
              satu=1,
-             interval=50)
+             interval=40)
 
 
         
@@ -373,7 +373,7 @@ if __name__ == "__main__" :
         anim(dh,
              filename="thicknesses.gif",
              satu=0.9,
-             interval=50)
+             interval=40)
 
 
         
