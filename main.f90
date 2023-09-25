@@ -26,10 +26,11 @@
 
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
-      integer nghost, ng2
+      ! integer nghost, ng2
       LOGICAL cou, ustar, waves, stokes
       REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
+      INTEGER :: mpi_field_size
       CHARACTER(80) :: err_str
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
@@ -252,6 +253,7 @@
       
       ! >>> Modification CEL >>>
       !IF (cou) THEN
+         !mpi_grid_size = (nx-1)*(ny-1)
          ! --- Creating zonal alpha window (North/South continuity) --- !
          !DO i=1,nx
             !DO j=1,ny

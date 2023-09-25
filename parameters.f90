@@ -26,7 +26,7 @@
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
-   parameter ( r_drag = 1.e-7 )
+   parameter ( r_drag = 1.e-7 ) ! Test de friction?
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
