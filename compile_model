@@ -10,30 +10,32 @@ then
     lapack_path=/usr/lib64/
     fishpack_path=/aos/home/celizotte/fishpack-master/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
-    case=/storage/celizotte/5layers_beta
-    #case=/storage/celizotte/2layers_beta
-    #case=/storage/celizotte/test_5couches
+    # casefile
+    case=~/Desktop/Modele-shallow-water-multicouches/newcase
+
+    
 elif [ "${pcid}" == "2" ]
 then
     machine_name=Bepsi
     model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
-    #case=t2layers_beta_debug
-    #case=t2layers_beta_tau01
-    case=Nlayer_beta
+    # casefile
+    case=newcase
+
 fi
 
 # >>> Preparing before compilation ::
 echo "!! ${pcid} was selected"
-echo "!! Using setting for ${machine_name} with fftw stored at ${fftw_path}"
-cp "${model_path}/parameters.f90" "${case}/."
+echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpath_path} and lapack at ${lapack_path}"
+#cp "${model_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${model_path} to ${case}"
 
 
 # >>> Compilation :: 
-#mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
+# mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
 gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+#mpiifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 
 # >>> Parameter last compiled in model directory ::
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
@@ -42,4 +44,4 @@ cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
 cp ${model_path}/parameters.f90 ${case}/parameters.f90_last_compiled
 
 # >>> Ending ::
-echo "!! Compilation of $case completed on the computer $machine_name "
+echo "!! Compilation of $case/exec completed on the computer $machine_name."

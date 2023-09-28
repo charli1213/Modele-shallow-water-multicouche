@@ -212,7 +212,15 @@ def anim(dS,
          add_colorbar = False,
          darkmode = False 
          ) :
-    """ Creates an animation for a chosen Xarray.DataArray (dA). """
+    """ This function creates an animation for a chosen Xarray.Dataset (dS).
+        It exports all animation on a 1 to 4 by X squares.
+    INPUT  ::
+      - dS (Xarray.Dataset) : The dataset to which we create the animation.
+    OUTPUT ::
+      - NONE
+    KWARGS ::
+      - Lots of stuff...
+    """
 
     # >> Darkmode On/Off
 
@@ -230,7 +238,7 @@ def anim(dS,
     if len(dS) > 4    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[13.5,7.5], sharey=True)
     elif len(dS) == 4 : fig, axes = plt.subplots(ncols=2, nrows=2, figsize=[9,7.5], sharey=True)
     else : fig, axes = plt.subplots(ncols=len(dS), figsize=(4.5*len(dS),3.75), sharey=True)
-    if not isinstance(axes,np.ndarray) : axes = [axes]    
+    if not isinstance(axes,np.ndarray) : axes = np.array(axes)
     im = []
     txt = []
     
@@ -250,11 +258,6 @@ def anim(dS,
                                        norm=mpl.colors.Normalize(min(mini),
                                                                  max(maxi)),
                                        )
-
-    print('len',len(axes.flat))
-    print('axes',axes)
-    print('axes',axes.flat)
-    print('flat',axes.flat[1])
     # >> Main loop ::
     for i,var in enumerate(dS) : 
         # Inner params 
@@ -268,7 +271,7 @@ def anim(dS,
         #axes.flat[i].set_ylabel("y [km]")
         if dA.name == 'eta1' : axes.flat[i].set_title('PsiBT')
         else : axes.flat[i].set_title(dA.name)
-        txt += [axes.flat[i].text(-0.95e6, 0.9e6, "Day # {}".format(0*dt), color=textcolor)]
+        txt += [axes.flat[i].text(-0.95e6, 0.9e6, "Day # 0", color=textcolor)]
     
     # >> inner animation function ::
     def inner_animate(itime, dS=dS, ax=axes):
@@ -305,81 +308,45 @@ def anim(dS,
 # ================================================================= #
         
 if __name__ == "__main__" :
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
     if input("Sortir 8pannels? [y/]") == 'y' :
         ds = eight_pannels(field = 'zetaBT1',dt=50)
+        
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
     elif input("Debugg?? [y/]") == 'y' :
         #ds = mudpack()
         ds = debug(field = 'zetaBT1', outt = 1)
+        
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-    else : 
 
-        # psi
-        ds = tls.bintods(outt = 1,
-                         minday = 800,
-                         maxday = 1000,
-                         fields_to_open = ['div1','div2','div3','div4','div5'],
+    else : 
+        print('Launching animations')
+        minday = 0
+        maxday = 1200
+        outt = 4
+        print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
+        # u
+        ds = tls.bintods(outt = outt,
+                         minday = minday,
+                         maxday = maxday,
+                         fields_to_open = ['u1'],
                          )
-        # Animation : 
         anim(ds,
              filename="div.gif",
              satu=1,interval=40)
 
         
         # psi
-        ds = tls.bintods(outt = 1,
-                         minday = 800,
-                         maxday = 1000,
-                         fields_to_open = ['eta2','eta3','eta4','eta5'],
+        ds = tls.bintods(outt = outt,
+                         minday = minday,
+                         maxday = maxday,
+                         fields_to_open = ['eta1'],
                          )
-        # Animation : 
         anim(ds,
              filename="eta.gif",
              satu=1,
              interval=40)
 
 
-        
-        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-        # Paramètres du diagnostique : 
-        cmap = cmo.curl
-        it = -2
-        figsize = (9,7.5)
-        
-        # Eta
-        ###fig1,axes1 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
-        ###for ax,var in zip(axes1.flat,ds) :
-        ###    ds[var].isel(time=-1).plot(x='x',ax=ax,cmap='seismic')
-        ###plt.tight_layout()
-        ###plt.show()
-
-        # Épaisseurs
-        dh = xr.Dataset()
-        #fig2,axes2 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
-        for var,h  in zip(ds,[100,300,600,1000]) : 
-            try :
-                dh['thickness{}'.format(h)] = (h - ds[var] + da) # Other layers 
-            except :
-                dh['thickness{}'.format(h)] = (h - ds[var]) # first layer
-            # Plotting : 
-            #dh['thickness{}'.format(h)].isel(time=it).plot(x='x',ax=ax,cmap=cmap)
-            da = ds[var]        
-        #fig2.tight_layout()
-        #plt.close()
-        dh['thickness{}'.format(3000)] = (ds.eta5+3000) # first layer
-
-
-        # naime épaisseur
-        anim(dh,
-             filename="thicknesses.gif",
-             satu=0.9,
-             interval=40)
-
-
-        
-        # différences :
-        ####fig3,axes3 = plt.subplots(nrows=2,ncols=2,sharex=True,sharey=True,figsize=figsize)
-        ####for var,ax in zip(dh,axes3.flat) :
-        ####    (dh[var].isel(time=-1) - dh[var].isel(time=-2)).plot(x='x',ax=ax,cmap=cmap)
-        ####plt.tight_layout()
-        ####plt.show()

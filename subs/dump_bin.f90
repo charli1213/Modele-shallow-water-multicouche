@@ -1,7 +1,8 @@
 
   
   WRITE(which,'(I6)') 100000 + icount
-  dummy_int = nz
+  !dummy_int = nz
+  dummy_int = 1 ! not nz because we have a lot of layers.
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
@@ -42,26 +43,26 @@
 
        ! >>> Divergence AND curl for each layers :
        
-       WRITE (k_str,'(I0)') k
-       string39 =  './data/div'   // trim(k_str)  // '_' // trim(which)
-       string40 =  './data/zeta' // trim(k_str)  // '_' // trim(which)
-
-       ! calculate div and curl
-       ! ilevel = 3 (latest field)
-       INCLUDE 'subs/div_vort.f90'
-       zeta_out(:,:) = zeta(isubx,isuby)
-       div_out(:,:)  = div(isubx,isuby)
-
-       ! Writing
-       open(unit=139,file=string39,access='DIRECT',&
-            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(139,REC=1) ((div_out(i,j),i=1,szsubx),j=1,szsuby)
-       close(139)
-
-       open(unit=140,file=string40,access='DIRECT',&
-            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       write(140,REC=1) ((zeta_out(i,j),i=1,szsubx),j=1,szsuby)
-       close(140)
+       !/*\!WRITE (k_str,'(I0)') k
+       !/*\!string39 =  './data/div'   // trim(k_str)  // '_' // trim(which)
+       !/*\!string40 =  './data/zeta' // trim(k_str)  // '_' // trim(which)
+       !/*\!
+       !/*\!! calculate div and curl
+       !/*\!! ilevel = 3 (latest field)
+       !/*\!INCLUDE 'subs/div_vort.f90'
+       !/*\!zeta_out(:,:) = zeta(isubx,isuby)
+       !/*\!div_out(:,:)  = div(isubx,isuby)
+       !/*\!
+       !/*\!! Writing
+       !/*\!open(unit=139,file=string39,access='DIRECT',&
+       !/*\!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       !/*\!write(139,REC=1) ((div_out(i,j),i=1,szsubx),j=1,szsuby)
+       !/*\!close(139)
+       !/*\!
+       !/*\!open(unit=140,file=string40,access='DIRECT',&
+       !/*\!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       !/*\!write(140,REC=1) ((zeta_out(i,j),i=1,szsubx),j=1,szsuby)
+       !/*\!close(140)
 
     end do ! end of k-loop
 

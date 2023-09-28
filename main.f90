@@ -2,9 +2,8 @@
       integer exec_loc
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
-      integer ixp, jyq, iex, jey
       integer i_diags
-      double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6
+      double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
       real f0, beta, r_drag, Ah, r_invLap, rf, g
       real tau0, tau1, wind_t0, variance ! CE modification
       real fileperday, daysperrestart
@@ -165,7 +164,8 @@
       
       ! Initialize qties (see initialise.f90)
       real f(0:nny)
-      real gprime(nz), Htot, H(nz), H_bin(6), rho(nz+1) ! +1 because see initialise.f90
+      real gprime(nz), Hsum, Hmin, H(nz), rho(nz+1) ! +1 because see initialise.f90
+      real exp_coef, exp_amp, ratio
       real top(nz), bot(nz)
       real pdf(-100:100)
       real x, y, z, ramp, ramp0, time, today
@@ -238,15 +238,6 @@
 
       INTEGER :: dummy_int
       REAL ::  dummy !Usep this for anything
-      
-      ! MUDPACK solver
-      INTEGER            :: iparm(17), mgopt(4), length
-      REAL               :: fparm(6)
-      REAL,ALLOCATABLE   :: workm(:)
-      CHARACTER(LEN=80)  :: myformat
-
-      ! SUBROUTINES CALLS
-      external coef,bndyc
       
       !include 'fftw_stuff/fft_params.f90'
       !include 'fftw_stuff/fft_init.f90'
@@ -491,7 +482,6 @@
       u(:,:,:,3) = u(:,:,:,2)
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
-      eta(:,:,1,3) = p_out(:,:)
       ! Eta1 is barotropic streamfunction (psiBT).
       eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
 
@@ -629,6 +619,7 @@
          v(:,:,:,2) = v(:,:,:,3)
          eta(:,:,:,2) = eta(:,:,:,3)
 
+         ! mean energy diagnostics : 
          ke1 = 0.
          ke2 = 0.
          do j = 1, ny-1

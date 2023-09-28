@@ -82,27 +82,24 @@ def bintods(casepath='./',
     print(' > MAXDAY:', maxday+step, nb_of_files*dt)
     print(' > MAX FILENUMBER', max_filenumber)
     print(' > # of files', nb_of_files)
-    print(tt)
     
     # > Boucle sur les noms des output
     for name in data_names :
-        print('NAME :: ',name)
-        # On recrée data, car problème de np.roll.
+
+        # On recrée la matrice 'data' (problème de np.roll)
         data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
-        print(np.shape(data)," -- Traitement fichiers : " + casepath + 'data/{}_100001+X'.format(name))
+        print(" -- Traitement fichiers : " + casepath + f'data/{name}_100001+X // shape {np.shape(data)}')
         for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
             ifile = min_filenumber+int(minday/dt)+it*outt
             try :
-                print( "filename :: {}".format(casepath + 'data/{}_{}'.format(name,ifile)))
+                #print( "filename :: {}".format(casepath + 'data/{}_{}'.format(name,ifile)))
                 f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
                 data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
                 f.close()
             except :
-                print('Champ inexistant')
+                print('Erreur : Champ inexistant')
                 data[it,:,:] = np.nan
         # coords/data = form (dims, data[, attrs, encoding])
-        #data = np.roll(data, int(nx/4), axis = 2)
-        #data = np.roll(data, int(nx/4), axis = 1)
         ds[name] = xr.DataArray(data,
                                     coords = dict(time=('time',tt,{'units':'days'}),
                                                   x=('x',xx,{'units':'m','name':'x'}),

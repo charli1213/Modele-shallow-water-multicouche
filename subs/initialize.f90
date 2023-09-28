@@ -57,37 +57,49 @@
 
 
        ! Thicknesses parameters :
-       H_bin = (/H1, H2, H3, H4, H5, H6 /)
-       Htot = 0
-       do k = 1,nz
-          H(k) = H_bin(k)
-          Htot = Htot + H(k)
-       end do
 
        WRITE (*,*) ''
        print *, '| --------> Diagno. from initialize.f90 <-------- |'
+
+       print *, "Setting layer's thicknesses :"
+       Hmin = 200
+       exp_coef = 3*log(1.*7/2)
+       exp_amp  = 1600/7
+       Hsum = 0.
+       H(:) = 0.
+       
+       do k = 1,nz 
+          ratio = real(k)/(nz+1)
+          print *, 'ratio',ratio
+          print *, 'exp_coef', exp_coef
+          H(k) = exp_amp*exp(exp_coef*ratio) + 200
+          print *, exp_amp*exp(exp_coef*ratio) + 200
+          Hsum = Hsum + H(k)
+
+       end do
+       do k = 1,nz
+          H(k) = nint(H(k)*Htot/Hsum)
+          WRITE (k_str,'(I0)') k
+          print *, ' H(',TRIM(k_str),')   =  ',H(k)
+       end do
+
        
        ! >>> Setting densities :
-       print *, 'Density parameters :'
-       !On s'assure d'avoir gprime = ( H(k-1)+H(k) )*c_bc**2/H(k-1)/H(k) partout
-       g = 10.00
-       rho(1) = 1000.00
-       print *, ' rho(1)    = ', rho(1)
-       if (nz.gt.1) then
-          rho(2) = rho(1) + rho(1)*(H(1)+H(2))*c_bc**2/H(1)/H(2)/g
-          print *, ' rho(2)    = ', rho(2)
-          if (nz.gt.2) then
-             do k = 3,nz
-                rho(k) = rho(k-1) + rho(1)*(H(k-1)+H(k))*c_bc**2/H(k-1)/H(k)/g
-                WRITE (k_str,'(I0)') k
-                print *, ' rho(',TRIM(k_str),')   =  ', rho(k)
-             enddo
-          end if
-       end if
+       print *, 'Setting densities :'
+       ! Logarithmic stratification : 
+       z = 0.
+       do k = 1,nz
+          z = z - H(k)/2
+          rho(k) = 1028 - 7*exp(z/1000)
+          WRITE (k_str,'(I0)') k
+          print *, ' rho(',TRIM(k_str),')   =  ', rho(k), ' at z=', z
+          z = z - H(k)/2
+       end do
        
        ! >>> Printing Diagnostics :
 
        ! gprime
+       g = 9.81
        write (*,*) 'Reduced gravities'
        gprime(1) = g
        print *, ' gprime(1) = ', gprime(1)

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-casename=$1
-data_path=/scratch/tpeng/
-case_dir=${data_path}${casename}/
-mkdir ${case_dir}
-mkdir ${case_dir}data ${case_dir}specdata ${case_dir}rst
-cp ./kxky* ./parameters_copy.f90 ${case_dir} 
-ln -s ${data_path}${casename}/ .
+model_path=~/Desktop/Modele-shallow-water-multicouches
+workdir=/storage/celizotte/work_Nlayers_test
+read -p "How would you name the work file?" casename
+case_dir=$workdir/$casename
+echo "Creating directory ${case_dir}".
+rm -r $case_dir #2> /dev/null
+cp -r $model_path/newcase $case_dir
 

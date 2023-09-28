@@ -2,12 +2,11 @@
 
 data_path=$PATH_SLAB_MODEL
 echo "Model path is ${data_path}"
-#case_dir=/share/work/celiz2/MPI_learning/Slab
 case_dir=/share/work/celiz2/MPI_learning/Field_npi1_wndperiod8_step0.3
-read -p "Is your case directory ${case_dir}? (yes/no)" answer
+read -p "Is your case directory ${case_dir}? (y/n)" answer
 
 
-if [ "${answer}" == "yes" ] 
+if [ "${answer}" == "y" ] 
 then
     mkdir ${case_dir}
     mkdir ${case_dir}/data ${case_dir}/specdata ${case_dir}/rst
