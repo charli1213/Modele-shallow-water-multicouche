@@ -61,7 +61,7 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .true.)
+   parameter ( use_ramp = .false.)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 

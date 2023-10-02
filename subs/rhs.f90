@@ -137,8 +137,8 @@
        &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))       &  ! Coriolis/Vorticité
        &            - 0.25*(f(jp)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm))   &  ! coriolis/Vorticité
        &            - Ah*grad4v(i,j)                                 &  ! Viscosité
-       &            - bot(k)*r_drag*vv_old(i,j)                         ! Frottement au fond
-
+       &            - bot(k)*r_drag*vv_old(i,j)                      &  ! Frottement au fond
+       &            + top(k)*wind_y(i,j)                                ! Vent en x
        enddo
        enddo
 

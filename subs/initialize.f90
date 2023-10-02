@@ -308,3 +308,5 @@
 
        enddo ! k = 1,nz
 
+
+       call flush(6)

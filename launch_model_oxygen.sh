@@ -3,13 +3,13 @@
 # each of those separate files, then run them on the computer
 # Oxygen (McGill computer).
 
-workdir=/storage/celizotte/work_Nlayers_rdrag
+workdir=/storage/celizotte/work_Nlayers_test
 model_path=~/Desktop/Modele-shallow-water-multicouches
 
 
 echo "Cases files are created in ${workdir}."
-nz_array=(2 6 10)
-drag_array=(2 4 6)
+nz_array=(2 3 4 5 6)
+drag_array=(1)
 
 
 for nz in ${nz_array[@]};
@@ -32,6 +32,6 @@ do
 	echo "File created at ${case_dir}"
 	# Running the model (and putting task in background with the command "&").
 	cd $case_dir
-	./exec > log_sw.txt &
+	./exec > $case_dir/log_sw.txt &
     done
 done

@@ -54,7 +54,7 @@
       use data_initial
       use fishpack
       !!! MPI-coupling
-      USE MPI
+      !!MPI!!USE MPI
       !!! MPI-coupling
       implicit none
       !
@@ -264,21 +264,21 @@
       !include 'fftw_stuff/fft_init.f90'
       
       ! >>> Modification CEL >>>
-      IF (cou) THEN
-         mpi_grid_size = nx_cou*ny_cou
-         
-         !!!  --- Starting MPI --- !!!
-         CALL MPI_INIT(ierror)
-         CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
-         CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
-         PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
-         
-         !!! --- Splitting MPI because WW3 is dumb
-         CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
-         CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
-         CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
-         PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
-      END IF
+      !!MPI!!IF (cou) THEN
+      !!MPI!!   mpi_grid_size = nx_cou*ny_cou
+      !!MPI!!   
+      !!MPI!!   !!!  --- Starting MPI --- !!!
+      !!MPI!!   CALL MPI_INIT(ierror)
+      !!MPI!!   CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
+      !!MPI!!   CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
+      !!MPI!!   PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
+      !!MPI!!   
+      !!MPI!!   !!! --- Splitting MPI because WW3 is dumb
+      !!MPI!!   CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
+      !!MPI!!   CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
+      !!MPI!!   CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
+      !!MPI!!   PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
+      !!MPI!!END IF
       ! <<< Modification CEL (END) <<<
 
       
@@ -353,17 +353,17 @@
       ! >>> Modification CEL >>>
       ! --- FIRST MPI CALL HERE. 
       ! Receiving first  Wavewatch atmospheric stresses here.
-      IF (cou) THEN
-      ! --- Coupling
-         !its = 1
-         include 'subs/coupling_ww3.f90'
-
-      ! ... then forgetting them to keep our restart files. 
-         UStokes(:,:,2) = UStokes(:,:,1) 
-         VStokes(:,:,2) = VStokes(:,:,1) 
-         taux_ocean(:,:,2) = taux_ocean(:,:,1)
-         tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
-      END IF
+      !!MPI!!IF (cou) THEN
+      !!MPI!!! --- Coupling
+      !!MPI!!   !its = 1
+      !!MPI!!   include 'subs/coupling_ww3.f90'
+      !!MPI!!
+      !!MPI!!! ... then forgetting them to keep our restart files. 
+      !!MPI!!   UStokes(:,:,2) = UStokes(:,:,1) 
+      !!MPI!!   VStokes(:,:,2) = VStokes(:,:,1) 
+      !!MPI!!   taux_ocean(:,:,2) = taux_ocean(:,:,1)
+      !!MPI!!   tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
+      !!MPI!!END IF
       ! <<< Modification CEL (END) <<<.
       !
 
@@ -542,9 +542,9 @@
          !
          ! >>> Modification CEL >>>
          ! --- SUBSEQUENT MPI CALL HERE. 
-         IF (cou) THEN
-            include 'subs/coupling_ww3.f90'
-         END IF
+         !!MPI!!IF (cou) THEN
+         !!MPI!!   include 'subs/coupling_ww3.f90'
+         !!MPI!!END IF
          ! <<< Modification CEL <<<
          !
                   
@@ -729,7 +729,7 @@
      !===== time loop ends here
 
      ! MPI-COUPLING
-     CALL MPI_FINALIZE(ierror)
+     !!MPI!!CALL MPI_FINALIZE(ierror)
      ! MPI-COUPLING
      !include 'fftw_stuff/fft_destroy.f90'
     end program main
