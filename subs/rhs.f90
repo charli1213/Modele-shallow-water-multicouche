@@ -95,11 +95,15 @@
        grad4v(i,j) = (grad2v(ip1,j)+grad2v(im,j)-2.*grad2v(i,j))/dx/dx   &
        &           + (grad2v(i,jp)+grad2v(i,jm)-2.*grad2v(i,j))/dy/dy
 
-       wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
+       if (cou) then ! Coupling :
+          wind_x(i,j) = taux_ocean(i,j,2)
+          wind_y(i,j) = tauy_ocean(i,j,2)
+       else
+          wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
+          wind_y(i,j) = 0.
+       end if
+       
        wind_x(i,j) = ramp*wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
-
-       !!! > coup de vent : 
-       !wind_x(i,j) = wind_x(i,j)*(1+exp(-((its - wind_t0)**2)/variance))
        
        enddo
        enddo

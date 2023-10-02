@@ -325,14 +325,15 @@ if __name__ == "__main__" :
         print('Launching animations')
         minday = 0
         maxday = 1200
-        outt = 4
+        outt = 1
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         # u
         ds = tls.bintods(outt = outt,
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = ['u1'],
+                         fields_to_open = ['div1'],
                          )
+        
         anim(ds,
              filename="div.gif",
              satu=1,interval=40)
@@ -342,7 +343,7 @@ if __name__ == "__main__" :
         ds = tls.bintods(outt = outt,
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = ['eta1'],
+                         fields_to_open = ['zeta1'],
                          )
         anim(ds,
              filename="eta.gif",

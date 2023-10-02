@@ -31,10 +31,12 @@
           do i=1,nx-1
 
           uBT(i,j) = uBT(i,j)                                             & 
-          &        + uu(i,j)*(thickness(i,j) + thickness(i-1,j))/Htot/2   
+          &        + uu(i,j)*(thickness(i,j) + thickness(i-1,j))/Htot/2   &
+          &        + ramp*UStokes(i,j,2)/HStokes
+          
           vBT(i,j) = vBT(i,j)                                             &
-          &        + vv(i,j)*(thickness(i,j) + thickness(i,j-1))/Htot/2   
-
+          &        + vv(i,j)*(thickness(i,j) + thickness(i,j-1))/Htot/2   &
+          &        + ramp*VStokes(i,j,2)/HStokes
           enddo
           enddo
 

@@ -90,7 +90,7 @@
        z = 0.
        do k = 1,nz
           z = z - H(k)/2
-          rho(k) = 1028 - 7*exp(z/1000)
+          rho(k) = 1028 - 2*exp(z/1000)
           WRITE (k_str,'(I0)') k
           print *, ' rho(',TRIM(k_str),')   =  ', rho(k), ' at z=', z
           z = z - H(k)/2

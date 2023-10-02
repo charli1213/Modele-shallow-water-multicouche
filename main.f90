@@ -2,6 +2,8 @@
       integer exec_loc
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
+      integer nx_cou, ny_cou, nnx_cou, nny_cou
+      real    HStokes
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
       real f0, beta, r_drag, Ah, r_invLap, rf, g
@@ -29,7 +31,6 @@
       LOGICAL cou, ustar, waves, stokes
       REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
-      INTEGER :: mpi_field_size
       CHARACTER(80) :: err_str
       INTEGER :: MPI_SECOND
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
@@ -52,7 +53,9 @@
       program main
       use data_initial
       use fishpack
-      !!!USE MPI 
+      !!! MPI-coupling
+      USE MPI
+      !!! MPI-coupling
       implicit none
       !
 
@@ -71,15 +74,15 @@
       REAL :: taux(0:nnx,0:ny), tauy(0:nx,0:nny)
       REAL :: taux_steady(0:nx,0:nny), taux_var(0:nx,0:nny)
       REAL :: rhs_u(0:nnx,0:ny,nz), rhs_v(0:nx,0:nny,nz)
-      REAL :: wind_x(0:nnx,0:ny)
+      REAL :: wind_x(0:nnx,0:ny), wind_y(0:nx,0:nny)
       REAL :: uu(0:nnx,0:ny), vv(0:nx,0:nny)
       REAL :: uu1(0:nnx,0:ny), vv1(0:nx,0:nny)
       REAL :: uu_old(0:nnx,0:ny), vv_old(0:nx,0:nny)
       REAL :: uh(0:nnx,0:ny), vh(0:nx,0:nny)
       REAL :: dissi_u(0:nnx,0:ny), dissi_v(0:nx,0:nny)
       REAL :: invLap_u(0:nnx,0:ny), invLap_v(0:nx,0:nny)
-      REAL :: taux_ocean(0:nnx,0:ny,2), tauy_ocean(0:nx,0:nny,2) ! WW3
-      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3
+      REAL :: taux_ocean(0:nnx,0:ny,2), tauy_ocean(0:nx,0:nny,2) ! WW3 Coupling
+      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3 Coupling
       REAL :: array_x(0:nnx,0:ny), array_y(0:nx,0:nny) ! dummy
       
       ! Centres/Centers :
@@ -108,10 +111,28 @@
       REAL :: array(0:nnx,0:nny) ! dummy
       
 
+      
+      !!! ----------- WW3 Coupling qties ----------- !!!
+      ! Send/receive quantities
+      REAL :: cur2WW3(1:nx_cou,1:ny_cou,2) ! Current sent to WW3.
+      REAL :: Tstokes(0:nnx_cou,0:nny_cou,2) ! Stokes' transport received.
+      REAL :: tauww3ust(0:nnx_cou,0:nny_cou,2) ! Directly received from WW3.
+      REAL :: tauww3waves(0:nnx_cou,0:nny_cou,2) ! Directly received from WW3.
+      ! Interpolated quantities :
+      REAL :: large_cur2WW3(1:nx,1:ny,2) ! Current sent to WW3.
+      REAL :: u_lag(0:nnx,0:ny)   ! (Now useless) def. of lagragian current (see Suzuki et al)
+      REAL :: v_lag(0:nx,0:nny)   ! (Now useless) def. of lagragian current (see Suzuki et al)
+      REAL :: taux_ust(0:nnx,0:ny),   tauy_ust(0:nx,0:nny)
+      REAL :: taux_waves(0:nnx,0:ny), tauy_waves(0:nx,0:nny)
+      ! Double interpolate :
+      REAL :: TStokes2(0:2*nx_cou,0:2*ny_cou,2),TStokes4(0:nx-1,0:ny-1,2) 
+      REAL :: tauww3ust2(0:2*nx_cou,0:2*ny_cou,2),tauww3ust4(0:nx-1,0:ny-1,2)
+      REAL :: tauww3waves2(0:2*nx_cou,0:2*ny_cou,2),tauww3waves4(0:nx-1,0:ny-1,2)
 
 
-
-
+!!!REAL :: taux_ocean(0:nnx,0:ny), tauy_ocean(0:nx,0:nny) ! Already declared before.
+      !
+      INTEGER :: mpi_grid_size
       
       
      !!! ---------- I/O qties definition ---------- !!!
@@ -243,33 +264,21 @@
       !include 'fftw_stuff/fft_init.f90'
       
       ! >>> Modification CEL >>>
-      !IF (cou) THEN
-         !mpi_grid_size = (nx-1)*(ny-1)
-         ! --- Creating zonal alpha window (North/South continuity) --- !
-         !DO i=1,nx
-            !DO j=1,ny
-               !IF (j .le. 64) THEN
-                  !alpha(i,j) = 1.-((real(j)-64.)/64.)**2
-               !ELSE IF (j .ge. 448) THEN
-                  !alpha(i,j) = 1.-((real(j)-448.)/64.)**2
-               !ELSE 
-                  !alpha(i,j) = 1.
-               !ENDIF
-            !ENDDO
-         !ENDDO
+      IF (cou) THEN
+         mpi_grid_size = nx_cou*ny_cou
          
-         !  --- Starting MPI --- !!!
-         !CALL MPI_INIT(ierror)
-         !CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
-         !CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
-         !PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
+         !!!  --- Starting MPI --- !!!
+         CALL MPI_INIT(ierror)
+         CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
+         CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
+         PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
          
-         ! --- Splitting MPI because WW3 is dumb
-         !CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
-         !CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
-         !CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
-         !PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
-      !END IF
+         !!! --- Splitting MPI because WW3 is dumb
+         CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
+         CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
+         CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
+         PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
+      END IF
       ! <<< Modification CEL (END) <<<
 
       
@@ -288,12 +297,12 @@
       ! === Define subsampling range in spatial space
       isubx=(/(i, i=1,nx, subsmprto)/)
       isuby=(/(i, i=1,ny, subsmprto)/)
-      do i=1,size(isubx)
-      write(*,*) 'isubx',i,'sub-x indices',isubx(i)
-      end do
-      do j=1,size(isuby)
-      write(*,*) 'isuby',j,'sub-y indices',isuby(j)
-      end do
+      !!!do i=1,size(isubx)
+      !!!write(*,*) 'isubx',i,'sub-x indices',isubx(i)
+      !!!end do
+      !!!do j=1,size(isuby)
+      !!!write(*,*) 'isuby',j,'sub-y indices',isuby(j)
+      !!!end do
       write(*,*) 'Subsampled file size: 4X',size(isubx),'X',size(isubx),'X',nz
 
 
@@ -344,17 +353,17 @@
       ! >>> Modification CEL >>>
       ! --- FIRST MPI CALL HERE. 
       ! Receiving first  Wavewatch atmospheric stresses here.
-      !IF (cou) THEN
-      !   ! --- Coupling
-      !   its = 1
-      !   include 'subs/coupling_ww3.f90'
+      IF (cou) THEN
+      ! --- Coupling
+         !its = 1
+         include 'subs/coupling_ww3.f90'
 
-      !   ! ... then forgetting them to keep our restart files. 
-      !   UStokes(:,:,2) = UStokes(:,:,1) 
-      !   VStokes(:,:,2) = VStokes(:,:,1) 
-      !   taux_ocean(:,:,2) = taux_ocean(:,:,1)
-      !   tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
-      !END IF
+      ! ... then forgetting them to keep our restart files. 
+         UStokes(:,:,2) = UStokes(:,:,1) 
+         VStokes(:,:,2) = VStokes(:,:,1) 
+         taux_ocean(:,:,2) = taux_ocean(:,:,1)
+         tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
+      END IF
       ! <<< Modification CEL (END) <<<.
       !
 
@@ -393,9 +402,12 @@
 
          ! Ramp :
          ! ramp0 is the slope of the ramp. Such that ramp = ramp0*its
-         ramp0 = real(dt/(365*86400))
+         ramp = 1
+         if (use_ramp) then
+            ramp0 = real(dt/(31*86400))
+            ramp = ramp0*float(its)
+         endif
 
-         
          ! Pas besoin d'update les contours de zeta ou psi.
          do j = 2,ny-1
             jp = j+1
@@ -419,12 +431,8 @@
          uu = array_x
          vv = array_y
 
-         ! Ramp : 
-         if (its.gt.int(86400*365/dt)) then 
-            ramp =1.
-         else
-            ramp = ramp0*float(its)
-         endif
+         
+
 
 
          ! Finding thickness locally
@@ -523,6 +531,7 @@
          ! call shuffle_phi
          end if
          !        =================
+         ramp = 1
          if ( use_ramp .eqv. .true. ) then
             ramp =  min(1.,float(its)*ramp0)
          endif
@@ -533,19 +542,11 @@
          !
          ! >>> Modification CEL >>>
          ! --- SUBSEQUENT MPI CALL HERE. 
-         !IF (cou) THEN
-         !   include 'subs/coupling_ww3.f90'
-         !END IF
+         IF (cou) THEN
+            include 'subs/coupling_ww3.f90'
+         END IF
          ! <<< Modification CEL <<<
          !
-
-         ! Ramp : 
-         if (its.gt.int(86400*365)) then 
-            ramp =1.
-         else
-            ramp = ramp0*float(its)
-         endif
-
                   
          pressure(:,:) =  0.
          do k = 1,nz
@@ -727,6 +728,9 @@
      enddo ! its
      !===== time loop ends here
 
+     ! MPI-COUPLING
+     CALL MPI_FINALIZE(ierror)
+     ! MPI-COUPLING
      !include 'fftw_stuff/fft_destroy.f90'
     end program main
 
@@ -909,3 +913,49 @@ FUNCTION gasdev(idum)
  !  matout=array2
  !
  !END SUBROUTINE interp_matrix
+
+
+ SUBROUTINE interp_2d(matin,matout,nin,nout)
+   use data_initial
+   real, dimension(nin,nin),   intent(in)  :: matin
+   real, dimension(nout,nout), intent(out) :: matout
+   integer :: i,j, im1, ip1, jm1, jp1
+   
+   if (2*nin.eq.nout) then
+      
+      ! Center of grid :
+      DO j=1,nin-1
+         jp1 = j+1
+      DO i=1,nin-1
+         ip1 = i+1
+
+         matout(2*i,2*j) = matin(i,j) + 0.25*( matin(ip1,j) - matin(i,j)) &
+              &                       + 0.25*( matin(i,jp1) - matin(i,j))
+         matout(2*i,2*j+1) = matin(i,jp1) + 0.25*( matin(ip1,jp1) - matin(i,jp1)) &
+              &                           - 0.25*( matin(i,  jp1) - matin(i,  j))
+         matout(2*i+1,2*j) = matin(ip1,j) - 0.25*( matin(ip1,j)   - matin(i,  j))   &
+              &                           + 0.25*( matin(ip1,jp1) - matin(ip1,j))
+         matout(2*i+1,2*j+1) = matin(ip1,jp1) - 0.25*( matin(ip1,jp1) - matin(i,jp1)) &
+              &                               - 0.25*( matin(ip1,jp1) - matin(ip1,j))
+      ENDDO
+      ENDDO
+
+
+      ! Extrapolation :
+      matout(1,:)    = matout(2,:)/2
+      matout(:,1)    = matout(:,2)/2
+      matout(nout,:) = matout(nout-1,:)/2
+      matout(:,nout) = matout(:,nout-1)/2
+
+      ! Coins : 
+      matout(1,1) = 0.5*(matout(2,1) + matout(1,2))
+      matout(nout,1) = 0.5*(matout(nout-1,1) + matout(nout,2))
+      matout(1,nout) = 0.5*(matout(2,nout) + matout(1,nout-1))
+      matout(nout,nout) = 0.5*(matout(nout-1,nout) + matout(nout,nout-1))
+
+   else
+      write (*,*) " Wrong interpolation "
+      stop
+   end if
+   
+ END SUBROUTINE interp_2d

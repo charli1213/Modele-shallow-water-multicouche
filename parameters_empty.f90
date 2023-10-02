@@ -61,7 +61,7 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false.)
+   parameter ( use_ramp = .true.)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -70,7 +70,9 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false. , HStokes = 50. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+
+   parameter (nx_cou = 128, ny_cou = 128, nnx_cou = nx_cou+1, nny_cou = ny_cou+1)
    
    parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    

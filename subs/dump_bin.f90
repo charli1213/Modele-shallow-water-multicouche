@@ -2,7 +2,7 @@
   
   WRITE(which,'(I6)') 100000 + icount
   !dummy_int = nz
-  dummy_int = 1 ! not nz because we have a lot of layers.
+  dummy_int = 3 ! not nz because we have a lot of layers.
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
@@ -43,26 +43,26 @@
 
        ! >>> Divergence AND curl for each layers :
        
-       !/*\!WRITE (k_str,'(I0)') k
-       !/*\!string39 =  './data/div'   // trim(k_str)  // '_' // trim(which)
-       !/*\!string40 =  './data/zeta' // trim(k_str)  // '_' // trim(which)
-       !/*\!
-       !/*\!! calculate div and curl
-       !/*\!! ilevel = 3 (latest field)
-       !/*\!INCLUDE 'subs/div_vort.f90'
-       !/*\!zeta_out(:,:) = zeta(isubx,isuby)
-       !/*\!div_out(:,:)  = div(isubx,isuby)
-       !/*\!
-       !/*\!! Writing
-       !/*\!open(unit=139,file=string39,access='DIRECT',&
-       !/*\!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       !/*\!write(139,REC=1) ((div_out(i,j),i=1,szsubx),j=1,szsuby)
-       !/*\!close(139)
-       !/*\!
-       !/*\!open(unit=140,file=string40,access='DIRECT',&
-       !/*\!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-       !/*\!write(140,REC=1) ((zeta_out(i,j),i=1,szsubx),j=1,szsuby)
-       !/*\!close(140)
+       WRITE (k_str,'(I0)') k
+       string39 =  './data/div'   // trim(k_str)  // '_' // trim(which)
+       string40 =  './data/zeta' // trim(k_str)  // '_' // trim(which)
+       
+       ! calculate div and curl
+       ! ilevel = 3 (latest field)
+       INCLUDE 'subs/div_vort.f90'
+       zeta_out(:,:) = zeta(isubx,isuby)
+       div_out(:,:)  = div(isubx,isuby)
+       
+       ! Writing
+       open(unit=139,file=string39,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(139,REC=1) ((div_out(i,j),i=1,szsubx),j=1,szsuby)
+       close(139)
+       
+       open(unit=140,file=string40,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(140,REC=1) ((zeta_out(i,j),i=1,szsubx),j=1,szsuby)
+       close(140)
 
     end do ! end of k-loop
 
@@ -195,10 +195,26 @@
   
   if (IO_coupling) then
 
-     UStokes_out(:,:) = UStokes(isubx,isuby,2)
-     VStokes_out(:,:) = VStokes(isubx,isuby,2)
+     UStokes_out(:,:) = 0.
+     VStokes_out(:,:) = 0.
+     taux_ocean_out(:,:) = 0.
+     tauy_ocean_out(:,:) = 0.
+     
+     UStokes_out(:,:)    = UStokes(isubx,isuby,2)
+     VStokes_out(:,:)    = VStokes(isubx,isuby,2)
      taux_ocean_out(:,:) = taux_ocean(isubx,isuby,2)
      tauy_ocean_out(:,:) = tauy_ocean(isubx,isuby,2)
+
+     ! putting stuff on tiny matrix (C'est pas bon ça. C'est juste pour voir)
+     !UStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,1)
+     !VStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,2)
+     !taux_ocean_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,1)
+     !tauy_ocean_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,2)
+     
+     !UStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 1)
+     !VStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 2)
+     !taux_ocean_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 1)
+     !tauy_ocean_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 2)
      
      ! U Stokes
      string25 =  './data/UStokes'  // '_' // trim(which)

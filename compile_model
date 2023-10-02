@@ -17,7 +17,7 @@ then
 elif [ "${pcid}" == "2" ]
 then
     machine_name=Bepsi
-    model_path=/home/charlesedouard/Desktop/Travail/ModeleSW
+    model_path=/home/charlesedouard/Desktop/Travail/modelSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
     # casefile
@@ -27,15 +27,19 @@ fi
 
 # >>> Preparing before compilation ::
 echo "!! ${pcid} was selected"
-echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpath_path} and lapack at ${lapack_path}"
+echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpack_path} and lapack at ${lapack_path}"
 #cp "${model_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${model_path} to ${case}"
 
 
 # >>> Compilation :: 
 # mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+#gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+#mpifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+
+
 
 # >>> Parameter last compiled in model directory ::
 cp ${model_path}/parameters.f90 ${model_path}/parameters.f90_last_compiled
