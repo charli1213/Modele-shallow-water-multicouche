@@ -26,8 +26,11 @@ elif [ "${pcid}" == "3" ]
 then
     machine_name=Beluga
     model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
-    module load flexiblas/3.0.4
-    lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+    # BLAS and LAPACK
+    module load intel/2021.2.0 nvhpc/22.1
+    module load openblas
+    #module load flexiblas/3.0.4
+    #lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=$HOME/projects/def-lpnadeau/celiz2/fishpack-master/lib
 fi
 
@@ -41,7 +44,7 @@ echo "!! Parameters file copied from ${model_path} to ${case}"
 # >>> Compilation :: 
 # mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
 #gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
-gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -L$fishpack_path -lfishpack -I$fishpack_path
+gfortran -O3 -o  $case/exec $model_path/main.f90  -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
