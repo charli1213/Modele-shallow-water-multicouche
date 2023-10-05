@@ -32,6 +32,8 @@ then
     #module load flexiblas/3.0.4
     #lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=$HOME/projects/def-lpnadeau/celiz2/fishpack-master/lib
+    # casefile
+    case=newcase
 fi
 
 # >>> Preparing before compilation ::
