@@ -2,7 +2,7 @@
 #read -p "Enter case folder name:  " ${case}
 # "case" is the place workdir directory in a sence.
 
-read -p "!! Enter machine: 1) Turbule (McGill computer); computer 2) Bepsi (personal computer)" pcid
+read -p "!! Enter machine: 1) Turbule (McGill computer); computer 2) Bepsi (personal computer); 3) Beluga (Compute Canada)" pcid
 #read pcid
 if [ "${pcid}" == "1" ] 
 then
@@ -22,7 +22,13 @@ then
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
     # casefile
     case=newcase
-
+elif [ "${pcid}" == "3" ]
+then
+    machine_name=Beluga
+    model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
+    module load flexiblas/3.0.4
+    lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+    fishpack_path=$HOME/projects/def-lpnadeau/celiz2/fishpack-master/lib
 fi
 
 # >>> Preparing before compilation ::
@@ -34,7 +40,8 @@ echo "!! Parameters file copied from ${model_path} to ${case}"
 
 # >>> Compilation :: 
 # mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+#gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -L$fishpack_path -lfishpack -I$fishpack_path
 #mpiifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 #mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
