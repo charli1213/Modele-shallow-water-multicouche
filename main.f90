@@ -6,7 +6,7 @@
       real    HStokes
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
-      real f0, beta, r_drag, Ah, r_invLap, rf, g
+      real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction
       real tau0, tau1, wind_t0, variance ! CE modification
       real fileperday, daysperrestart
       integer nsteps,start_spec
@@ -15,7 +15,7 @@
       integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile,endx,endy
       integer szsubx,szsuby
       integer ftsubsmprto,forcingtype, iou_method
-      logical restart, use_ramp, ifsteady, gaussian_bump_eta
+      logical restart, use_ramp, ifsteady, gaussian_bump_eta, free_slip
       logical calc1Dspec,save_movie,save2dfft
       real c_theta, c_mu, c_sigma, c_tauvar
 
@@ -152,6 +152,7 @@
       REAL :: eta_out(1:szsubx,1:szsuby,nz)
       REAL :: div_out(1:szsubx,1:szsuby)
       REAL :: divBT_out(1:szsubx,1:szsuby)
+      REAL :: thickness_out(1:szsubx,1:szsuby)
       
       ! Nodes : 
       REAL :: zeta_out(1:szsubx,1:szsuby)

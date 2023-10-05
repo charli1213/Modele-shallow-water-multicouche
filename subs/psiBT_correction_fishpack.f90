@@ -44,7 +44,11 @@
           array_x = uBT
           array_y = vBT
           include 'subs/no_normal_flow.f90'
-          include 'subs/free_slip.f90'
+          if (free_slip) then 
+             include 'subs/free_slip.f90'
+          else
+             include 'subs/partial_slip.f90'
+          endif
           uBT = array_x
           vBT = array_y
             
@@ -61,9 +65,9 @@
        
        ! finding curl of uBT OR RHS_zetaBT after leapfrog 
        ! note : no need for bndy conditions here : Boundaries are set to 0.
-       do j = 2,ny-1
+       do j = 1,ny
           jm = j-1
-       do i = 2,nx-1
+       do i = 1,nx
           im = i-1
           
           zetaBT(i,j) =  (vBT(i,j) - vBT(im,j))/dx    &
@@ -108,7 +112,11 @@
        array_x = uBT
        array_y = vBT
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uBT = array_x
        vBT = array_y
 

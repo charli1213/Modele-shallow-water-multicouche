@@ -1,11 +1,5 @@
 
 
-  ! Ghost points 
-  array_x(0,:) = 0.
-  array_x(nx+1,:) = 0.
-  array_y(:,0) = 0.
-  array_y(:,ny+1) = 0.
-
   ! Taylor expansions =>  u''(1) = (u(3)-u(2))/dx^2
   array_x(1, :) = (array_x(3,   :) - 2*array_x(2,   :))/dx**2
   array_x(nx,:) = (array_x(nx-2,:) - 2*array_x(nx-1,:))/dx**2

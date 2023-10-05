@@ -140,6 +140,46 @@ def hovmoller() :
         plt.show()
 
     return ds
+
+# ================================================================= #
+
+# ================================================================= #
+def energy(outt = 2, nz=4) :
+        minday = 0
+        maxday = 7200
+        print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
+
+        # thickness
+        fields_u = ['u{}'.format(i) for i in range(1,n+1)]
+        fields_v = ['v{}'.format(i) for i in range(1,n+1)]
+        fields = fields_u + fields_v
+        
+        ds1 = tls.bintods(outt = outt,
+                         minday = minday,
+                         maxday = maxday,
+                         fields_to_open = fields,
+                         )
+        ds2 = xr.Dataset()
+        
+        #if nz > 4    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[15,7.5], sharey=True)
+        #elif nz == 4 : fig, axes = plt.subplots(ncols=2, nrows=2, figsize=[10,7.5], sharey=True)
+        #else : fig, axes = plt.subplots(ncols=len(dS), figsize=(4.5*len(dS),3.75), sharey=True)
+        #if not isinstance(axes,np.ndarray) : axes = np.array(axes)
+        fig, ax = plt.subplots()
+        
+        #for i,ax in enumerate(axes.flat) :
+        for i in range(nz) : 
+            k=i+1
+            attrs = {'long_name':'Energy layer {}'.format(k),'units':r'Kg ms${}^{-2}$','name':'Energy{}'.format(k)}
+            ds2['energy{}'.format(k)] = np.square((ds1['u{}'.format(k)]**2 + ds1['v{}'.format(k)]**2))
+            ds2['energy{}'.format(k)].attrs.update(attrs)
+            ds2['energy{}'.format(k)].mean(['x','y']).plot(x='time', ax=ax, label='Mean energy layer={}'.format(k))
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+        return ds2
+            
 # ================================================================= #
 #                                                                   #
 #                        4-PANNELS ANIMATION                        #
@@ -167,6 +207,8 @@ def debug(field='zetaBT1', outt=1, minday = 0, maxday = 50) :
     plt.show()
 
     return ds
+
+# ================================================================= #
 
 # ================================================================= #
 def eight_pannels(field = 'zetaBT1', t0=0, maxday = 500,dt=40, title = r"Zeta Barotrope ($\zeta_{BT}$)" ) : 
@@ -290,6 +332,8 @@ def anim(dS,
     plt.show()
 
 
+    
+
 # ================================================================= #
 #                                                                   #
 #                               (END)                               #
@@ -322,32 +366,48 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        print('Launching animations')
-        minday = 800
-        maxday = 2000
-        outt = 4
-        print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
-        # u
-        ds = tls.bintods(outt = outt,
-                         minday = minday,
-                         maxday = maxday,
-                         fields_to_open = ['eta1'],
-                         )
+
+
+        #print('Launching animations')
+        #minday = 0
+        #maxday = 3600
+        #outt = 2
+        #print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
+        n = int(input("Nombre de couches?"))
         
-        anim(ds,
-             filename="div.gif",
-             satu=1,interval=40)
+        ds = energy(outt = 4, nz=n)
+        timelen = len(ds.time)
+        anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
+        
+        #        
+        ## u
+        #
+        ## thickness
+        #fields = ['eta{}'.format(i) for i in range(1,n+1)]
+        #
+        #ds = tls.bintods(outt = outt,
+        #                 minday = minday,
+        #                 maxday = maxday,
+        #                 fields_to_open = fields,
+        #                 )
+        #
+        #anim(ds,
+        #     filename="eta.gif",
+        #     satu=1,interval=40,
+        #     )
+        #
+        ## thickness
+        #fields = ['thickness{}'.format(i) for i in range(1,n+1)]
+        #ds = tls.bintods(outt = outt,
+        #                 minday = minday,
+        #                 maxday = maxday,
+        #                 fields_to_open = fields,
+        #                 )
+        #anim(ds,
+        #     filename="thickness.gif",
+        #     satu=1,
+        #     interval=40)
+
+
 
         
-        # psi
-        ds = tls.bintods(outt = outt,
-                         minday = minday,
-                         maxday = maxday,
-                         fields_to_open = ['eta1'],
-                         )
-        anim(ds,
-             filename="eta.gif",
-             satu=1,
-             interval=40)
-
-

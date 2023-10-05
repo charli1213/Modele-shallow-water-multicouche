@@ -6,7 +6,11 @@
        array_x = uu
        array_y = vv
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uu = array_x
        vv = array_y       
 
@@ -21,7 +25,11 @@
        array_x = uh
        array_y = vh
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uh = array_x
        vh = array_y       
        

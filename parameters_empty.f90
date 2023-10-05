@@ -5,7 +5,7 @@
 
   ! ---  Grid ---
  
-   parameter ( Lx = 4e6, Ly = Lx )
+   parameter ( Lx = 2e6, Ly = Lx )
    
    parameter ( H1 = 1.0e2, H2 = 3.0e2, H3 = 6.0e2, H4 = 1.0e3, H5 = 2.0e3, H6 = 4.0e3 )
 
@@ -22,15 +22,15 @@
    
    ! --- Physical parameters ---
  
-   parameter ( tau0 = 0.1, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2], wind_t0 [timestep]
+   parameter ( tau0 = 0.05, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2], wind_t0 [timestep]
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
-   parameter ( r_drag = RD*1.e-7 ) ! Test de friction?
+   parameter ( r_drag = RD*1.e-7 , alpha = SLIP/1e6, free_slip = .true. ) ! Test de friction?
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah = 1.e-5*dx**4 ) !parameter ( Ah = 2.5e-6*dx**4 ) 
+   parameter ( Ah2 = NAH*1.e-7*dx**2, Ah4 = 0. ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
    parameter ( rf = 0.001 ) !0.001
  
@@ -42,7 +42,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))

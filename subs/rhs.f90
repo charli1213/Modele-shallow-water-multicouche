@@ -11,14 +11,22 @@
        array_x = uu
        array_y = vv
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uu = array_x
        vv = array_y
 
        array_x = uu_old
        array_y = vv_old
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uu_old = array_x
        vv_old = array_y
 
@@ -70,7 +78,6 @@
        ! Boundaries call for correction. 
        array_x = grad2u
        array_y = grad2v
-       include 'subs/free_slip.f90'
        include 'subs/laplacian_bndy.f90'
        grad2u = array_x
        grad2v = array_y
@@ -78,7 +85,11 @@
        array_x = uh
        array_y = vh
        include 'subs/no_normal_flow.f90'
-       include 'subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include 'subs/partial_slip.f90'
+       endif
        uh = array_x
        vh = array_y
 
@@ -99,7 +110,8 @@
           wind_x(i,j) = taux_ocean(i,j,2)
           wind_y(i,j) = tauy_ocean(i,j,2)
        else
-          wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
+          !wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
+          wind_x(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * (1-COS(twopi*(jm-1)/(ny-1)*1.))
           wind_y(i,j) = 0.
        end if
        
@@ -111,7 +123,6 @@
        ! grad4 boundary call
        array_x = grad4u
        array_y = grad4v
-       include 'subs/free_slip.f90'
        include 'subs/laplacian_bndy.f90'
        grad4u = array_x
        grad4v = array_y
@@ -126,26 +137,32 @@
           ip1 = i+1
           im = i-1
 
-       rhs_u(i,j,k) = -(B(i,j)-B(im,j))/dx                           &  ! Bernouilli
-       &            + 0.25*(f(j) +zeta(i,j))* (vv(i,j) +vv(im,j))    &  ! Coriolis/Vorticité
-       &            + 0.25*(f(jp)+zeta(i,jp))*(vv(i,jp)+vv(im,jp))   &  ! Coriolis/Vorticité
-       &            - Ah*grad4u(i,j)                                 &  ! Viscosité
-       &            - bot(k)*r_drag*uu_old(i,j)                      &  ! Frottement au fond
+       rhs_u(i,j,k) = -(B(i,j)-B(im,j))/dx                             &  ! Bernouilli
+       &            + 0.25*(f(j) +zeta(i,j))* (vv(i,j) +vv(im,j))      &  ! Coriolis/Vorticité
+       &            + 0.25*(f(jp)+zeta(i,jp))*(vv(i,jp)+vv(im,jp))     &  ! Coriolis/Vorticité
+       &            + Ah2*grad2u(i,j)                                  &  ! Viscosité laplacienne
+       &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
+       &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
        &            + top(k)*wind_x(i,j)                                ! Vent en x
        
-       rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                           &  ! Bernouilli
-       &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))       &  ! Coriolis/Vorticité
-       &            - 0.25*(f(jp)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm))   &  ! coriolis/Vorticité
-       &            - Ah*grad4v(i,j)                                 &  ! Viscosité
-       &            - bot(k)*r_drag*vv_old(i,j)                      &  ! Frottement au fond
-       &            + top(k)*wind_y(i,j)                                ! Vent en x
+       rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                             &  ! Bernouilli
+       &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))         &  ! Coriolis/Vorticité
+       &            - 0.25*(f(jp)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm))  &  ! coriolis/Vorticité
+       &            + Ah2*grad2v(i,j)                                  &  ! Viscosité laplacienne
+       &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
+       &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
+       &            + top(k)*wind_y(i,j)                                  ! Vent en x
        enddo
        enddo
 
        array_x(:,:) = rhs_u(:,:,k)
        array_y(:,:) = rhs_v(:,:,k)
        include '/subs/no_normal_flow.f90'
-       include '/subs/free_slip.f90'
+       if (free_slip) then 
+          include 'subs/free_slip.f90'
+       else
+          include '/subs/partial_slip.f90'
+       endif
        rhs_u(:,:,k) = array_x
        rhs_v(:,:,k) = array_y
        

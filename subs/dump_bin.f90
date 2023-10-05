@@ -2,7 +2,7 @@
   
   WRITE(which,'(I6)') 100000 + icount
   !dummy_int = nz
-  dummy_int = 3 ! not nz because we have a lot of layers.
+  dummy_int = nz! not nz because we have a lot of layers.
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
@@ -64,6 +64,28 @@
        write(140,REC=1) ((zeta_out(i,j),i=1,szsubx),j=1,szsuby)
        close(140)
 
+       
+       ! >>> Thicknesses
+       
+       if (k.eq.1) then
+          thickness(:,:) =  H(k) - eta(:,:,k+1,ilevel) 
+       elseif(k.eq.nz) then
+          thickness(:,:) =  H(k) + eta(:,:,k,ilevel)
+       else
+          thickness(:,:) =  H(k) + eta(:,:,k,ilevel)  &
+               &             -  eta(:,:,k+1,ilevel)
+       endif
+
+       string41 =  './data/thickness' // trim(k_str)  // '_' // trim(which)
+       thickness_out(:,:) = 0.
+       thickness_out(:,:) =  thickness(isubx,isuby)
+
+       open(unit=141,file=string41,access='DIRECT',&
+            & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+       write(141,REC=1) ((thickness_out(i,j),i=1,szsubx),j=1,szsuby)
+       close(141)
+       
+       
     end do ! end of k-loop
 
 
