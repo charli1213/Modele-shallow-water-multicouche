@@ -1,13 +1,8 @@
 testcase*
-mudpack-test/poisson-exec
-*~
-udpack-test/data/
-udpack-test/data/*
 testfft/*
 parameters.f90_last_compiled
 __pycache__
 newcase/*.py
-testmud
 testcase
 mudpack-test/data/delta_RHS1
 mudpack-test/data/erreur_abs1
@@ -19,4 +14,7 @@ mudpack-test/data/RHS_MUD2
 mudpack-test/data/mud_sol
 mudpack-test/data/rhs
 mudpack-test/data/solution
-mudpack-test/data/true_error
+mudpack-test/data/true_errorSWmodel.log
+newcase/SWmodel.log
+SWmodel.log
+newcase/slurm_test.sh~
