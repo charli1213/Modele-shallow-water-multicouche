@@ -13,7 +13,7 @@
    
    parameter ( nx = 513,  ny = 513 ) ! 513
       
-   parameter ( nz = 6 )
+   parameter ( nz = 3 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
@@ -42,7 +42,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 16) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -59,7 +59,7 @@
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way
 
-   parameter ( restart = .false. , daysperrestart = 365)
+   parameter ( restart = .true. , daysperrestart = 365)
    
    parameter ( use_ramp = .false.)
  

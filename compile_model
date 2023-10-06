@@ -10,9 +10,10 @@ then
     lapack_path=/usr/lib64/
     fishpack_path=/aos/home/celizotte/fishpack-master/lib
     model_path=~/Desktop/Modele-shallow-water-multicouches
+    compiler="gfortran"
+    opt="-L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path"
     # casefile
     case=~/Desktop/Modele-shallow-water-multicouches/newcase
-
     
 elif [ "${pcid}" == "2" ]
 then
@@ -20,36 +21,33 @@ then
     model_path=/home/charlesedouard/Desktop/Travail/modelSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
+    compiler="gfortran"
+    opt="-L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path"
     # casefile
     case=newcase
 elif [ "${pcid}" == "3" ]
-then
-    machine_name=Beluga
-    model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
+then    
     # BLAS and LAPACK
-    #module load intel/2021.2.0 nvhpc/22.1
     module load openblas
     module load flexiblas
-    #module load flexiblas/3.0.4
-    #lapack_path=/usr/lib/x86_64-linux-gnu/lapack
+
+    # Compiler options
+    machine_name=Beluga
+    model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
     fishpack_path=$HOME/projects/def-lpnadeau/celiz2/fishpack-master/lib
+    compiler="gfortran"
+    opt="-lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path"
     # casefile
     case=newcase
 fi
 
 # >>> Preparing before compilation ::
-echo "!! ${pcid} was selected"
 echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpack_path} and lapack at ${lapack_path}"
 #cp "${model_path}/parameters.f90" "${case}/."
 echo "!! Parameters file copied from ${model_path} to ${case}"
 
-
-# >>> Compilation :: 
-# mpiifort -O3 -o  $case/exec $model_path/main.f90  -L$fftw_path -lfftw3
-#gfortran -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
-gfortran -O3 -o  $case/exec $model_path/main.f90  -lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path
-#mpiifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
-#mpifort -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
+# >>> Compilation ::
+gfortran -O3 -o  $case/exec $model_path/main.f90 $opt
 #mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 
 

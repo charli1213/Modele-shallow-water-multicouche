@@ -24,13 +24,14 @@ dt     = 0.25 # Spatial discretisation (1/fileperday) [days^{-1}]
 # ================================================================= #
 
 def bintods(casepath='./',
-                          minday=0,
-                          maxday=365*5,
-                          outt=1,
-                          klayer=klayer,
-                          fields_to_open=None,
-                          dt=dt,
-                          nx=nx) : 
+            datapath='data/',
+            minday=0,
+            maxday=365*5,
+            outt=1,
+            klayer=klayer,
+            fields_to_open=None,
+            dt=dt,
+            nx=nx) : 
 
     """
     La fonction 'bintods' ouvre un nombre nday/dt/outt de
@@ -53,7 +54,7 @@ def bintods(casepath='./',
 
     # > On fetch les champs dans le dossier 'data'
     
-    data_filenames = listdir(casepath + 'data/') # On liste les noms entiers de tous les fichiers
+    data_filenames = listdir(casepath + datapath) # On liste les noms entiers de tous les fichiers
     max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) # Indicateur numérique
     min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
     nb_of_files    = max_filenumber%100000 + 1
@@ -88,12 +89,12 @@ def bintods(casepath='./',
 
         # On recrée la matrice 'data' (problème de np.roll)
         data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
-        print(" -- Traitement fichiers : " + casepath + f'data/{name}_100001+X // shape {np.shape(data)}')
+        print(" -- Traitement fichiers : " + casepath + datapath + f'{name}_100001+X // shape {np.shape(data)}')
         for it in range(0,len(tt)) : # Boucles l'indicateur du fichier.
             ifile = min_filenumber+int(minday/dt)+it*outt
             try :
                 #print( "filename :: {}".format(casepath + 'data/{}_{}'.format(name,ifile)))
-                f = open( casepath + 'data/{}_{}'.format(name,ifile), 'rb' )
+                f = open( casepath + datapath + f'{name}_{ifile}', 'rb' )
                 data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
                 f.close()
             except :

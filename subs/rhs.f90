@@ -1,9 +1,13 @@
 
+  
        tmp(1) = minval(thickness)/H(k)
        if(tmp(1).le.0.02) then
           print*, 'its',its
           print*, k,'thickness too small'
           print*, 'thickness', tmp(1)
+          ijposition = minloc(thickness)
+          print *, "minloc :: ", ijposition, tmp(1), '%'
+          print *, "STOP"
           stop
        endif
 

@@ -40,7 +40,7 @@ do
 		echo "File created at ${case_dir}"
 		# Running the model (and putting task in background with the command "&").
 		cd $case_dir
-		nohup ./exec | cat > $case_dir/log_sw.txt &
+		nohup ./exec | cat > log_sw.txt &
 	    done
 	done
     done

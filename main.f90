@@ -225,6 +225,7 @@
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
       integer i, j, k, ii, jj, kk, ip1, im, jp, jm, kp, km
       integer ilevel, itt,  it, its, imode, ntimes, inkrow
+      integer ijposition(2)
       real*4 tstime(1:ntsrow)
       
       !subsampling arrays (I/O)
@@ -533,7 +534,7 @@
          end if
          !        =================
          ramp = 1
-         if ( use_ramp .eqv. .true. ) then
+         if (use_ramp) then
             ramp =  min(1.,float(its)*ramp0)
          endif
          !        =================

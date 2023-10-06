@@ -144,7 +144,7 @@ def hovmoller() :
 # ================================================================= #
 
 # ================================================================= #
-def energy(outt = 2, nz=4) :
+def energy(outt = 2, nz=4, dt=0.25) :
         minday = 0
         maxday = 7200
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
@@ -155,10 +155,11 @@ def energy(outt = 2, nz=4) :
         fields = fields_u + fields_v
         
         ds1 = tls.bintods(outt = outt,
-                         minday = minday,
-                         maxday = maxday,
-                         fields_to_open = fields,
-                         )
+                          minday = minday,
+                          maxday = maxday,
+                          fields_to_open = fields,
+                          dt=dt,
+                          )
         ds2 = xr.Dataset()
         
         #if nz > 4    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[15,7.5], sharey=True)
@@ -369,33 +370,33 @@ if __name__ == "__main__" :
 
 
         #print('Launching animations')
-        #minday = 0
-        #maxday = 3600
-        #outt = 2
-        #print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
+        minday = 0
+        maxday = 3600
+        outt = 4
+        print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))
         
-        ds = energy(outt = 4, nz=n)
+        ds = energy(outt = 4, nz=n, dt = 0.5)
         timelen = len(ds.time)
         anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
         
         #        
         ## u
-        #
-        ## thickness
-        #fields = ['eta{}'.format(i) for i in range(1,n+1)]
-        #
-        #ds = tls.bintods(outt = outt,
-        #                 minday = minday,
-        #                 maxday = maxday,
-        #                 fields_to_open = fields,
-        #                 )
-        #
-        #anim(ds,
-        #     filename="eta.gif",
-        #     satu=1,interval=40,
-        #     )
-        #
+        fields = ['thickness{}'.format(i) for i in range(1,n+1)]
+        
+        ds = tls.bintods(outt = outt,
+                         datapath='data0/',
+                         minday = minday,
+                         maxday = maxday,
+                         fields_to_open = fields,
+                         dt=0.125,
+                         )
+        
+        anim(ds,
+             filename="eta.gif",
+             satu=1,interval=40,
+             )
+        
         ## thickness
         #fields = ['thickness{}'.format(i) for i in range(1,n+1)]
         #ds = tls.bintods(outt = outt,
