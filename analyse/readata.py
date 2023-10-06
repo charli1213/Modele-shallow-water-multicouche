@@ -367,21 +367,14 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-
-
-        #print('Launching animations')
         minday = 0
         maxday = 3600
         outt = 4
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))
-        
-        ds = energy(outt = 4, nz=n, dt = 0.5)
-        timelen = len(ds.time)
-        anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
-        
-        #        
-        ## u
+                
+        # Ancien champ (dt = 0.5) :
+        #>
         fields = ['thickness{}'.format(i) for i in range(1,n+1)]
         
         ds = tls.bintods(outt = outt,
@@ -389,13 +382,21 @@ if __name__ == "__main__" :
                          minday = minday,
                          maxday = maxday,
                          fields_to_open = fields,
-                         dt=0.125,
+                         dt=0.5,
                          )
         
         anim(ds,
              filename="eta.gif",
              satu=1,interval=40,
              )
+        
+        # Nouveau champ (ds = 0.125) :
+        #>
+        ds = energy(outt = outt, nz=n, dt = 0.125)
+        timelen = len(ds.time)
+        anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
+
+
         
         ## thickness
         #fields = ['thickness{}'.format(i) for i in range(1,n+1)]
