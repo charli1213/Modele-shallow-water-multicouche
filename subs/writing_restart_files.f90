@@ -86,7 +86,7 @@
                  &     v(i,j,:,3),                           &
                  &     eta(i,j,:,3),                         &
                  &     UStokes(i,j,2),VStokes(i,j,2),        &
-                 &     taux_ocean(i,j,2), tauy_ocean(i,j,2)
+                 &     taux_oc(i,j,2), tauy_oc(i,j,2)
          enddo
          enddo
       ! 5 layers 
@@ -97,7 +97,7 @@
       !#!           &     v(i,j,1,1),v(i,j,2,1),v(i,j,3,1),v(i,j,4,1),v(i,j,5,1),    &
       !#!           &     eta(i,j,2,1),eta(i,j,3,1),eta(i,j,4,1),eta(i,j,5,1),       &
       !#!           &     UStokes(i,j,1),VStokes(i,j,1),                             &
-      !#!           &     taux_ocean(i,j,1),tauy_ocean(i,j,1)
+      !#!           &     taux_oc(i,j,1),tauy_oc(i,j,1)
       !#!   enddo
       !#!   enddo
       !#!else ! Number of layers doesn't fit. 

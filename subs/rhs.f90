@@ -45,7 +45,14 @@
        
           B(i,j) = 0.25*(uu(i,j)**2+uu(i+1,j)**2+vv(i,j)**2+vv(i,j+1)**2)
           B(i,j) = B(i,j) + pressure(i,j)/rho(k)
-       
+
+          ! Coupling quantities (if Ustokes =/= 0.)
+          if (stokes) then
+          B(i,j) = B(i,j) + 0.25*(Ustokes(i,j,2)**2+Ustokes(i+1,j,2)**2 &
+               &                + VStokes(i,j,2)**2+VStokes(i,j+1,2)**2)/(HS**2)
+          B(i,j) = B(i,j) + 0.5*(uu(i,j)*Ustokes(i,j,2) + uu(i+1,j)*Ustokes(i+1,j,2) &
+               &               + vv(i,j)*VStokes(i,j,2) + vv(i,j+1)*VStokes(i,j+1,2) )/HS
+          endif
        enddo
        enddo
 
@@ -111,15 +118,14 @@
        &           + (grad2v(i,jp)+grad2v(i,jm)-2.*grad2v(i,j))/dy/dy
 
        if (cou) then ! Coupling :
-          wind_x(i,j) = taux_ocean(i,j,2)
-          wind_y(i,j) = tauy_ocean(i,j,2)
+          taux(i,j) = taux_oc(i,j,2)
+          tauy(i,j) = tauy_oc(i,j,2)
        else
-          !wind_x(i,j) = -tau0 * (1+step*SIN(it*f0*dt)) * COS(twopi*(jm-1)/(ny-1)*1.)
-          wind_x(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * (1-COS(twopi*(jm-1)/(ny-1)*1.))
-          wind_y(i,j) = 0.
+          taux(i,j) = tau0 * (1+step*SIN(it*f0*dt)) * (1-COS(twopi*(jm-1)/(ny-1)*1.))
+          tauy(i,j) = 0.
        end if
        
-       wind_x(i,j) = ramp*wind_x(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
+       taux(i,j) = ramp*taux(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
        
        enddo
        enddo
@@ -147,7 +153,11 @@
        &            + Ah2*grad2u(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*wind_x(i,j)                                ! Vent en x
+       &            + top(k)*taux(i,j)                                 &  ! Vent en x
+       &            + 0.25*(f(j) +zeta(i,j))* (VStokes(i,j)            &  ! S.-C. et C.-L.
+       &                                     + VStokes(im,j))/HS       &  ! S.-C. et C.-L.
+       &            + 0.25*(f(jp)+zeta(i,jp))*(VStokes(i,jp,2)         &  ! S.-C. et C.-L.
+       &                                     + VStokes(im,jp,2))/HS         ! S.-C. et C.-L.
        
        rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                             &  ! Bernouilli
        &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))         &  ! Coriolis/Vorticité
@@ -155,7 +165,11 @@
        &            + Ah2*grad2v(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*wind_y(i,j)                                  ! Vent en x
+       &            + top(k)*tauy(i,j)                                 &  ! Vent en y
+       &            - 0.25*(f(j) +zeta(i,j))  *(UStokes(i,  j,2)       &  ! S.-C et C.-L.
+       &                                      + UStokes(i,  jm,2))/HS  &  ! S.-C et C.-L.
+       &            - 0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j,2)       &  ! S.-C et C.-L.
+       &                                      + UStokes(ip1,jm,2) )/HS    ! S.-C et C.-L.
        enddo
        enddo
 
@@ -178,10 +192,10 @@
           ip1 = i+1
           
        rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
-       &              -  (vh(i,jp)-vh(i,j))/dy                       &  
-       &              - top(k)*(                                     &  ! div(uStokes*h)
-       &                (UStokes(ip1,j,2)-UStokes(i,j,2))/dx          &
-       &              + (VStokes(i,jp,2)-VStokes(i,j,2))/dy  )
+       &              -  (vh(i,jp)-vh(i,j))/dy                        &  
+       &              -  top(k)*(                                     &  ! div(uStokes*h)
+       &                  (UStokes(ip1,j,2)-UStokes(i,j,2))/dx        &
+       &              +   (VStokes(i,jp,2)-VStokes(i,j,2))/dy  )
 
        enddo
        enddo

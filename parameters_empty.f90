@@ -17,8 +17,9 @@
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
-   parameter ( nnx = nx+1, nny = ny+1 ) ! 513
+   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 513
 
+   parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 512
    
    ! --- Physical parameters ---
  
@@ -70,10 +71,8 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.false. , HStokes = 50. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false. , HS = 50. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
 
-   parameter (nx_cou = 128, ny_cou = 128, nnx_cou = nx_cou+1, nny_cou = ny_cou+1)
-   
    parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    
-   parameter ( step = 0.0, nghost=0, ng2=nghost/2)
+   parameter ( step = 0.0 )

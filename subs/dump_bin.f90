@@ -219,24 +219,24 @@
 
      UStokes_out(:,:) = 0.
      VStokes_out(:,:) = 0.
-     taux_ocean_out(:,:) = 0.
-     tauy_ocean_out(:,:) = 0.
+     taux_oc_out(:,:) = 0.
+     tauy_oc_out(:,:) = 0.
      
      UStokes_out(:,:)    = UStokes(isubx,isuby,2)
      VStokes_out(:,:)    = VStokes(isubx,isuby,2)
-     taux_ocean_out(:,:) = taux_ocean(isubx,isuby,2)
-     tauy_ocean_out(:,:) = tauy_ocean(isubx,isuby,2)
+     taux_oc_out(:,:) = taux_oc(isubx,isuby,2)
+     tauy_oc_out(:,:) = tauy_oc(isubx,isuby,2)
 
      ! putting stuff on tiny matrix (C'est pas bon ça. C'est juste pour voir)
      !UStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,1)
      !VStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,2)
-     !taux_ocean_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,1)
-     !tauy_ocean_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,2)
+     !taux_oc_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,1)
+     !tauy_oc_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,2)
      
      !UStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 1)
      !VStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 2)
-     !taux_ocean_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 1)
-     !tauy_ocean_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 2)
+     !taux_oc_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 1)
+     !tauy_oc_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 2)
      
      ! U Stokes
      string25 =  './data/UStokes'  // '_' // trim(which)
@@ -263,16 +263,16 @@
      !write(128,REC=1) ((tauy_eff(i,j),i=1,szsubx),j=1,szsuby)
      !close(128)
 
-     string29 =  './data/taux_ocean'  // '_' // trim(which)
+     string29 =  './data/taux_oc'  // '_' // trim(which)
      open(unit=129,file=string29,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(129,REC=1) ((taux_ocean_out(i,j),i=1,szsubx),j=1,szsuby)
+     write(129,REC=1) ((taux_oc_out(i,j),i=1,szsubx),j=1,szsuby)
      close(129)
      
-     string30 =  './data/tauy_ocean'  // '_' // trim(which)
+     string30 =  './data/tauy_oc'  // '_' // trim(which)
      open(unit=130,file=string30,access='DIRECT',&
           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(130,REC=1) ((tauy_ocean_out(i,j),i=1,szsubx),j=1,szsuby)
+     write(130,REC=1) ((tauy_oc_out(i,j),i=1,szsubx),j=1,szsuby)
      close(130)
      
   endif ! IO_coupling  

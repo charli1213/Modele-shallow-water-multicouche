@@ -3,11 +3,11 @@
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
       integer nx_cou, ny_cou, nnx_cou, nny_cou
-      real    HStokes
+      real    HS ! Stokes' drift thickness layer.
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
       real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction
-      real tau0, tau1, wind_t0, variance ! CE modification
+      real tau0, tau1, wind_t0, variance
       real fileperday, daysperrestart
       integer nsteps,start_spec
       real ndays,totaltime,dt
@@ -74,15 +74,12 @@
       REAL :: taux(0:nnx,0:ny), tauy(0:nx,0:nny)
       REAL :: taux_steady(0:nx,0:nny), taux_var(0:nx,0:nny)
       REAL :: rhs_u(0:nnx,0:ny,nz), rhs_v(0:nx,0:nny,nz)
-      REAL :: wind_x(0:nnx,0:ny), wind_y(0:nx,0:nny)
       REAL :: uu(0:nnx,0:ny), vv(0:nx,0:nny)
       REAL :: uu1(0:nnx,0:ny), vv1(0:nx,0:nny)
       REAL :: uu_old(0:nnx,0:ny), vv_old(0:nx,0:nny)
       REAL :: uh(0:nnx,0:ny), vh(0:nx,0:nny)
       REAL :: dissi_u(0:nnx,0:ny), dissi_v(0:nx,0:nny)
       REAL :: invLap_u(0:nnx,0:ny), invLap_v(0:nx,0:nny)
-      REAL :: taux_ocean(0:nnx,0:ny,2), tauy_ocean(0:nx,0:nny,2) ! WW3 Coupling
-      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3 Coupling
       REAL :: array_x(0:nnx,0:ny), array_y(0:nx,0:nny) ! dummy
       
       ! Centres/Centers :
@@ -114,23 +111,17 @@
       
       !!! ----------- WW3 Coupling qties ----------- !!!
       ! Send/receive quantities
-      REAL :: cur2WW3(1:nx_cou,1:ny_cou,2) ! Current sent to WW3.
-      REAL :: Tstokes(0:nnx_cou,0:nny_cou,2) ! Stokes' transport received.
-      REAL :: tauww3ust(0:nnx_cou,0:nny_cou,2) ! Directly received from WW3.
-      REAL :: tauww3waves(0:nnx_cou,0:nny_cou,2) ! Directly received from WW3.
-      ! Interpolated quantities :
-      REAL :: large_cur2WW3(1:nx,1:ny,2) ! Current sent to WW3.
-      REAL :: u_lag(0:nnx,0:ny)   ! (Now useless) def. of lagragian current (see Suzuki et al)
-      REAL :: v_lag(0:nx,0:nny)   ! (Now useless) def. of lagragian current (see Suzuki et al)
+      REAL :: cur2WW3     (1:nxm1, 1:nym1, 2) ! Current sent to WW3.
+      REAL :: Tstokes     (0:nx,   0:ny,   2) ! Stokes' transport received.
+      REAL :: tauww3ust   (0:nx,   0:ny,   2) ! Directly received from WW3.
+      REAL :: tauww3waves (0:nx,   0:ny,   2) ! Directly received from WW3.
+
+      ! Interpolated quantities from A-grid to C-grid.
       REAL :: taux_ust(0:nnx,0:ny),   tauy_ust(0:nx,0:nny)
       REAL :: taux_waves(0:nnx,0:ny), tauy_waves(0:nx,0:nny)
-      ! Double interpolate :
-      REAL :: TStokes2(0:2*nx_cou,0:2*ny_cou,2),TStokes4(0:nx-1,0:ny-1,2) 
-      REAL :: tauww3ust2(0:2*nx_cou,0:2*ny_cou,2),tauww3ust4(0:nx-1,0:ny-1,2)
-      REAL :: tauww3waves2(0:2*nx_cou,0:2*ny_cou,2),tauww3waves4(0:nx-1,0:ny-1,2)
+      REAL :: taux_oc(0:nnx,0:ny,2), tauy_oc(0:nx,0:nny,2) ! WW3 Coupling
+      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3 Coupling
 
-
-!!!REAL :: taux_ocean(0:nnx,0:ny), tauy_ocean(0:nx,0:nny) ! Already declared before.
       !
       INTEGER :: mpi_grid_size
       
@@ -141,12 +132,12 @@
       REAL :: u_out(1:szsubx,1:szsuby,nz)
       REAL :: uBT_out(1:szsubx,1:szsuby)
       REAL :: UStokes_out(1:szsubx,1:szsuby)
-      REAL :: taux_ocean_out(1:szsubx,1:szsuby)
+      REAL :: taux_oc_out(1:szsubx,1:szsuby)
       ! >
       REAL :: v_out(1:szsubx,1:szsuby,nz)
       REAL :: vBT_out(1:szsubx,1:szsuby)
       REAL :: VStokes_out(1:szsubx,1:szsuby)
-      REAL :: tauy_ocean_out(1:szsubx,1:szsuby)
+      REAL :: tauy_oc_out(1:szsubx,1:szsuby)
 
       ! Centers :
       REAL :: eta_out(1:szsubx,1:szsuby,nz)
@@ -267,7 +258,7 @@
       
       ! >>> Modification CEL >>>
       !!MPI!!IF (cou) THEN
-      !!MPI!!   mpi_grid_size = nx_cou*ny_cou
+      !!MPI!!   mpi_grid_size = nxm1*nym1
       !!MPI!!   
       !!MPI!!   !!!  --- Starting MPI --- !!!
       !!MPI!!   CALL MPI_INIT(ierror)
@@ -363,8 +354,8 @@
       !!MPI!!! ... then forgetting them to keep our restart files. 
       !!MPI!!   UStokes(:,:,2) = UStokes(:,:,1) 
       !!MPI!!   VStokes(:,:,2) = VStokes(:,:,1) 
-      !!MPI!!   taux_ocean(:,:,2) = taux_ocean(:,:,1)
-      !!MPI!!   tauy_ocean(:,:,2) = tauy_ocean(:,:,1)
+      !!MPI!!   taux_oc(:,:,2) = taux_oc(:,:,1)
+      !!MPI!!   tauy_oc(:,:,2) = tauy_oc(:,:,1)
       !!MPI!!END IF
       ! <<< Modification CEL (END) <<<.
       !

@@ -1,8 +1,12 @@
 
 
      ! Coupling quantities (WAVEWATCH III) >>>
-       taux_ocean(:,:,:) = 0.
-       tauy_ocean(:,:,:) = 0.
+       taux_oc(:,:,:) = 0.
+       tauy_oc(:,:,:) = 0.
+       taux_ust(:,:) = 0.
+       tauy_ust(:,:) = 0.
+       taux_waves(:,:) = 0.
+       tauy_waves(:,:) = 0.
        UStokes(:,:,:) = 0.
        VStokes(:,:,:) = 0. 
      ! Model arrays >>>
@@ -234,7 +238,7 @@
                      &      v(i,j,:,1), &
                      &      eta(i,j,:,1),                         &
                      &      UStokes(i,j,1),VStokes(i,j,1),        &
-                     &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
+                     &      taux_oc(i,j,1),tauy_oc(i,j,1)
              enddo
              enddo
           ! 5 layers
@@ -245,7 +249,7 @@
           !#!           &      v(i,j,1,1),v(i,j,2,1),v(i,j,3,1),v(i,j,4,1),v(i,j,5,1),    &
           !#!           &      eta(i,j,2,1),eta(i,j,3,1),eta(i,j,4,1),eta(i,j,5,1),       &
           !#!           &      UStokes(i,j,1),VStokes(i,j,1),                             &
-          !#!           &      taux_ocean(i,j,1),tauy_ocean(i,j,1)
+          !#!           &      taux_oc(i,j,1),tauy_oc(i,j,1)
           !#!   enddo
           !#!   enddo
           !#!else ! Number of layers doesn't fit
