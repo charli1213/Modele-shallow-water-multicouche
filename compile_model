@@ -47,7 +47,7 @@ echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpack_pa
 echo "!! Parameters file copied from ${model_path} to ${case}"
 
 # >>> Compilation ::
-gfortran -O3 -o  $case/exec $model_path/main.f90 $opt
+$compiler -O3 -o  $case/exec $model_path/main.f90 $opt
 #mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 
 

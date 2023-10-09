@@ -154,9 +154,9 @@
        &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
        &            + top(k)*taux(i,j)                                 &  ! Vent en x
-       &            + 0.25*(f(j) +zeta(i,j))* (VStokes(i,j)            &  ! S.-C. et C.-L.
-       &                                     + VStokes(im,j))/HS       &  ! S.-C. et C.-L.
-       &            + 0.25*(f(jp)+zeta(i,jp))*(VStokes(i,jp,2)         &  ! S.-C. et C.-L.
+       &            + 0.25*(f(j) +zeta(i,j))* (VStokes(i ,j, 2)        &  ! S.-C. et C.-L.
+       &                                     + VStokes(im,j, 2))/HS    &  ! S.-C. et C.-L.
+       &            + 0.25*(f(jp)+zeta(i,jp))*(VStokes(i,jp, 2)        &  ! S.-C. et C.-L.
        &                                     + VStokes(im,jp,2))/HS         ! S.-C. et C.-L.
        
        rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                             &  ! Bernouilli
@@ -166,9 +166,9 @@
        &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
        &            + top(k)*tauy(i,j)                                 &  ! Vent en y
-       &            - 0.25*(f(j) +zeta(i,j))  *(UStokes(i,  j,2)       &  ! S.-C et C.-L.
+       &            - 0.25*(f(j) +zeta(i,j))  *(UStokes(i,  j ,2)      &  ! S.-C et C.-L.
        &                                      + UStokes(i,  jm,2))/HS  &  ! S.-C et C.-L.
-       &            - 0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j,2)       &  ! S.-C et C.-L.
+       &            - 0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)      &  ! S.-C et C.-L.
        &                                      + UStokes(ip1,jm,2) )/HS    ! S.-C et C.-L.
        enddo
        enddo
