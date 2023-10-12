@@ -35,7 +35,9 @@ then
     machine_name=Beluga
     model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
     fishpack_path=$HOME/projects/def-lpnadeau/celiz2/fishpack-master/lib
-    compiler="gfortran"
+    compiler="mpifort"
+    module load gcc
+    module load openmpi
     opt="-lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path"
     # casefile
     case=newcase

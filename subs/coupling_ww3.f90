@@ -8,10 +8,8 @@
   tauww3waves(:,:,:) = 0.
   Tstokes(:,:,:)     = 0.
   cur2WW3(:,:,:)     = 0.
-
   
   ! Re-initialising each field before interpolating (mandatory).
-
   ! Received quantities
   UStokes(:,:,2)  = 0 ! U_Stokes
   VStokes(:,:,2)  = 0  
@@ -26,8 +24,8 @@
   !      of the walls. 
   DO j=1,nym1
   DO i=1,nxm1
-     cur2WW3(i,j,1) = (u_lag(i,j) + u_lag(i+1,j))/2
-     cur2WW3(i,j,2) = (v_lag(i,j) + v_lag(i,j+1))/2
+     cur2WW3(i,j,1) = (uu(i,j) + uu(i+1,j))/2
+     cur2WW3(i,j,2) = (vv(i,j) + vv(i,j+1))/2
   ENDDO
   ENDDO
   

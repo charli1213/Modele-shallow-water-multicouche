@@ -1,6 +1,6 @@
 
 
-PROGRAM MPItest
+Program MPItest
 
 ! USE
   USE MPI

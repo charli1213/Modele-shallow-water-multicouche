@@ -54,7 +54,7 @@
       use data_initial
       use fishpack
       !!! MPI-coupling
-      !!MPI!!USE MPI
+      USE MPI
       !!! MPI-coupling
       implicit none
       !
@@ -89,7 +89,7 @@
       REAL :: div1(0:nx,0:ny),div2(0:nx,0:ny)
       REAL :: divBT(0:nx,0:ny)
       REAL :: Psurf(0:nx,0:ny), rhs_Psurf(0:nx,0:ny)
-      REAL :: B(0:nx,0:ny), B_nl(0:nx,0:ny)
+      REAL :: B(0:nx,0:ny), B_nl(0:nx,0:ny), BS(0:nx,0:ny)
       REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny)
       REAL :: eta_ag(0:nx,0:ny), eta_qg(0:nx,0:ny)
       REAL :: eta_ag_p(0:nx,0:ny,2)
@@ -257,21 +257,21 @@
       !include 'fftw_stuff/fft_init.f90'
       
       ! >>> Modification CEL >>>
-      !!MPI!!IF (cou) THEN
-      !!MPI!!   mpi_grid_size = nxm1*nym1
-      !!MPI!!   
-      !!MPI!!   !!!  --- Starting MPI --- !!!
-      !!MPI!!   CALL MPI_INIT(ierror)
-      !!MPI!!   CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
-      !!MPI!!   CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
-      !!MPI!!   PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
-      !!MPI!!   
-      !!MPI!!   !!! --- Splitting MPI because WW3 is dumb
-      !!MPI!!   CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
-      !!MPI!!   CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
-      !!MPI!!   CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
-      !!MPI!!   PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
-      !!MPI!!END IF
+      IF (cou) THEN
+         mpi_grid_size = nxm1*nym1
+         
+         !!!  --- Starting MPI --- !!!
+         CALL MPI_INIT(ierror)
+         CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
+         CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
+         PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
+         
+         !!! --- Splitting MPI because WW3 is dumb
+         CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
+         CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
+         CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
+         PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
+      END IF
       ! <<< Modification CEL (END) <<<
 
       
@@ -346,17 +346,19 @@
       ! >>> Modification CEL >>>
       ! --- FIRST MPI CALL HERE. 
       ! Receiving first  Wavewatch atmospheric stresses here.
-      !!MPI!!IF (cou) THEN
-      !!MPI!!! --- Coupling
-      !!MPI!!   !its = 1
-      !!MPI!!   include 'subs/coupling_ww3.f90'
-      !!MPI!!
-      !!MPI!!! ... then forgetting them to keep our restart files. 
-      !!MPI!!   UStokes(:,:,2) = UStokes(:,:,1) 
-      !!MPI!!   VStokes(:,:,2) = VStokes(:,:,1) 
-      !!MPI!!   taux_oc(:,:,2) = taux_oc(:,:,1)
-      !!MPI!!   tauy_oc(:,:,2) = tauy_oc(:,:,1)
-      !!MPI!!END IF
+      IF (cou) THEN
+      ! --- Coupling
+         !its = 1
+         uu(:,:) = u(:,:,1,1) 
+         vv(:,:) = v(:,:,1,1)
+         include 'subs/coupling_ww3.f90'
+      
+      ! ... then forgetting them to keep our restart files. 
+         UStokes(:,:,2) = UStokes(:,:,1) 
+         VStokes(:,:,2) = VStokes(:,:,1) 
+         taux_oc(:,:,2) = taux_oc(:,:,1)
+         tauy_oc(:,:,2) = tauy_oc(:,:,1)
+      END IF
       ! <<< Modification CEL (END) <<<.
       !
 
@@ -535,9 +537,12 @@
          !
          ! >>> Modification CEL >>>
          ! --- SUBSEQUENT MPI CALL HERE. 
-         !!MPI!!IF (cou) THEN
-         !!MPI!!   include 'subs/coupling_ww3.f90'
-         !!MPI!!END IF
+         IF (cou) THEN
+            uu(:,:) = u(:,:,1,2) 
+            vv(:,:) = v(:,:,1,2)
+
+            include 'subs/coupling_ww3.f90'
+         END IF
          ! <<< Modification CEL <<<
          !
                   
@@ -722,7 +727,7 @@
      !===== time loop ends here
 
      ! MPI-COUPLING
-     !!MPI!!CALL MPI_FINALIZE(ierror)
+     CALL MPI_FINALIZE(ierror)
      ! MPI-COUPLING
      !include 'fftw_stuff/fft_destroy.f90'
     end program main

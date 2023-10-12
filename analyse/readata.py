@@ -369,32 +369,40 @@ if __name__ == "__main__" :
     else : 
         minday = 0
         maxday = 3600
-        outt = 4
+        outt = 1
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
-        n = int(input("Nombre de couches?"))
-                
+        n = int(input("Nombre de couches?"))        
+        
         # Ancien champ (dt = 0.5) :
         #>
         fields = ['thickness{}'.format(i) for i in range(1,n+1)]
-        
         ds = tls.bintods(outt = outt,
-                         datapath='data0/',
+                         datapath='data/',
                          minday = minday,
                          maxday = maxday,
                          fields_to_open = fields,
-                         dt=0.5,
+                         dt=1/288,
                          )
-        
         anim(ds,
              filename="eta.gif",
              satu=1,interval=40,
              )
+
+        # Other fields :
+        ds = tls.bintods(outt = outt,
+                         datapath='data/',
+                         minday = minday,
+                         maxday = maxday,
+                         fields_to_open = ['taux_oc','tauy_oc','UStokes','thickness1','u1'],
+                         dt=0.5,)
+
+
         
-        # Nouveau champ (ds = 0.125) :
-        #>
-        ds = energy(outt = outt, nz=n, dt = 0.125)
-        timelen = len(ds.time)
-        anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
+        #### Nouveau champ (ds = 0.125) :
+        ####>
+        ###ds = energy(outt = outt, nz=n, dt = 0.125)
+        ###timelen = len(ds.time)
+        ###anim(ds.isel(time=slice(0,timelen-100)), filename = 'energy.gif', interval = 40, cmap = cmo.deep_r)
 
 
         

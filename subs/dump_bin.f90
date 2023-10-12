@@ -222,8 +222,8 @@
      taux_oc_out(:,:) = 0.
      tauy_oc_out(:,:) = 0.
      
-     UStokes_out(:,:)    = UStokes(isubx,isuby,2)
-     VStokes_out(:,:)    = VStokes(isubx,isuby,2)
+     UStokes_out(:,:) = UStokes(isubx,isuby,2)
+     VStokes_out(:,:) = VStokes(isubx,isuby,2)
      taux_oc_out(:,:) = taux_oc(isubx,isuby,2)
      tauy_oc_out(:,:) = tauy_oc(isubx,isuby,2)
 

@@ -48,13 +48,15 @@
 
           ! Coupling quantities (if Ustokes =/= 0.)
           if (stokes) then
-          B(i,j) = B(i,j) + 0.25*(Ustokes(i,j,2)**2+Ustokes(i+1,j,2)**2 &
-               &                + VStokes(i,j,2)**2+VStokes(i,j+1,2)**2)/(HS**2)
-          B(i,j) = B(i,j) + 0.5*(uu(i,j)*Ustokes(i,j,2) + uu(i+1,j)*Ustokes(i+1,j,2) &
-               &               + vv(i,j)*VStokes(i,j,2) + vv(i,j+1)*VStokes(i,j+1,2) )/HS
+          BS(i,j) =  0.25*(UStokes(i,j,2)**2+UStokes(i+1,j,2)**2 &
+               &         + VStokes(i,j,2)**2+VStokes(i,j+1,2)**2)/(HS**2)
+          BS(i,j) = BS(i,j) + 0.5*(uu(i,j)*UStokes(i,j,2) + uu(i+1,j)*UStokes(i+1,j,2) &
+               &                 + vv(i,j)*VStokes(i,j,2) + vv(i,j+1)*VStokes(i,j+1,2) )/HS
+          B(i,j) = B(i,j) + ramp*top(k)*BS(i,j)
           endif
        enddo
        enddo
+
 
        ! --- Nodes loop (! note : marche aussi entre 2 et nx-1)
        do j = 1,nx
@@ -154,10 +156,10 @@
        &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
        &            + top(k)*taux(i,j)                                 &  ! Vent en x
-       &            + 0.25*(f(j) +zeta(i,j))* (VStokes(i ,j, 2)        &  ! S.-C. et C.-L.
-       &                                     + VStokes(im,j, 2))/HS    &  ! S.-C. et C.-L.
-       &            + 0.25*(f(jp)+zeta(i,jp))*(VStokes(i,jp, 2)        &  ! S.-C. et C.-L.
-       &                                     + VStokes(im,jp,2))/HS         ! S.-C. et C.-L.
+       &            + top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i ,j, 2)     &  ! S.-C. et C.-L.
+       &                                                  + VStokes(im,j, 2))/HS &  ! S.-C. et C.-L.
+       &            + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)     &  ! S.-C. et C.-L.
+       &                                                  + VStokes(im,jp,2))/HS    ! S.-C. et C.-L.
        
        rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                             &  ! Bernouilli
        &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))         &  ! Coriolis/Vorticité
@@ -166,20 +168,20 @@
        &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
        &            + top(k)*tauy(i,j)                                 &  ! Vent en y
-       &            - 0.25*(f(j) +zeta(i,j))  *(UStokes(i,  j ,2)      &  ! S.-C et C.-L.
-       &                                      + UStokes(i,  jm,2))/HS  &  ! S.-C et C.-L.
-       &            - 0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)      &  ! S.-C et C.-L.
-       &                                      + UStokes(ip1,jm,2) )/HS    ! S.-C et C.-L.
+       &            - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)      &  ! S.-C et C.-L.
+       &                                                + UStokes(i,  jm,2))/HS  &  ! S.-C et C.-L.
+       &            - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)    &  ! S.-C et C.-L.
+       &                                                  + UStokes(ip1,jm,2) )/HS  ! S.-C et C.-L.
        enddo
        enddo
 
        array_x(:,:) = rhs_u(:,:,k)
        array_y(:,:) = rhs_v(:,:,k)
-       include '/subs/no_normal_flow.f90'
+       include 'subs/no_normal_flow.f90'
        if (free_slip) then 
           include 'subs/free_slip.f90'
        else
-          include '/subs/partial_slip.f90'
+          include 'subs/partial_slip.f90'
        endif
        rhs_u(:,:,k) = array_x
        rhs_v(:,:,k) = array_y
@@ -193,9 +195,9 @@
           
        rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
        &              -  (vh(i,jp)-vh(i,j))/dy                        &  
-       &              -  top(k)*(                                     &  ! div(uStokes*h)
+       &              -  top(k)*ramp*(                                &  ! div(uStokes*h)
        &                  (UStokes(ip1,j,2)-UStokes(i,j,2))/dx        &
-       &              +   (VStokes(i,jp,2)-VStokes(i,j,2))/dy  )
+       &              +   (VStokes(i,jp,2) -VStokes(i,j,2))/dy  )
 
        enddo
        enddo

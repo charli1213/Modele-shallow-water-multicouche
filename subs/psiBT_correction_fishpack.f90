@@ -30,12 +30,9 @@
           do i=1,nx-1
 
           uBT(i,j) = uBT(i,j)                                             & 
-          &        + uu(i,j)*(thickness(i,j) + thickness(i-1,j))/Htot/2   &
-          &        + ramp*UStokes(i,j,2)/HS
-          
+          &        + uu(i,j)*(thickness(i,j) + thickness(i-1,j))/Htot/2 
           vBT(i,j) = vBT(i,j)                                             &
-          &        + vv(i,j)*(thickness(i,j) + thickness(i,j-1))/Htot/2   &
-          &        + ramp*VStokes(i,j,2)/HS
+          &        + vv(i,j)*(thickness(i,j) + thickness(i,j-1))/Htot/2 
           enddo
           enddo
 
@@ -53,6 +50,9 @@
             
           
        end do !end k-loop
+
+       uBT(:,:) = uBT(:,:) + ramp*UStokes(:,:,2)/HS
+       vBT(:,:) = vBT(:,:) + ramp*VStokes(:,:,2)/HS
 
        ! Barotropic part of u(ilevel=3) and v(ilevel=3).
        ! note : no need for bndy conditions here.
