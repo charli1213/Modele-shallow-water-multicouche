@@ -9,7 +9,7 @@
       real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction
       real tau0, tau1, wind_t0, variance
       real fileperday, daysperrestart
-      integer nsteps,start_spec
+      integer nsteps,start_spec, cut_days
       real ndays,totaltime,dt
       real restart_from
       integer subsmprto,itape,ispechst,iout,itlocal,itsrow,ntsrow,nspecfile,endx,endy
@@ -181,7 +181,7 @@
       real exp_coef, exp_amp, ratio
       real top(nz), bot(nz)
       real pdf(-100:100)
-      real x, y, z, ramp, ramp0, time, today
+      real x, y, z, ramp, ramp0, time, today, cut_its
 
       ! real amp_matrix(864000) !3000 days
       real amp_forcing, amp, rms_amp, ampfactor, Omgrange !initialize_forcing
@@ -398,9 +398,10 @@
          ! Ramp :
          ! ramp0 is the slope of the ramp. Such that ramp = ramp0*its
          ramp = 1
+         cut_its = cut_days*86400/dt
          if (use_ramp) then
-            ramp0 = real(dt/(31*86400))
-            ramp = ramp0*float(its)
+            ramp0 = real(dt/(31*86400)) ! Slope per iteration (extended on 31 days).
+            ramp = max(0.,ramp0*(float(its)-cut_its))
          endif
 
          ! Pas besoin d'update les contours de zeta ou psi.
@@ -528,7 +529,11 @@
          !        =================
          ramp = 1
          if (use_ramp) then
-            ramp =  min(1.,float(its)*ramp0)
+            if (its.le.(cut_its)) then 
+               ramp = max(0.,ramp0*(float(its) - cut_its))
+            else
+               ramp = min(1.,ramp0*(float(its) - cut_its))
+            endif
          endif
          !        =================
 
