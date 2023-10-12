@@ -12,6 +12,7 @@ then
     model_path=~/Desktop/Modele-shallow-water-multicouches
     compiler="gfortran"
     opt="-L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path"
+    main=$model_path/main2.f90
     # casefile
     case=~/Desktop/Modele-shallow-water-multicouches/newcase
     
@@ -23,6 +24,7 @@ then
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
     compiler="gfortran"
     opt="-L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path"
+    main=$model_path/main.f90
     # casefile
     case=newcase
 elif [ "${pcid}" == "3" ]
@@ -39,6 +41,7 @@ then
     module load gcc
     module load openmpi
     opt="-lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path"
+    main=$model_path/main.f90
     # casefile
     case=newcase
 fi
@@ -49,7 +52,7 @@ echo "!! Using setting for ${machine_name} with fishpack stored at ${fishpack_pa
 echo "!! Parameters file copied from ${model_path} to ${case}"
 
 # >>> Compilation ::
-$compiler -O3 -o  $case/exec $model_path/main.f90 $opt
+$compiler -O3 -o  $case/exec $main $opt
 #mpif90 -O3 -o  $case/exec $model_path/main.f90  -L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path
 
 

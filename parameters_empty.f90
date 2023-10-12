@@ -33,7 +33,7 @@
  
    parameter ( Ah2 = NAH*1.e-7*dx**2, Ah4 = 0. ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( rf = 0.001 ) !0.001
+   parameter ( rf = 0.001*RFFF ) !0.001
  
    parameter ( c_bc = 2. )
       
@@ -43,7 +43,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 2) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -71,7 +71,7 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.false. , HS = 50. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
 
    parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
    
