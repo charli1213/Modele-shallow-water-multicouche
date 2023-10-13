@@ -253,7 +253,8 @@ def anim(dS,
          textcolor = 'black',
          cmap = cmo.curl,
          add_colorbar = False,
-         darkmode = False 
+         darkmode = False,
+         savefig=False
          ) :
     """ This function creates an animation for a chosen Xarray.Dataset (dS).
         It exports all animation on a 1 to 4 by X squares.
@@ -328,7 +329,8 @@ def anim(dS,
     ani =  animation.FuncAnimation(fig, inner_animate, nt , blit = True, interval=interval, repeat=True)
 
     # Show/Save :: (Faut installer imagemagick avant tout)
-    #ani.save('./figures/' + filename, writer=PillowWriter(fps=20)) #Save animation as
+    if savefig :
+        ani.save('./figures/' + filename, writer=PillowWriter(fps=20)) #Save animation as
     
     plt.show()
 
@@ -381,11 +383,11 @@ if __name__ == "__main__" :
                          minday = minday,
                          maxday = maxday,
                          fields_to_open = fields,
-                         dt=1/288,
+                         dt=0.125,
                          )
         anim(ds,
              filename="eta.gif",
-             satu=1,interval=40,
+             satu=1,interval=125,
              )
 
         # Other fields :
@@ -393,8 +395,10 @@ if __name__ == "__main__" :
                          datapath='data/',
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = ['taux_oc','tauy_oc','UStokes','thickness1','u1'],
-                         dt=0.5,)
+                         fields_to_open = ['taux_oc','tauy_oc','UStokes','VStokes','thickness1','u1'],
+                         dt=0.125,
+                         )
+
 
 
         

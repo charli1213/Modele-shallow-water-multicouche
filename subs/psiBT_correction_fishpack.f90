@@ -47,8 +47,8 @@
           
        end do !end k-loop
 
-       uBT(:,:) = uBT(:,:) + ramp*UStokes(:,:,2)/HS
-       vBT(:,:) = vBT(:,:) + ramp*VStokes(:,:,2)/HS
+       !uBT(:,:) = uBT(:,:) + ramp*UStokes(:,:,2)/HS
+       !vBT(:,:) = vBT(:,:) + ramp*VStokes(:,:,2)/HS
 
        ! Barotropic part of u(ilevel=3) and v(ilevel=3).
        ! note : no need for bndy conditions here.

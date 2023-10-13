@@ -115,7 +115,7 @@
           tauy(i,j) = 0.
        end if
        
-       taux(i,j) = ramp*taux(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
+       taux(i,j) = taux(i,j)*2/(thickness(i,j)+thickness(im,j))/rho(1)
        
        enddo
        enddo
@@ -143,7 +143,7 @@
        &            + Ah2*grad2u(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*taux(i,j)                                 &  ! Vent en x
+       &            + top(k)*ramp* taux(i,j)                           &  ! Vent en x
        &            + top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i ,j, 2)     &  ! S.-C. et C.-L.
        &                                                  + VStokes(im,j, 2))/HS &  ! S.-C. et C.-L.
        &            + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)     &  ! S.-C. et C.-L.
@@ -155,7 +155,7 @@
        &            + Ah2*grad2v(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*tauy(i,j)                                 &  ! Vent en y
+       &            + top(k)*ramp*tauy(i,j)                            &  ! Vent en y
        &            - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)      &  ! S.-C et C.-L.
        &                                                + UStokes(i,  jm,2))/HS  &  ! S.-C et C.-L.
        &            - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)    &  ! S.-C et C.-L.
