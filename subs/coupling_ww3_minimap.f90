@@ -140,23 +140,14 @@
   array_x = UStokes(:,:,2)
   array_y = VStokes(:,:,2)
   include 'subs/no_normal_flow.f90'
-  if (free_slip) then 
-     include 'subs/free_slip.f90'
-  else
-     include 'subs/partial_slip.f90'
-  endif
-  UStokes(:,:,2) = array_x
+  include 'subs/free_or_partial_slip.f90'
+    UStokes(:,:,2) = array_x
   VStokes(:,:,2) = array_y
 
   array_x = taux_ocean(:,:,2)
   array_y = tauy_ocean(:,:,2)
   include 'subs/no_normal_flow.f90'
-  if (free_slip) then 
-     include 'subs/free_slip.f90'
-  else
-     include 'subs/partial_slip.f90'
-  endif
-
+  include 'subs/free_or_partial_slip.f90'
   taux_ocean(:,:,2) = array_x
   tauy_ocean(:,:,2) = array_y
 

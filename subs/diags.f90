@@ -21,11 +21,7 @@
         array_x = uu
         array_y = vv
         include 'subs/no_normal_flow.f90'
-        if (free_slip) then 
-           include 'subs/free_slip.f90'
-        else
-           include 'subs/partial_slip.f90'
-        endif
+        include 'subs/free_or_partial_slip.f90'
         uu = array_x
         vv = array_y
 

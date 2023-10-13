@@ -54,7 +54,7 @@
       use data_initial
       use fishpack
       !!! MPI-coupling
-      USE MPI
+      !!!MPI!!!USE MPI
       !!! MPI-coupling
       implicit none
       !
@@ -261,15 +261,15 @@
          mpi_grid_size = nxm1*nym1
          
          !!!  --- Starting MPI --- !!!
-         CALL MPI_INIT(ierror)
-         CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
-         CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
+         !!!MPI!!!CALL MPI_INIT(ierror)
+         !!!MPI!!!CALL MPI_COMM_RANK(MPI_COMM_WORLD, procid, ierror)
+         !!!MPI!!!CALL MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierror)
          PRINT *, "SW  (COMM_WORLD) : Je suis le proc :", procid, "sur", numprocs
          
          !!! --- Splitting MPI because WW3 is dumb
-         CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
-         CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
-         CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
+         !!!MPI!!!CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 2, 0, MPI_SECOND, ierror)
+         !!!MPI!!!CALL MPI_COMM_RANK(MPI_SECOND, procid_sec, ierror)
+         !!!MPI!!!CALL MPI_COMM_SIZE(MPI_SECOND, numprocs_sec, ierror)
          PRINT *, "SW (COMM_SECOND) : Je suis le proc :", procid_sec, "sur", numprocs_sec
       END IF
       ! <<< Modification CEL (END) <<<
@@ -351,7 +351,7 @@
          !its = 1
          uu(:,:) = u(:,:,1,1) 
          vv(:,:) = v(:,:,1,1)
-         include 'subs/coupling_ww3.f90'
+         !!!MPI!!!include 'subs/coupling_ww3.f90'
       
       ! ... then forgetting them to keep our restart files. 
          UStokes(:,:,2) = UStokes(:,:,1) 
@@ -546,7 +546,7 @@
             uu(:,:) = u(:,:,1,2) 
             vv(:,:) = v(:,:,1,2)
 
-            include 'subs/coupling_ww3.f90'
+            !!!MPI!!!include 'subs/coupling_ww3.f90'
          END IF
          ! <<< Modification CEL <<<
          !
@@ -732,7 +732,7 @@
      !===== time loop ends here
 
      ! MPI-COUPLING
-     CALL MPI_FINALIZE(ierror)
+     !!!MPI!!!CALL MPI_FINALIZE(ierror)
      ! MPI-COUPLING
      !include 'fftw_stuff/fft_destroy.f90'
     end program main

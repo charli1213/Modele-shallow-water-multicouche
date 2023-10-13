@@ -7,11 +7,7 @@
        array_x = u(:,:,k,3)
        array_y = v(:,:,k,3)
        include 'subs/no_normal_flow.f90'
-       if (free_slip) then 
-          include 'subs/free_slip.f90'
-       else
-          include 'subs/partial_slip.f90'
-       endif
+       include 'subs/free_or_partial_slip.f90'
        u(:,:,k,3) = array_x
        v(:,:,k,3) = array_y
 

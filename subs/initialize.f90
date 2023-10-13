@@ -306,11 +306,7 @@
           array_x(:,:) = u(:,:,k,1)
           array_y(:,:) = v(:,:,k,1)
           include 'subs/no_normal_flow.f90'
-          if (free_slip) then 
-             include 'subs/free_slip.f90'
-          else
-             include 'subs/partial_slip.f90'
-          endif
+          include 'subs/free_or_partial_slip.f90'
           u(:,:,k,1) = array_x(:,:)
           v(:,:,k,1) = array_y(:,:)
 

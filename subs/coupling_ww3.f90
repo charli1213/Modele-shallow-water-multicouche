@@ -85,11 +85,7 @@
   array_x = taux_oc(:,:,2)
   array_y = tauy_oc(:,:,2)
   INCLUDE 'subs/no_normal_flow.f90'
-  IF (free_slip) then 
-  INCLUDE 'subs/free_slip.f90'
-  ELSE
-  INCLUDE 'subs/partial_slip.f90'
-  ENDIF
+  INCLUDE 'subs/free_or_partial_slip.f90'
   taux_oc(:,:,2) = array_x
   tauy_oc(:,:,2) = array_y
 
@@ -108,11 +104,7 @@
   array_x = UStokes(:,:,2)
   array_y = VStokes(:,:,2)
   INCLUDE 'subs/no_normal_flow.f90'
-  IF (free_slip) then 
-  INCLUDE 'subs/free_slip.f90'
-  ELSE
-  INCLUDE 'subs/partial_slip.f90'
-  ENDIF
+  INCLUDE 'subs/free_or_partial_slip.f90'
   UStokes(:,:,2) = array_x
   VStokes(:,:,2) = array_y
 
