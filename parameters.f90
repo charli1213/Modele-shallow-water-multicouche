@@ -13,7 +13,7 @@
    
    parameter ( nx = 513,  ny = 513 ) ! 513
       
-   parameter ( nz = 3 )
+   parameter ( nz = 6 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
@@ -27,19 +27,19 @@
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
-   parameter ( r_drag = 1*1.e-7 , alpha = 0/1e6  ) ! Test de friction?
+   parameter ( r_drag = 1*1.e-7 , alpha = 0/1e6 ) ! Test de friction?
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
    parameter ( Ah2 = 1*1.e-7*dx**2, Ah4 = 0. ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( rf = 0.001*100 ) !0.001
+   parameter ( rf = 0.001*1 ) !0.001
  
    parameter ( c_bc = 2. )
       
   ! ---  Time ---
  
-   parameter ( dt = 300. )
+   parameter ( dt = 200. )
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  

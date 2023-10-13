@@ -39,7 +39,7 @@
       
   ! ---  Time ---
  
-   parameter ( dt = 300. )
+   parameter ( dt = 200. )
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
