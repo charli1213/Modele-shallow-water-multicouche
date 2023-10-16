@@ -179,9 +179,9 @@
           
        rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
        &              -  (vh(i,jp)-vh(i,j))/dy                        &  
-       &              -  top(k)*ramp*(                                &  ! div(uStokes*h)
+       &              -  top(k)*ramp*thickness(i,j)*(                 &  ! h*div(UStokes\HS)
        &                  (UStokes(ip1,j,2)-UStokes(i,j,2))/dx        &
-       &              +   (VStokes(i,jp,2) -VStokes(i,j,2))/dy  )
+       &              +   (VStokes(i,jp,2) -VStokes(i,j,2))/dy  )/HS
 
        enddo
        enddo

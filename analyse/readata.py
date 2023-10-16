@@ -369,9 +369,10 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        minday = 0
+        minday = 3
         maxday = 3600
-        outt = 1
+        outt = 4
+        dt = 1/288
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
         
@@ -383,7 +384,7 @@ if __name__ == "__main__" :
                          minday = minday,
                          maxday = maxday,
                          fields_to_open = fields,
-                         dt=0.125,
+                         dt=dt,
                          )
         anim(ds,
              filename="eta.gif",
@@ -396,7 +397,7 @@ if __name__ == "__main__" :
                          minday = minday,
                          maxday = maxday,
                          fields_to_open = ['taux_oc','tauy_oc','UStokes','VStokes','thickness1','u1'],
-                         dt=0.125,
+                         dt=dt,
                          )
 
 
