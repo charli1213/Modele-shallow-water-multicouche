@@ -31,7 +31,7 @@
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah2 = NAH*1.e-7*dx**2, Ah4 = 0. ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
+   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = NAH*1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
    parameter ( rf = 0.001*RFFF ) !0.001
  
@@ -39,7 +39,7 @@
       
   ! ---  Time ---
  
-   parameter ( dt = 200. )
+   parameter ( dt = 300. )
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  

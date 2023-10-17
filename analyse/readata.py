@@ -369,10 +369,10 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        minday = 3
+        minday = 1500
         maxday = 3600
         outt = 4
-        dt = 1/288
+        dt = 1/4
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
         
@@ -389,6 +389,7 @@ if __name__ == "__main__" :
         anim(ds,
              filename="eta.gif",
              satu=1,interval=125,
+
              )
 
         # Other fields :
@@ -396,7 +397,7 @@ if __name__ == "__main__" :
                          datapath='data/',
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = ['taux_oc','tauy_oc','UStokes','VStokes','thickness1','u1'],
+                         fields_to_open = ['taux_oc','tauy_oc','UStokes','zeta1','zeta2','zeta3'],
                          dt=dt,
                          )
 

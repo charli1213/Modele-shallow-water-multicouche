@@ -3,14 +3,14 @@
 # each of those separate files, then run them on the computer
 # Oxygen (McGill computer).
 
-workdir=/storage/celizotte/work_pas_de_temps
+workdir=/storage/celizotte/test_visco
 model_path=~/Desktop/Modele-shallow-water-multicouches
 
 
 echo "Cases files are created in ${workdir}."
-nz_array=(3 4 5 6)
+nz_array=(3)
 drag_array=(1)
-visc_array=(1)
+visc_array=(1 2 5 10 50)
 part_slip=(0)
 robert_filter=(1)
 
@@ -38,7 +38,7 @@ do
 
 		    # Deleteing old cases and creating new cases :
 		    # (see create_case_oxygen). 
-		    case_dir=$workdir/test_${nz}layers_rf${rf}_dt200
+		    case_dir=$workdir/test_${nz}layers_visc${nah}
 		    rm -r $case_dir 2> /dev/null
 		    cp -r $model_path/newcase $case_dir
 		    echo "File created at ${case_dir}"
