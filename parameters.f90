@@ -11,15 +11,15 @@
 
    parameter ( Htot = 4000. )
    
-   parameter ( nx = 513,  ny = 513 ) ! 513
+   parameter ( nx = 514,  ny = 514 ) ! 514
       
    parameter ( nz = 3 )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
-   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 514
+   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 515
 
-   parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 512
+   parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 513
    
    ! --- Physical parameters ---
  
@@ -43,7 +43,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 8) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -62,7 +62,7 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .true., cut_days = 2)
+   parameter ( use_ramp = .false., cut_days = 0)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -74,5 +74,7 @@
    parameter ( cou=.true. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
    
    parameter ( ustar=.true., waves=.true., stokes=.true.) !!! Coupling activation.
+
+   parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
    parameter ( step = 0.0 )

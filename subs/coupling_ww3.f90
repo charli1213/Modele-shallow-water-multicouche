@@ -4,9 +4,9 @@
 
   PRINT *, "SW model :::::: its :",its
 
-  tauww3ust(:,:,:)   = 0.
-  tauww3waves(:,:,:) = 0.
-  Tstokes(:,:,:)     = 0.
+  WW3tauUst(:,:,:)   = 0.
+  WW3tauWaves(:,:,:) = 0.
+  WW3Ustokes(:,:,:)  = 0.
   cur2WW3(:,:,:)     = 0.
   
   ! Re-initialising each field before interpolating (mandatory).
@@ -24,10 +24,26 @@
   !      of the walls. 
   DO j=1,nym1
   DO i=1,nxm1
-     cur2WW3(i,j,1) = (uu(i,j) + uu(i+1,j))/2
-     cur2WW3(i,j,2) = (vv(i,j) + vv(i,j+1))/2
+     large_cur2WW3(i,j,1) = (uu(i,j) + uu(i+1,j))/2
+     large_cur2WW3(i,j,2) = (vv(i,j) + vv(i,j+1))/2
   ENDDO
   ENDDO
+
+  ! LIMITING RESOLUTION
+  ! Taking mean qties because the grid to WW3 is smaller (Hardware consideration)
+  DO j=1,nycou
+     jj = 1 + mpiratio*(j-1)
+     jp1 = mpiratio*j
+  DO i=1,nxcou
+     ii = 1 + mpiratio*(i-1)
+     ip1 = mpiratio*i
+     cur2WW3(i,j,1) = sum(RESHAPE(large_cur2WW3(ii:ip1,jj:jp1,1), &
+          &                       (/mpiratio**2, 1/))) / (mpiratio**2)
+     cur2WW3(i,j,2) = sum(RESHAPE(large_cur2WW3(ii:ip1,jj:jp1,2), &
+          &                       (/mpiratio**2, 1/))) / (mpiratio**2)
+  ENDDO
+  ENDDO
+
   
   ! --- MPI_SEND BLOC ::
   ! Sending currents to Wavewatch III.
@@ -46,14 +62,24 @@
   ! --- MPI_RECEIVE BLOC ::
   ! Receiving surface stresses from Wavewatch III (and Stokes' transport).
   PRINT *, 'SW model [ proc ',numprocs,'] :: Wainting for forcings.'
-  CALL MPI_RECV(    Tstokes(1:nxm1, 1:nym1, :), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3Ustokes (1:nxcou, 1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-  CALL MPI_RECV(  tauww3ust(1:nxm1 ,1:nym1, :), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3tauUst  (1:nxcou ,1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-  CALL MPI_RECV(tauww3waves(1:nxm1 ,1:nym1 ,:), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3tauWaves(1:nxcou ,1:nycou ,:), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
   PRINT *, 'SW model [ proc ',numprocs,'] :: Forcings received.'  
   CALL MPI_Barrier(MPI_COMM_WORLD, ierror)
+
+  
+!!! interpolation on bigger grid.
+  
+  call geometric_interpolation(WW3Ustokes(:,:,1),  large_WW3Ustokes (1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3Ustokes(:,:,2),  large_WW3Ustokes (1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3tauUst(:,:,1),   large_WW3tauUst  (1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3tauUst(:,:,2),   large_WW3tauUst  (1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3tauWaves(:,:,1), large_WW3tauWaves(1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3tauWaves(:,:,2), large_WW3tauWaves(1:,1:,2), nxcou, nxm1)
 
   
   !!! Interpolating from Arakawa-B to Arakawa-C grid.
@@ -61,8 +87,8 @@
   IF (ustar) THEN
   DO j = 1,ny-1
   DO i = 1,nx-1
-     taux_ust(i,j) = ( tauww3ust(i,j,1) + tauww3ust(i-1,j,1) )/2
-     tauy_ust(i,j) = ( tauww3ust(i,j,2) + tauww3ust(i,j-1,2) )/2
+     taux_ust(i,j) = ( large_WW3tauUst(i,j,1) + large_WW3tauUst(i-1,j,1) )/2
+     tauy_ust(i,j) = ( large_WW3tauUst(i,j,2) + large_WW3tauUst(i,j-1,2) )/2
   END DO
   END DO
   END IF
@@ -71,8 +97,8 @@
   IF (waves) THEN
   DO i = 1,nx-1
   DO j = 1,ny-1
-     taux_waves(i,j) = ( tauww3waves(i,j,1) + tauww3waves(i-1,j,1) )/2
-     tauy_waves(i,j) = ( tauww3waves(i,j,2) + tauww3waves(i,j-1,2) )/2
+     taux_waves(i,j) = ( large_WW3tauWaves(i,j,1) + large_WW3tauWaves(i-1,j,1) )/2
+     tauy_waves(i,j) = ( large_WW3tauWaves(i,j,2) + large_WW3tauWaves(i,j-1,2) )/2
   END DO
   END DO
   END IF
@@ -94,8 +120,8 @@
   IF (stokes) THEN
   DO i = 1,nx-1
   DO j = 1,ny-1
-     UStokes(i,j,2)  = (Tstokes(i,j,1) + Tstokes(i-1,j,1) )/2
-     VStokes(i,j,2)  = (Tstokes(i,j,2) + Tstokes(i,j-1,2) )/2
+     UStokes(i,j,2)  = (large_WW3Ustokes(i,j,1) + large_WW3Ustokes(i-1,j,1) )/2
+     VStokes(i,j,2)  = (large_WW3Ustokes(i,j,2) + large_WW3Ustokes(i,j-1,2) )/2
   END DO
   END DO
   END IF

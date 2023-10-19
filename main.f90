@@ -27,12 +27,12 @@
 
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
-      ! integer nghost, ng2
       LOGICAL cou, ustar, waves, stokes
       REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
       CHARACTER(80) :: err_str
       INTEGER :: MPI_SECOND
+      INTEGER :: nxcou, nycou, mpiratio
       ! <<< Defining WAVEWATCH III coupling variables (End) <<<
       !
       
@@ -111,10 +111,14 @@
       
       !!! ----------- WW3 Coupling qties ----------- !!!
       ! Send/receive quantities
-      REAL :: cur2WW3     (1:nxm1, 1:nym1, 2) ! Current sent to WW3.
-      REAL :: Tstokes     (0:nx,   0:ny,   2) ! Stokes' transport received.
-      REAL :: tauww3ust   (0:nx,   0:ny,   2) ! Directly received from WW3.
-      REAL :: tauww3waves (0:nx,   0:ny,   2) ! Directly received from WW3.
+      REAL :: large_cur2WW3    (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3Ustokes (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3tauUst  (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3tauWaves(0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: cur2WW3      (1:nxcou,1:nycou,2) ! Current sent to WW3.
+      REAL :: WW3Ustokes   (1:nxcou,1:nycou,2) ! Stokes' transport received.
+      REAL :: WW3tauUst    (1:nxcou,1:nycou,2) ! Directly received from WW3.
+      REAL :: WW3tauWaves  (1:nxcou,1:nycou,2) ! Directly received from WW3.
 
       ! Interpolated quantities from A-grid to C-grid.
       REAL :: taux_ust(0:nnx,0:ny),   tauy_ust(0:nx,0:nny)
@@ -214,7 +218,7 @@
       !real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
       !real sgn1,tmp2,tmp3
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
-      integer i, j, k, ii, jj, kk, ip1, im, jp, jm, kp, km
+      integer i, j, k, ii, jj, kk, ip1, im, jp, jm, kp, km, jp1
       integer ilevel, itt,  it, its, imode, ntimes, inkrow
       integer ijposition(2)
       real*4 tstime(1:ntsrow)
@@ -258,7 +262,7 @@
       
       ! >>> Modification CEL >>>
       IF (cou) THEN
-         mpi_grid_size = nxm1*nym1
+         mpi_grid_size = nxcou*nycou
          
          !!!  --- Starting MPI --- !!!
          CALL MPI_INIT(ierror)
@@ -981,7 +985,7 @@ FUNCTION gasdev(idum)
    enddo
 
    
-   ! 3. Applying interpolation stencil.
+   ! 4. Applying interpolation stencil.
    mat_out = mat_mid
    do jout = 1+j0,n_out-j0
       jms = jout - j0
@@ -1003,7 +1007,7 @@ FUNCTION gasdev(idum)
    enddo
    enddo
 
-   ! Boundarie conditions.
+   ! 5. Boundaries
    mat_out(1,:) = mat_out(2,:)/2
    mat_out(:,1) = mat_out(:,2)/2
    mat_out(:,n_nout) = mat_out(:,n_out-1)/2

@@ -229,13 +229,13 @@
      ! putting stuff on tiny matrix (C'est pas bon ça. C'est juste pour voir)
      !UStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,1)
      !VStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,2)
-     !taux_oc_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,1)
-     !tauy_oc_out(:szsubx-1,:szsuby-1) = tauww3ust2(1:,1:,2)
+     !taux_oc_out(:szsubx-1,:szsuby-1) = WW3tauUst2(1:,1:,1)
+     !tauy_oc_out(:szsubx-1,:szsuby-1) = WW3tauUst2(1:,1:,2)
      
      !UStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 1)
      !VStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 2)
-     !taux_oc_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 1)
-     !tauy_oc_out(1:nx_cou-1, 1:ny_cou-1) = tauww3ust(1:nx_cou-1 ,1:ny_cou-1, 2)
+     !taux_oc_out(1:nx_cou-1, 1:ny_cou-1) = WW3tauUst(1:nx_cou-1 ,1:ny_cou-1, 1)
+     !tauy_oc_out(1:nx_cou-1, 1:ny_cou-1) = WW3tauUst(1:nx_cou-1 ,1:ny_cou-1, 2)
      
      ! U Stokes
      string25 =  './data/UStokes'  // '_' // trim(which)
