@@ -27,11 +27,11 @@
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
-   parameter ( r_drag = 1*1.e-7 , alpha = 0/1e6, free_slip = .true. ) ! Test de friction?
+   parameter ( r_drag = 1*1.e-7 , alpha = 0/1e6 ) ! Test de friction?
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah2 = 1*1.e-7*dx**2, Ah4 = 0. ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
+   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
    parameter ( rf = 0.001 ) !0.001
  

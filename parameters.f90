@@ -17,7 +17,7 @@
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
-   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 513
+   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 514
 
    parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 512
    
@@ -31,9 +31,9 @@
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 50*1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
+   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( rf = 0.001*1 ) !0.001
+   parameter ( rf = 0.001 ) !0.001
  
    parameter ( c_bc = 2. )
       
@@ -43,7 +43,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 8) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -62,17 +62,17 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false., cut_days = 2)
+   parameter ( use_ramp = .true., cut_days = 2)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
    parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.false.)
-   parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.false.)
+   parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.true.)
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.false. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
-
-   parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
+   parameter ( cou=.true. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
+   
+   parameter ( ustar=.true., waves=.true., stokes=.true.) !!! Coupling activation.
    
    parameter ( step = 0.0 )
