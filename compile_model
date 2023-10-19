@@ -22,7 +22,8 @@ then
     model_path=/home/charlesedouard/Desktop/Travail/modelSW
     lapack_path=/usr/lib/x86_64-linux-gnu/lapack
     fishpack_path=/home/charlesedouard/Desktop/Travail/fishpack/lib
-    compiler="gfortran"
+    #compiler="gfortran"
+    compiler="mpifort"
     opt="-L/usr/lib -lblas -llapack  -L$fishpack_path -lfishpack -I$fishpack_path"
     main=$model_path/main.f90
     # casefile

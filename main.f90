@@ -918,47 +918,96 @@ FUNCTION gasdev(idum)
  !END SUBROUTINE interp_matrix
 
 
- SUBROUTINE interp_2d(matin,matout,nin,nout)
-   use data_initial
-   real, dimension(nin,nin),   intent(in)  :: matin
-   real, dimension(nout,nout), intent(out) :: matout
-   integer :: i,j, im1, ip1, jm1, jp1
+ 
+ SUBROUTINE geometric_interpolation(mat_in, mat_out, n_in, n_out)
+   ! This subroutine takes a small matrix (mat_in) and geometricly interpolate an
+   ! a big matrix out of it. Interpolation is done with stencil ratio over the
+   ! small grid. 
+   integer, intent(in) :: n_in, n_out
+   real, dimension(n_in,n_in),   intent(in)  :: mat_in
+   real, dimension(n_out,n_out), intent(out) :: mat_out
+   real, dimension(n_out,n_out) :: mat_mid
+   real, allocatable :: weight(:,:), stencil_mat(:,:)
+   integer :: iin, jin, iout, jout, i, j
+   integer :: ips, ims, jps, jms
+   integer :: ratio, stencil_size, sarea ! Ratio is also the stencil size!
+   integer :: i0,j0
+   real    :: delta, square_sum
    
-   if (2*nin.eq.nout) then
-      
-      ! Center of grid :
-      DO j=1,nin-1
-         jp1 = j+1
-      DO i=1,nin-1
-         ip1 = i+1
-
-         matout(2*i,2*j) = matin(i,j) + 0.25*( matin(ip1,j) - matin(i,j)) &
-              &                       + 0.25*( matin(i,jp1) - matin(i,j))
-         matout(2*i,2*j+1) = matin(i,jp1) + 0.25*( matin(ip1,jp1) - matin(i,jp1)) &
-              &                           - 0.25*( matin(i,  jp1) - matin(i,  j))
-         matout(2*i+1,2*j) = matin(ip1,j) - 0.25*( matin(ip1,j)   - matin(i,  j))   &
-              &                           + 0.25*( matin(ip1,jp1) - matin(ip1,j))
-         matout(2*i+1,2*j+1) = matin(ip1,jp1) - 0.25*( matin(ip1,jp1) - matin(i,jp1)) &
-              &                               - 0.25*( matin(ip1,jp1) - matin(ip1,j))
-      ENDDO
-      ENDDO
-
-
-      ! Extrapolation :
-      matout(1,:)    = matout(2,:)/2
-      matout(:,1)    = matout(:,2)/2
-      matout(nout,:) = matout(nout-1,:)/2
-      matout(:,nout) = matout(:,nout-1)/2
-
-      ! Coins : 
-      matout(1,1) = 0.5*(matout(2,1) + matout(1,2))
-      matout(nout,1) = 0.5*(matout(nout-1,1) + matout(nout,2))
-      matout(1,nout) = 0.5*(matout(2,nout) + matout(1,nout-1))
-      matout(nout,nout) = 0.5*(matout(nout-1,nout) + matout(nout,nout-1))
-
+   ! 1. Finding stencil size. 
+   delta = (real(n_out)/n_in)
+   if (mod(delta,1.).lt.0.001) then
+      ratio = nint(delta)
+      sarea = ratio**2
    else
-      write (*,*) " Wrong interpolation "
+      print *,"geometric interpolation :: Size problem. n_out must be a multiple of n_in"
       stop
    end if
+
    
- END SUBROUTINE interp_2d
+   ! 2. i0 and j0 are stencil radii in terme of indices.
+   if (mod(ratio,2) .eq. 0) then
+      ! If ratio is even :
+      stencil_size = ratio+1      
+      i0 = ratio/2
+      j0 = i0
+      allocate(stencil_mat(stencil_size,stencil_size))
+      allocate(weight(stencil_size,stencil_size))
+      weight(:,:) = 1.
+      weight(1,:)            = 0.5*weight(1,:)
+      weight(stencil_size,:) = 0.5*weight(stencil_size,:)
+      weight(:,1)            = 0.5*weight(:,1)
+      weight(:,stencil_size) = 0.5*weight(:,stencil_size)
+   else
+      ! If ratio is odd (way easier) :
+      stencil_size = ratio
+      i0 = (ratio+1)/2
+      j0 = i0
+      allocate(stencil_mat(stencil_size,stencil_size))
+      allocate(weight(stencil_size,stencil_size))
+      weight(:,:) = 1.
+   endif
+
+   
+   ! 3. Filling intermediate matrix : mat_mid
+   ! N.B. now general for odd and even ratios.
+   do jin = 1,n_in
+      jout = 1 + (jin-1)*ratio   
+   do iin = 1,n_in
+      iout = 1 + (iin-1)*ratio
+      ! Creating square bins on mat_mid.
+      mat_mid(iout:ratio*iin,jout:ratio*jin) = mat_in(iin,jin)
+   enddo
+   enddo
+
+   
+   ! 3. Applying interpolation stencil.
+   mat_out = mat_mid
+   do jout = 1+j0,n_out-j0
+      jms = jout - j0
+      jps = jout + j0
+   do iout = 1+i0,n_out-i0
+      ims = iout - i0
+      ips = iout + i0
+      
+      ! Summing values on the stencil.
+      square_sum = 0.
+      stencil_mat = mat_mid(ims:ips, jms:jps)
+      do j = 1,stencil_size
+      do i = 1,stencil_size
+         square_sum = square_sum + weight(i,j)*stencil_mat(i,j)
+      enddo
+      enddo
+      mat_out(iout,jout) = square_sum/sarea
+      
+   enddo
+   enddo
+
+   ! Boundarie conditions.
+   mat_out(1,:) = mat_out(2,:)/2
+   mat_out(:,1) = mat_out(:,2)/2
+   mat_out(:,n_nout) = mat_out(:,n_out-1)/2
+   mat_out(n_nout,:) = mat_out(n_out-1,:)/2
+   
+
+ END SUBROUTINE geometric_interpolation

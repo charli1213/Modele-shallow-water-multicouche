@@ -88,7 +88,6 @@
        
     end do ! end of k-loop
 
-
     
   end if !IO_field
 
