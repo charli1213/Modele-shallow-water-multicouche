@@ -46,6 +46,12 @@
        top(1) = 1.
        bot(nz) = 1.
 
+     ! mass transfert arrays 
+       mass_mask(:,  :) = 0.
+       mass_mask(2:4,:) = 1.
+       mass_mask(:,2:4) = 1.
+       mass_mask(2:4,2:4) = 2.
+       mass_mask(3,3) = 0.
        !count_specs_1 = 0
        !count_specs_2 = 0
        !count_specs_to = 0

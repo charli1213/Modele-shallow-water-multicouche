@@ -166,6 +166,8 @@
       DOUBLE PRECISION :: elmbda, pertrb ! Fishpack (Parameters)
       DOUBLE PRECISION :: bda(1), bdb(1), bdc(1), bdd(1) ! Fishpack (Newmann bndy)
       INTEGER          :: mbdcnd, nbdcnd ! Fishpack (boundary type)
+      REAL :: mass_mask(5,5)             ! horizontal mass transfert
+      INTEGER :: leftpad, rightpad, toppad, botpad ! horizontal mass transfert
       
       
       ! Baroclinic/Barotropic modes/solutions with LAPACK (see initialise.f90) : 
@@ -218,9 +220,10 @@
       !real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
       !real sgn1,tmp2,tmp3
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
-      integer i, j, k, ii, jj, kk, ip1, im, jp, jm, kp, km, jp1
+      integer i, j, k, ii, jj, kk,    ip, im, jp, jm, kp, km
+      integer ip1, im1, jp1, jm1
       integer ilevel, itt,  it, its, imode, ntimes, inkrow
-      integer ijposition(2)
+      integer ijposition(2), ipos, jpos, lgap, rgap, tgap, bgap, mask_norm, mask_size ! mass transfert
       real*4 tstime(1:ntsrow)
       
       !subsampling arrays (I/O)

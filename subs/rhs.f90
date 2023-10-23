@@ -1,6 +1,12 @@
 
   
        tmp(1) = minval(thickness)/H(k)
+
+       ! Mass transfert
+       if(tmp(1).le.0.15) then ! 15%
+          include 'subs/mass_transfert.f90'
+       endif
+          
        if(tmp(1).le.0.02) then
           print*, 'its',its
           print*, k,'thickness too small'
