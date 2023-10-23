@@ -41,7 +41,8 @@ then
     compiler="mpifort"
     module load gcc
     module load openmpi
-    opt="-fbacktrace -Wall -fcheck=all -lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path"
+    opt=" -fbacktrace -Wall -fcheck=all"
+    opt=" -lflexiblas  -L$fishpack_path -lfishpack -I$fishpack_path"
     main=$model_path/main.f90
     # casefile
     case=newcase

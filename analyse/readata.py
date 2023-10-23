@@ -369,10 +369,10 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        minday = 1500
+        minday = 0
         maxday = 3600
-        outt = 4
-        dt = 1/4
+        outt = 1
+        dt = 1/288
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
         

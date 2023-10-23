@@ -43,7 +43,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -62,7 +62,7 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false., cut_days = 0)
+   parameter ( use_ramp = .true., cut_days = 2)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -71,7 +71,7 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.true. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
+   parameter ( cou=.false. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
    
    parameter ( ustar=.true., waves=.true., stokes=.true.) !!! Coupling activation.
 

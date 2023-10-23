@@ -1010,8 +1010,8 @@ FUNCTION gasdev(idum)
    ! 5. Boundaries
    mat_out(1,:) = mat_out(2,:)/2
    mat_out(:,1) = mat_out(:,2)/2
-   mat_out(:,n_nout) = mat_out(:,n_out-1)/2
-   mat_out(n_nout,:) = mat_out(n_out-1,:)/2
+   mat_out(:,n_out) = mat_out(:,n_out-1)/2
+   mat_out(n_out,:) = mat_out(n_out-1,:)/2
    
 
  END SUBROUTINE geometric_interpolation
