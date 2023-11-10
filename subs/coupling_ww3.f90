@@ -4,10 +4,11 @@
 
   PRINT *, "SW model :::::: its :",its
 
-  WW3tauUst(:,:,:)   = 0.
-  WW3tauWaves(:,:,:) = 0.
-  WW3Ustokes(:,:,:)  = 0.
-  cur2WW3(:,:,:)     = 0.
+  WW3tauUst(:,:,:)  = 0.
+  WW3tauIN(:,:,:)   = 0.
+  WW3tauDS(:,:,:)   = 0.
+  WW3Ustokes(:,:,:) = 0.
+  cur2WW3(:,:,:)    = 0.
   
   ! Re-initialising each field before interpolating (mandatory).
   ! Received quantities
@@ -62,24 +63,29 @@
   ! --- MPI_RECEIVE BLOC ::
   ! Receiving surface stresses from Wavewatch III (and Stokes' transport).
   PRINT *, 'SW model [ proc ',numprocs,'] :: Wainting for forcings.'
-  CALL MPI_RECV(WW3Ustokes (1:nxcou, 1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3Ustokes(1:nxcou, 1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-  CALL MPI_RECV(WW3tauUst  (1:nxcou ,1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3tauUst (1:nxcou ,1:nycou, :), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-  CALL MPI_RECV(WW3tauWaves(1:nxcou ,1:nycou ,:), 2*mpi_grid_size, MPI_REAL, &
+  CALL MPI_RECV(WW3tauDS  (1:nxcou ,1:nycou ,:), 2*mpi_grid_size, MPI_REAL, &
        &        numprocs-2, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+  CALL MPI_RECV(WW3tauIN  (1:nxcou ,1:nycou ,:), 2*mpi_grid_size, MPI_REAL, &
+       &        numprocs-2, 6, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+
   PRINT *, 'SW model [ proc ',numprocs,'] :: Forcings received.'  
   CALL MPI_Barrier(MPI_COMM_WORLD, ierror)
 
   
 !!! interpolation on bigger grid.
   
-  call geometric_interpolation(WW3Ustokes(:,:,1),  large_WW3Ustokes (1:,1:,1), nxcou, nxm1)
-  call geometric_interpolation(WW3Ustokes(:,:,2),  large_WW3Ustokes (1:,1:,2), nxcou, nxm1)
-  call geometric_interpolation(WW3tauUst(:,:,1),   large_WW3tauUst  (1:,1:,1), nxcou, nxm1)
-  call geometric_interpolation(WW3tauUst(:,:,2),   large_WW3tauUst  (1:,1:,2), nxcou, nxm1)
-  call geometric_interpolation(WW3tauWaves(:,:,1), large_WW3tauWaves(1:,1:,1), nxcou, nxm1)
-  call geometric_interpolation(WW3tauWaves(:,:,2), large_WW3tauWaves(1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3Ustokes(:,:,1), large_WW3Ustokes(1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3Ustokes(:,:,2), large_WW3Ustokes(1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3tauUst(:,:,1),  large_WW3tauUst (1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3tauUst(:,:,2),  large_WW3tauUst (1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3tauDS(:,:,1),   large_WW3tauDS  (1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3tauDS(:,:,2),   large_WW3tauDS  (1:,1:,2), nxcou, nxm1)
+  call geometric_interpolation(WW3tauIN(:,:,1),   large_WW3tauIN  (1:,1:,1), nxcou, nxm1)
+  call geometric_interpolation(WW3tauIN(:,:,2),   large_WW3tauIN  (1:,1:,2), nxcou, nxm1)
 
   
   !!! Interpolating from Arakawa-B to Arakawa-C grid.
@@ -93,19 +99,21 @@
   END DO
   END IF
   
-  ! Interpolating stress from the wavefield (tau_ds - tau_in).
+  ! Interpolating stress from the wavefield rho_atm*(tau_ds - tau_in).
   IF (waves) THEN
   DO i = 1,nx-1
   DO j = 1,ny-1
-     taux_waves(i,j) = ( large_WW3tauWaves(i,j,1) + large_WW3tauWaves(i-1,j,1) )/2
-     tauy_waves(i,j) = ( large_WW3tauWaves(i,j,2) + large_WW3tauWaves(i,j-1,2) )/2
+     taux_IN(i,j) = rho_atm*( large_WW3tauIN(i,j,1) + large_WW3tauIN(i-1,j,1) )/2
+     tauy_IN(i,j) = rho_atm*( large_WW3tauIN(i,j,2) + large_WW3tauIN(i,j-1,2) )/2
+     taux_DS(i,j) = rho_atm*( large_WW3tauDS(i,j,1) + large_WW3tauDS(i-1,j,1) )/2
+     tauy_DS(i,j) = rho_atm*( large_WW3tauDS(i,j,2) + large_WW3tauDS(i,j-1,2) )/2
   END DO
   END DO
   END IF
 
   ! Adding both effects together (and applying no-normal flow & free slip)
-  taux_oc(:,:,2) = taux_ust(:,:) + taux_waves(:,:)
-  tauy_oc(:,:,2) = tauy_ust(:,:) + tauy_waves(:,:)
+  taux_oc(:,:,2) = taux_ust(:,:) - (taux_IN(:,:) - taux_DS(:,:))
+  tauy_oc(:,:,2) = tauy_ust(:,:) - (tauy_IN(:,:) - tauy_DS(:,:))
 
   ! Boundary conditions :
   array_x = taux_oc(:,:,2)

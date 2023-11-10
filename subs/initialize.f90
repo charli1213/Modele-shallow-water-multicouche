@@ -5,8 +5,10 @@
        tauy_oc(:,:,:) = 0.
        taux_ust(:,:) = 0.
        tauy_ust(:,:) = 0.
-       taux_waves(:,:) = 0.
-       tauy_waves(:,:) = 0.
+       taux_IN(:,:) = 0.
+       tauy_IN(:,:) = 0.
+       taux_DS(:,:) = 0.
+       tauy_DS(:,:) = 0.
        UStokes(:,:,:) = 0.
        VStokes(:,:,:) = 0. 
      ! Model arrays >>>
@@ -47,11 +49,24 @@
        bot(nz) = 1.
 
      ! mass transfert arrays 
-       mass_mask(:,  :) = 0.
-       mass_mask(2:4,:) = 1.
-       mass_mask(:,2:4) = 1.
-       mass_mask(2:4,2:4) = 2.
-       mass_mask(3,3) = 0.
+       mass_window(:,  :) = 0.
+       mass_coef = 1.09184184635878
+       do i = -4,4
+       do j = -4,4
+          r = sqrt(real(i**2 + j**2))
+          if ((r/9).gt.0.51) then
+             mass_window(i+5,j+5) = 0.
+          else
+             mass_window(i+5,j+5) = COS( (1.5*twopi) * r/9)*EXP(-r/mass_coef)
+          endif
+       enddo
+       enddo
+       !!!mass_window(:,  :) = 0.
+       !!!mass_window(2:4,:) = 1.
+       !!!mass_window(:,2:4) = 1.
+       !!!mass_window(2:4,2:4) = 2.
+       !!!mass_window(3,3) = 0.
+
        !count_specs_1 = 0
        !count_specs_2 = 0
        !count_specs_to = 0
@@ -94,6 +109,9 @@
           print *, ' H(',TRIM(k_str),')   =  ',H(k)
        end do
 
+       ! Stokes' thickness :
+       !HS = Htot
+       HS(:,:) = H(1)
        
        ! >>> Setting densities :
        print *, 'Setting densities :'

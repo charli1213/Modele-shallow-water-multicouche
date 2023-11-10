@@ -369,10 +369,10 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        minday = 0
+        minday = 4
         maxday = 3600
-        outt = 1
-        dt = 1/288
+        outt = 4
+        dt = 1/4
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
         
@@ -387,20 +387,20 @@ if __name__ == "__main__" :
                          dt=dt,
                          )
         anim(ds,
-             filename="eta.gif",
-             satu=1,interval=125,
-
+             satu=1,interval=50,
+             savefig=False,
+             filename='thickness_anim.gif',
              )
 
         # Other fields :
-        ds = tls.bintods(outt = outt,
-                         datapath='data/',
-                         minday = minday,
-                         maxday = maxday,
-                         fields_to_open = ['taux_oc','tauy_oc','UStokes','zeta1','zeta2','zeta3'],
-                         dt=dt,
-                         )
-
+        ##ds = tls.bintods(outt = outt,
+        ##                 datapath='data/',
+        ##                 minday = minday,
+        ##                 maxday = maxday,
+        ##                 fields_to_open = ['taux_IN','taux_DS','taux_UST','divTauIN','zetaTauIN'],
+        ##                 dt=dt,
+        ##)
+        
 
 
         

@@ -216,64 +216,160 @@
   
   if (IO_coupling) then
 
-     UStokes_out(:,:) = 0.
-     VStokes_out(:,:) = 0.
-     taux_oc_out(:,:) = 0.
-     tauy_oc_out(:,:) = 0.
+     ! Setting fields : 
+     UStokes_out(:,:)  = 0.
+     VStokes_out(:,:)  = 0.
+     taux_ust_out(:,:) = 0.
+     tauy_ust_out(:,:) = 0.
+     taux_IN_out(:,:)  = 0.
+     tauy_IN_out(:,:)  = 0.
+     taux_DS_out(:,:)  = 0.
+     tauy_DS_out(:,:)  = 0.
      
-     UStokes_out(:,:) = UStokes(isubx,isuby,2)
-     VStokes_out(:,:) = VStokes(isubx,isuby,2)
-     taux_oc_out(:,:) = taux_oc(isubx,isuby,2)
-     tauy_oc_out(:,:) = tauy_oc(isubx,isuby,2)
-
-     ! putting stuff on tiny matrix (C'est pas bon ça. C'est juste pour voir)
-     !UStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,1)
-     !VStokes_out(:szsubx-1,:szsuby-1) = Tstokes2(1:,1:,2)
-     !taux_oc_out(:szsubx-1,:szsuby-1) = WW3tauUst2(1:,1:,1)
-     !tauy_oc_out(:szsubx-1,:szsuby-1) = WW3tauUst2(1:,1:,2)
-     
-     !UStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 1)
-     !VStokes_out   (1:nx_cou-1, 1:ny_cou-1) =   TStokes(1:nx_cou-1, 1:ny_cou-1, 2)
-     !taux_oc_out(1:nx_cou-1, 1:ny_cou-1) = WW3tauUst(1:nx_cou-1 ,1:ny_cou-1, 1)
-     !tauy_oc_out(1:nx_cou-1, 1:ny_cou-1) = WW3tauUst(1:nx_cou-1 ,1:ny_cou-1, 2)
+     UStokes_out(:,:)  = UStokes(isubx,isuby,2)
+     VStokes_out(:,:)  = VStokes(isubx,isuby,2)
+     taux_ust_out(:,:) = taux_ust(isubx,isuby)
+     tauy_ust_out(:,:) = tauy_ust(isubx,isuby)
+     taux_IN_out(:,:)  = taux_IN(isubx, isuby)
+     tauy_IN_out(:,:)  = tauy_IN(isubx, isuby)
+     taux_DS_out(:,:)  = taux_DS(isubx, isuby)
+     tauy_DS_out(:,:)  = tauy_DS(isubx, isuby)
      
      ! U Stokes
-     string25 =  './data/UStokes'  // '_' // trim(which)
-     open(unit=125,file=string25,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(125,REC=1) ((UStokes_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(125)
+     IF (stokes) THEN
+        
+        string25 =  './data/UStokes'  // '_' // trim(which)
+        open(unit=125,file=string25,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(125,REC=1) ((UStokes_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(125)
+        
+        string26 =  './data/VStokes'  // '_' // trim(which)
+        open(unit=126,file=string26,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(126,REC=1) ((VStokes_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(126)
+        
+        array_x(:,:) = UStokes(:,:,2)
+        array_y(:,:) = VStokes(:,:,2)
+        include 'subs/div_and_curl.f90'
+        
+        ! Divergence 
+        string33 =  './data/divUStokes'  // '_' // trim(which)
+        open(unit=133,file=string33,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(133,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(133)
 
-     string26 =  './data/VStokes'  // '_' // trim(which)
-     open(unit=126,file=string26,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(126,REC=1) ((VStokes_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(126)
-
-     !string27 = './data/taux_eff'  // '_' // trim(which)
-     !open(unit=127,file=string27,access='DIRECT',&
-     !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(127,REC=1) ((taux_eff(i,j),i=1,szsubx),j=1,szsuby)
-     !close(127)
-
-     !string28 = './data/tauy_eff'  // '_' // trim(which)
-     !open(unit=128,file=string28,access='DIRECT',&
-     !     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !write(128,REC=1) ((tauy_eff(i,j),i=1,szsubx),j=1,szsuby)
-     !close(128)
-
-     string29 =  './data/taux_oc'  // '_' // trim(which)
-     open(unit=129,file=string29,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(129,REC=1) ((taux_oc_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(129)
+        ! Curl
+        string34 =  './data/curlUStokes'  // '_' // trim(which)
+        open(unit=134,file=string34,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(134,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(134)
      
-     string30 =  './data/tauy_oc'  // '_' // trim(which)
-     open(unit=130,file=string30,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(130,REC=1) ((tauy_oc_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(130)
-     
+     ENDIF
+
+     ! Friction velocity
+     IF (ustar) THEN
+        
+        string27 = './data/taux_ust'  // '_' // trim(which)
+        open(unit=127,file=string27,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(127,REC=1) ((taux_ust(i,j),i=1,szsubx),j=1,szsuby)
+        close(127)
+        
+        string28 = './data/tauy_ust'  // '_' // trim(which)
+        open(unit=128,file=string28,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(128,REC=1) ((tauy_ust(i,j),i=1,szsubx),j=1,szsuby)
+        close(128)
+        
+        array_x = taux_ust
+        array_y = tauy_ust
+        include 'subs/div_and_curl.f90'
+        
+        ! Divergence 
+        string33 =  './data/divTauUST'  // '_' // trim(which)
+        open(unit=133,file=string33,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(133,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(133)
+
+        ! Curl
+        string34 =  './data/curlTauUST'  // '_' // trim(which)
+        open(unit=134,file=string34,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(134,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(134)
+
+     ENDIF
+
+
+     IF (waves) THEN
+        ! > Wave-supported stress
+        string29 =  './data/taux_IN'  // '_' // trim(which)
+        open(unit=129,file=string29,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(129,REC=1) ((taux_IN_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(129)
+        
+        string30 =  './data/tauy_IN'  // '_' // trim(which)
+        open(unit=130,file=string30,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(130,REC=1) ((tauy_IN_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(130)
+   
+        array_x = taux_IN
+        array_y = tauy_IN
+        include 'subs/div_and_curl.f90'
+        
+        ! Divergence 
+        string35 =  './data/divTauIN'  // '_' // trim(which)
+        open(unit=135,file=string35,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(135,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(135)
+
+        ! Curl
+        string36 =  './data/curlTauIN'  // '_' // trim(which)
+        open(unit=136,file=string36,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(136,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(136)
+        
+        ! > Wave induced stress
+        string31 =  './data/taux_DS'  // '_' // trim(which)
+        open(unit=131,file=string31,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(131,REC=1) ((taux_DS_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(131)
+        
+        string32 =  './data/tauy_DS'  // '_' // trim(which)
+        open(unit=132,file=string32,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(132,REC=1) ((tauy_DS_out(i,j),i=1,szsubx),j=1,szsuby)
+        close(132)
+        ENDIF
+
+        array_x = taux_DS
+        array_y = tauy_DS
+        include 'subs/div_and_curl.f90'
+        
+        ! Divergence 
+        string37 =  './data/divTauDS'  // '_' // trim(which)
+        open(unit=137,file=string37,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(137,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(137)
+
+        ! Curl
+        string38 =  './data/curlTauDS'  // '_' // trim(which)
+        open(unit=138,file=string38,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(138,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(138)
+        
   endif ! IO_coupling  
 
 

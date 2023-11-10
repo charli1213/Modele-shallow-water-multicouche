@@ -11,15 +11,15 @@
 
    parameter ( Htot = 4000. )
    
-   parameter ( nx = 513,  ny = 513 ) ! 513
+   parameter ( nx = 514,  ny = 514 ) ! 514
       
    parameter ( nz = NZ )
  
    parameter ( dx = Lx/(nx-1), dy = Ly/(ny-1) ) ! New form since fixed boundaries
    
-   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 513
+   parameter ( nnx  = nx+1, nny  = ny+1 ) ! 515
 
-   parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 512
+   parameter ( nxm1 = nx-1, nym1 = ny-1 ) ! 513
    
    ! --- Physical parameters ---
  
@@ -33,6 +33,8 @@
  
    parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = NAH*1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
+   parameter ( thickness_viscosity = 0., numerical_mixing = .true. )
+
    parameter ( rf = 0.001*RFFF ) !0.001
  
    parameter ( c_bc = 2. )
@@ -62,7 +64,7 @@
 
    parameter ( restart = .false. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false., cut_days = 2)
+   parameter ( use_ramp = .false., cut_days = 4)
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -71,8 +73,11 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.false. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
+   parameter ( cou=.false. ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here)
 
-   parameter ( ustar=.false., waves=.false., stokes=.false.) !!! Coupling activation.
+   parameter ( ustar=.false., waves=.false., stokes=.false., HS_fixed = .false. ) !!! Coupling activation.
+   parameter ( rho_atm = 1.225 ) !kg/m^3
+   
+   parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
    parameter ( step = 0.0 )

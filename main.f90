@@ -3,11 +3,10 @@
       character(88) fftw_loc
       integer nx, ny, nz, nnx, nny
       integer nx_cou, ny_cou, nnx_cou, nny_cou
-      real    HS ! Stokes' drift thickness layer.
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
-      real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction
-      real tau0, tau1, wind_t0, variance
+      real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction, thickness_viscosity
+      real tau0, tau1, wind_t0, variance, rho_atm
       real fileperday, daysperrestart
       integer nsteps,start_spec, cut_days
       real ndays,totaltime,dt
@@ -24,10 +23,11 @@
       logical  IO_field,   IO_forcing,  IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
       logical  IO_BT,      IO_psimodes
-
+      logical  numerical_mixing
+      
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
-      LOGICAL cou, ustar, waves, stokes
+      LOGICAL cou, ustar, waves, stokes, HS_fixed
       REAL step
       INTEGER :: ierror, numprocs, procid, err_class, err_len, iproc, numprocs_sec, procid_sec
       CHARACTER(80) :: err_str
@@ -90,10 +90,12 @@
       REAL :: divBT(0:nx,0:ny)
       REAL :: Psurf(0:nx,0:ny), rhs_Psurf(0:nx,0:ny)
       REAL :: B(0:nx,0:ny), B_nl(0:nx,0:ny), BS(0:nx,0:ny)
-      REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny)
+      REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny), thickness_old(0:nx,0:ny,nz)
       REAL :: eta_ag(0:nx,0:ny), eta_qg(0:nx,0:ny)
       REAL :: eta_ag_p(0:nx,0:ny,2)
       REAL :: p_out(0:nx,0:ny)
+      REAL :: grad2h(0:nx,0:ny)
+      REAL :: grad4h(0:nx,0:ny)
       REAL :: faces_array(0:nx,0:ny) ! dummy
       
       ! Noeuds/Nodes :
@@ -111,23 +113,27 @@
       
       !!! ----------- WW3 Coupling qties ----------- !!!
       ! Send/receive quantities
-      REAL :: large_cur2WW3    (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
-      REAL :: large_WW3Ustokes (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
-      REAL :: large_WW3tauUst  (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
-      REAL :: large_WW3tauWaves(0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
-      REAL :: cur2WW3      (1:nxcou,1:nycou,2) ! Current sent to WW3.
-      REAL :: WW3Ustokes   (1:nxcou,1:nycou,2) ! Stokes' transport received.
-      REAL :: WW3tauUst    (1:nxcou,1:nycou,2) ! Directly received from WW3.
-      REAL :: WW3tauWaves  (1:nxcou,1:nycou,2) ! Directly received from WW3.
+      REAL :: large_cur2WW3   (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3Ustokes(0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3tauUst (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3tauDS  (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: large_WW3tauIN  (0:nxm1, 0:nym1, 2) ! Large current sent to WW3 (before bining)
+      REAL :: cur2WW3   (1:nxcou,1:nycou,2) ! Current sent to WW3.
+      REAL :: WW3Ustokes(1:nxcou,1:nycou,2) ! Stokes' transport received.
+      REAL :: WW3tauUst (1:nxcou,1:nycou,2) ! Directly received from WW3.
+      REAL :: WW3tauDS  (1:nxcou,1:nycou,2) ! Directly received from WW3.
+      REAL :: WW3tauIN  (1:nxcou,1:nycou,2) ! Directly received from WW3.
 
       ! Interpolated quantities from A-grid to C-grid.
       REAL :: taux_ust(0:nnx,0:ny),   tauy_ust(0:nx,0:nny)
-      REAL :: taux_waves(0:nnx,0:ny), tauy_waves(0:nx,0:nny)
-      REAL :: taux_oc(0:nnx,0:ny,2), tauy_oc(0:nx,0:nny,2) ! WW3 Coupling
-      REAL :: UStokes(0:nnx,0:ny,nz), VStokes(0:nx,0:nny,nz) ! WW3 Coupling
+      REAL :: taux_IN(0:nnx,0:ny),    tauy_IN(0:nx,0:nny)
+      REAL :: taux_DS(0:nnx,0:ny),    tauy_DS(0:nx,0:nny)
+      REAL :: taux_oc(0:nnx,0:ny,2),  tauy_oc(0:nx,0:nny,2) ! WW3 Coupling
+      REAL :: UStokes(0:nnx,0:ny,2),  VStokes(0:nx,0:nny,2) ! WW3 Coupling
 
       !
       INTEGER :: mpi_grid_size
+      real    :: HS(0:nx,0:ny) ! Stokes' drift thickness layer.
       
       
      !!! ---------- I/O qties definition ---------- !!!
@@ -136,12 +142,16 @@
       REAL :: u_out(1:szsubx,1:szsuby,nz)
       REAL :: uBT_out(1:szsubx,1:szsuby)
       REAL :: UStokes_out(1:szsubx,1:szsuby)
-      REAL :: taux_oc_out(1:szsubx,1:szsuby)
+      REAL :: taux_ust_out(1:szsubx,1:szsuby)
+      REAL :: taux_IN_out(1:szsubx,1:szsuby)
+      REAL :: taux_DS_out(1:szsubx,1:szsuby)
       ! >
       REAL :: v_out(1:szsubx,1:szsuby,nz)
       REAL :: vBT_out(1:szsubx,1:szsuby)
       REAL :: VStokes_out(1:szsubx,1:szsuby)
-      REAL :: tauy_oc_out(1:szsubx,1:szsuby)
+      REAL :: tauy_ust_out(1:szsubx,1:szsuby)
+      REAL :: tauy_IN_out(1:szsubx,1:szsuby)
+      REAL :: tauy_DS_out(1:szsubx,1:szsuby)
 
       ! Centers :
       REAL :: eta_out(1:szsubx,1:szsuby,nz)
@@ -166,8 +176,7 @@
       DOUBLE PRECISION :: elmbda, pertrb ! Fishpack (Parameters)
       DOUBLE PRECISION :: bda(1), bdb(1), bdc(1), bdd(1) ! Fishpack (Newmann bndy)
       INTEGER          :: mbdcnd, nbdcnd ! Fishpack (boundary type)
-      REAL :: mass_mask(5,5)             ! horizontal mass transfert
-      INTEGER :: leftpad, rightpad, toppad, botpad ! horizontal mass transfert
+
       
       
       ! Baroclinic/Barotropic modes/solutions with LAPACK (see initialise.f90) : 
@@ -187,7 +196,7 @@
       real exp_coef, exp_amp, ratio
       real top(nz), bot(nz)
       real pdf(-100:100)
-      real x, y, z, ramp, ramp0, time, today, cut_its
+      real x, y, z, ramp, ramp0, time, today, cut_its, r
 
       ! real amp_matrix(864000) !3000 days
       real amp_forcing, amp, rms_amp, ampfactor, Omgrange !initialize_forcing
@@ -220,10 +229,14 @@
       !real,dimension(nx/2+1,ny,2) :: omega_p ! omega field for poincaire plus and minus
       !real sgn1,tmp2,tmp3
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
-      integer i, j, k, ii, jj, kk,    ip, im, jp, jm, kp, km
-      integer ip1, im1, jp1, jm1
+      integer i, j, k, ii, jj, kk, im, jp, jm, kp, km
+      integer ip1, im1, jp1, jm1 
       integer ilevel, itt,  it, its, imode, ntimes, inkrow
-      integer ijposition(2), ipos, jpos, lgap, rgap, tgap, bgap, mask_norm, mask_size ! mass transfert
+      integer ijposition(2), ipos, jpos, lgap, rgap, tgap, bgap, mask_size ! mass transfert
+      real mask_norm, hgap, mass_window(9,9) ! mass_transfert.f90
+      real positive_part, negative_part, mass_correction, mass_coef ! mass_transfert.f90
+      integer leftpad, rightpad, toppad, botpad ! mass transfert
+      
       real*4 tstime(1:ntsrow)
       
       !subsampling arrays (I/O)
@@ -448,6 +461,7 @@
             pressure(:,:) =  pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,1) 
             thickness(:,:) =  H(k) + eta(:,:,k,1) - eta(:,:,k+1,1)
          endif
+         thickness_old(:,:,k) = thickness(:,:)
          include 'subs/rhs.f90'
       enddo  ! end of the do k = 1,nz loop
 
@@ -552,12 +566,40 @@
          IF (cou) THEN
             uu(:,:) = u(:,:,1,2) 
             vv(:,:) = v(:,:,1,2)
-
             include 'subs/coupling_ww3.f90'
          END IF
          ! <<< Modification CEL <<<
          !
-                  
+         
+         !
+         ! Mass transfert (begin)
+         if (.true.) then
+         do k = 1,nz-1
+            ! Finding thickness.
+            if (k.eq.1) then
+               thickness(:,:) = H(k) - eta(:,:,k+1,2) 
+            else if (k.eq.nz) then
+               thickness(:,:) = H(k) + eta(:,:,k,2)
+            else
+               thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
+            end if
+
+            ! Applying mass transfert.
+            if (numerical_mixing) then            
+            tmp(1) = minval(thickness)/H(k)
+            do while (tmp(1).lt.0.20) ! 20%
+               print *, " > minval = ",minval(thickness), "MINVAL/H(k) = ", tmp(1), 'H(k)=', H(k), 'its=',its
+               !include 'subs/mass_transfert_new.f90'
+               include 'subs/thickness_capping.f90'
+               print *, "Thickness after : minval", minval(thickness)
+               tmp(1) = minval(thickness)/H(k)               
+            enddo
+            endif
+         enddo  ! k
+         endif
+         ! Mass transfert (End)
+         !
+         
          pressure(:,:) =  0.
          do k = 1,nz
             uu(:,:) = u(:,:,k,2)
@@ -575,7 +617,8 @@
                pressure(:,:)  = pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,2) 
                thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
             end if
-            include 'subs/rhs.f90' 
+            include 'subs/rhs.f90'
+            thickness_old(:,:,k) = thickness(:,:)
          enddo  ! k
          
          
@@ -945,7 +988,7 @@ FUNCTION gasdev(idum)
    delta = (real(n_out)/n_in)
    if (mod(delta,1.).lt.0.001) then
       ratio = nint(delta)
-      sarea = ratio**2
+      sarea = ratio**2 ! Stencil area [squares]
    else
       print *,"geometric interpolation :: Size problem. n_out must be a multiple of n_in"
       stop

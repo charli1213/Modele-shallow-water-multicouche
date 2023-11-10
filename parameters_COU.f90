@@ -33,6 +33,8 @@
  
    parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
+   parameter ( thickness_viscosity = 0., numerical_mixing = .false.  )
+
    parameter ( rf = 0.001 ) !0.001
  
    parameter ( c_bc = 2. )
@@ -43,7 +45,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 288) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -60,9 +62,9 @@
    ! forcingtype =0, zero spatial mode tau0+amp_matrix =1 tau0*(1+amp_matrix)
    ! iou_method =0, read amp_matrix, =1,generate amp_matrix in the same way
 
-   parameter ( restart = .false. , daysperrestart = 365)
+   parameter ( restart = .true. , daysperrestart = 365)
    
-   parameter ( use_ramp = .false., cut_days = 2)
+   parameter ( use_ramp = .true., cut_days = 4) 
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
@@ -71,10 +73,12 @@
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.true. , HS = Htot ) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
+   parameter ( cou=.true.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
    
-   parameter ( ustar=.true., waves=.true., stokes=.true.) !!! Coupling activation.
+   parameter ( ustar=.true., waves=.true., stokes=.true., HS_fixed = .true. ) !!! Coupling activation.
 
+   parameter ( rho_atm = 1.225 ) !kg/m^3
+   
    parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
    parameter ( step = 0.0 )
