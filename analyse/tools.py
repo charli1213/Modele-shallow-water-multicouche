@@ -122,6 +122,60 @@ def bintods(casepath='./',
         pass
     return ds
 
+# ================================================================= #
+#                                                                   #
+#               CREATE DATAARRAYS FROM BINARY FILES                 #
+#                                                                   # 
+# ================================================================= #
+
+
+
+def bintoda(qtyname,
+            casepath='./',
+            datapath='data/',
+            minday=0,
+            maxday=365*5,
+            outt=1,
+            dt=dt,
+            nx=nx)  :
+
+    # > Fetching files/directory parameters first : 
+    data_filenames = listdir(casepath + datapath) # On liste les noms entiers de tous les fichiers
+    min_filenumber = min(set([int(name[-6:]) for name in data_filenames]))
+    max_filenumber = max(set([int(name[-6:]) for name in data_filenames])) # Indicateur numérique
+    nb_of_files    = max_filenumber%100000 + 1
+    
+    # > Vecteurs des coordonnées et paramètres
+    ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
+    step = outt*dt
+    xx   = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
+    tt   = np.arange(max(minday, min_filenumber%100000),
+                     min(maxday+step, nb_of_files*dt),
+                     step) # Le vecteur temps [jours]
+
+    # > Bining data : 
+    data = np.zeros((len(tt), nx, nx)) # Création matrice données vide : IMPORTANT.
+    for it in range(0,len(tt)) : # Boucles sur l'indicateur du fichier.
+        ifile = min_filenumber+int(minday/dt)+it*outt
+        try :
+            f = open( casepath + datapath + f'{qtyname}_{ifile}', 'rb' )
+            data[it,:,:] = np.fromfile(f,dtype='float32').reshape((nx,nx)).transpose()
+            f.close()
+        except :
+            print('Erreur : Champ inexistant')
+            data[it,:,:] = np.nan
+            
+    # coords/data = form (dims, data[, attrs, encoding])
+    da = xr.DataArray(data,
+                      coords = dict(time=('time',tt,{'units':'days'}),
+                                    x=('x',xx,{'units':'m','name':'x'}),
+                                    y=('y',xx,{'units':'m','name':'y'}),
+                      ))
+    return da
+
+    
+
 if __name__ == "__main__" :
-    ds = bintods(minday=120, maxday = 500, fields_to_open = ['u1','v1'])
+    #ds = bintods(minday=120, maxday = 500, fields_to_open = ['u1','v1'])
+    dA = bintoda('UStokes',outt=16)
     

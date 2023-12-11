@@ -257,7 +257,6 @@
 !
 ! 1.  Prepare auxiliary arrays
 !
-
       IF ( FLFRST ) THEN
           DO ISEA=1, NSEA
             IX        = MAPSF(ISEA,1)
@@ -296,7 +295,6 @@
 !/CRT2      RD     = DT0T / MAX ( 1.E-7 , DT0N )
 !/CRT2      RD2    = 1. - RD
 !/OASIS      RD     = 1.
-!
 !
 !/T      WRITE (NDST,9000) DT0N, DT0T, RD
 
@@ -384,27 +382,26 @@
 
         CX(ISEA) = CABS * COS(CDIR)
         CY(ISEA) = CABS * SIN(CDIR)
-
-
 !/TIDE  !        IF (ISEA.EQ.1)  WRITE(6,'(A,4F8.4,A,4F8.4)') 'CUR#:',RD,CA0(ISEA),CAI(ISEA),CABS,'##', &
 !/TIDE  !                                      CX(ISEA), CY(ISEA),WCURTIDEX, WCURTIDEY        
 !/TIDE          END IF
 !
         END DO
 !
-! ========================== MPI CALLLLLL HERE ========================== 
+! =========== MPI CALL HERE -- Modification Charles-Édouard ===============
 
 ! ---------------------------- MPI REVC BLOC ----------------------------- 
 
 !/MPI CALL MPI_COMM_SIZE ( MPI_COMM_WORLD, NAPROC_WORLD, ierror )
 
 ! Receiving MPI fields here.
-!/MPI      IF ((IAPROC-1) .le. (NAPROC_WORLD-3)) THEN !Checkin if last proc
+!/MPI      IF ((IAPROC-1) .le. (NAPROC_WORLD-2)) THEN    !Checkin if last proc
 !/MPI      PRINT *, 'WW3 (COMM_WORLD): [', IAPROC-1, '/', NAPROC_WORLD, '] En attente.'
 !/MPI      CALL MPI_RECV(CX0(2:NX-1,2:NY-1), (NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
 !/MPI      CALL MPI_RECV(CY0(2:NX-1,2:NY-1), (NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-!/MPI      PRINT *,'WW3 (COMM_WORLD): [', IAPROC-1, '/', NAPROC_WORLD, '] Courant reçus.'
-
+!/MPI      PRINT *,'WW3 (COMM_WORLD): [', IAPROC-1, '/', NAPROC_WORLD, '] Courant reçus.', ierror
+!
+!
 !
 !/MPI  !!! --- Replacing the grid in WW3 terms.
 !
@@ -416,7 +413,9 @@
 !/MPI      END DO
 !/MPI      ELSE
 !/MPI      ENDIF !!!-checking if last process.
+!/MPI      CALL MPI_BARRIER(MPI_COMM_WORLD,ierror)
 ! -------------------------- MPI REVC BLOC (END) ------------------------- 
+
 
 
 ! ---------------------------- MPI SEND BLOC ---------------------------- 
@@ -434,33 +433,35 @@
 !/MPI CALL W3XETA (1,6,6)
 !/MPI CALL W3SETW (1,6,6)
 
-
+!!!(YIT-2)  (Je sais pas pourquoi)
 !/MPI DO  YIT = 1, NY
-!/MPI    UST_NORM_XY(:,YIT) = UST(   (YIT-1)*(NX-2)+1 : YIT*(NX-2))
-!/MPI    UST_DIR_XY(:,YIT)  = USTDIR((YIT-1)*(NX-2)+1 : YIT*(NX-2))	
+!/MPI    UST_NORM_XY(:,YIT) = UST(   (YIT-2)*(NX-2)+1 : YIT*(NX-2))
+!/MPI    UST_DIR_XY(:,YIT)  = USTDIR((YIT-2)*(NX-2)+1 : YIT*(NX-2))	
 !/MPI END DO
 !
 !/MPI TAU_UST(:,:,1) = 1.225*COS(UST_DIR_XY(:,:))*(UST_NORM_XY(:,:)**2)
 !/MPI TAU_UST(:,:,2) = 1.225*SIN(UST_DIR_XY(:,:))*(UST_NORM_XY(:,:)**2)
-
+!
 ! --- On transforme les vecteur(nsea) en matrice(x,y).
 !!! === TAUWIX/Y  R.A.  Wind to wave energy flux.
 !/MPI CALL W3S2XY (NSEA,NSEA,NX,NY, TAUWIX(1:NSEA), MAPSF, TAU_IN(:,:,1))
 !/MPI CALL W3S2XY (NSEA,NSEA,NX,NY, TAUWIY(1:NSEA), MAPSF, TAU_IN(:,:,2))
+!
 !!! === TAUOX/Y   R.A.  Wave-ocean momentum flux.
 !/MPI CALL W3S2XY (NSEA,NSEA,NX,NY, TAUOX(1:NSEA), MAPSF, TAU_DS(:,:,1))
 !/MPI CALL W3S2XY (NSEA,NSEA,NX,NY, TAUOY(1:NSEA), MAPSF, TAU_DS(:,:,2))
-!/MPI TAU_WAVES(:,:,:) = 1000*(TAU_DS(:,:,:) - TAU_IN(:,:,:))
+!
 !!! === TUSX/Y    R.A.  Volume transport associated to Stokes drift.
 !/MPI !!!CALL W3S2XY (NSEA,NSEA,NX,NY, TUSX(1:NSEA), MAPSF, STOKES_T(:,:,1))
 !/MPI !!!CALL W3S2XY (NSEA,NSEA,NX,NY, TUSY(1:NSEA), MAPSF, STOKES_T(:,:,2))
-
+!
 !!! Trying this for fun instead of W3S2XY...
 !/MPI      DO ISEA=1,NSEA
 !/MPI            IX = MAPSF(ISEA,1)
 !/MPI            IY = MAPSF(ISEA,2)
 !/MPI            STOKES_T(IX,IY,1) = TUSX(ISEA)
 !/MPI            STOKES_T(IX,IY,2) = TUSY(ISEA)
+
 !/MPI      END DO
 
 
@@ -468,16 +469,18 @@
 !/MPI      PRINT *, 'WW3 (COMM_WORLD): [', IAPROC-1, '/', NAPROC_WORLD, '] Envoie des forçage à SW'
 !/MPI CALL MPI_SEND(STOKES_T(2:NX-1,2:NY-1,:),  2*(NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 5, MPI_COMM_WORLD, ierror)
 !/MPI CALL MPI_SEND(TAU_UST(2:NX-1,2:NY-1,:),   2*(NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 3, MPI_COMM_WORLD, ierror)
-!/MPI CALL MPI_SEND(TAU_WAVES(2:NX-1,2:NY-1,:), 2*(NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 4, MPI_COMM_WORLD, ierror)
+!/MPI CALL MPI_SEND(TAU_DS(2:NX-1,2:NY-1,:), 2*(NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 4, MPI_COMM_WORLD, ierror)
+!/MPI CALL MPI_SEND(TAU_IN(2:NX-1,2:NY-1,:), 2*(NX-2)*(NY-2), MPI_REAL, NAPROC_WORLD-1, 6, MPI_COMM_WORLD, ierror)
 !/MPI      PRINT *, 'WW3 (COMM_WORLD): [', IAPROC-1, '/', NAPROC_WORLD, '] Forçage envoyé à SW'
 !/MPI ENDIF
 
+!/MPI      CALL MPI_BARRIER(MPI_COMM_WORLD,ierror)
+
 ! ------------------------- MPI SEND BLOC (END) -------------------------- 
+! ========= END MPI CALL HERE -- Modification Charles-Édouard ============
 
-
-
-! ========================= END MPI OF CALL HERE ========================= 
 !
+
       RETURN
 !
 ! Formats

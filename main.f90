@@ -23,7 +23,7 @@
       logical  IO_field,   IO_forcing,  IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
       logical  IO_BT,      IO_psimodes
-      logical  numerical_mixing
+      logical  thickness_correction
       
       !
       ! >>> Defining WAVEWATCH III coupling variables >>>
@@ -130,6 +130,7 @@
       REAL :: taux_DS(0:nnx,0:ny),    tauy_DS(0:nx,0:nny)
       REAL :: taux_oc(0:nnx,0:ny,2),  tauy_oc(0:nx,0:nny,2) ! WW3 Coupling
       REAL :: UStokes(0:nnx,0:ny,2),  VStokes(0:nx,0:nny,2) ! WW3 Coupling
+      REAL :: RHSu_Stokes(0:nnx,0:ny), RHSv_Stokes(0:nx,0:nny) ! WW3 Coupling (Output only. See dump_bin.f90)
 
       !
       INTEGER :: mpi_grid_size
@@ -196,7 +197,7 @@
       real exp_coef, exp_amp, ratio
       real top(nz), bot(nz)
       real pdf(-100:100)
-      real x, y, z, ramp, ramp0, time, today, cut_its, r
+      real x, y, z, ramp, ramp0, today, cut_its, r, time
 
       ! real amp_matrix(864000) !3000 days
       real amp_forcing, amp, rms_amp, ampfactor, Omgrange !initialize_forcing
@@ -204,6 +205,12 @@
       real,allocatable:: amp_matrix_rand(:)
       real ke1, ke2, ke1_qg, ke2_qg, pe, pe_qg, etot, etot_qg
       real*4 tmp_out(10)
+
+      ! Thickness correction (thickness_correction.f90)
+      real hgap
+      integer ijposition(2), ipos, jpos
+      
+      
 
       ! *** On bloque tout ce qui est en lien avec fftw parce que ça marchera pas, anyway.
       !2-D FFT spectra reduced
@@ -231,12 +238,7 @@
       !double complex,dimension(nx/2+1,ny) :: kappa_ijsq,M !kappa**2 at (i,j) 
       integer i, j, k, ii, jj, kk, im, jp, jm, kp, km
       integer ip1, im1, jp1, jm1 
-      integer ilevel, itt,  it, its, imode, ntimes, inkrow
-      integer ijposition(2), ipos, jpos, lgap, rgap, tgap, bgap, mask_size ! mass transfert
-      real mask_norm, hgap, mass_window(9,9) ! mass_transfert.f90
-      real positive_part, negative_part, mass_correction, mass_coef ! mass_transfert.f90
-      integer leftpad, rightpad, toppad, botpad ! mass transfert
-      
+      integer ilevel, itt,  it, its, imode, ntimes, inkrow      
       real*4 tstime(1:ntsrow)
       
       !subsampling arrays (I/O)
@@ -572,32 +574,41 @@
          !
          
          !
-         ! Mass transfert (begin)
+         ! Thickness correction (begin)
          if (.true.) then
-         do k = 1,nz-1
-            ! Finding thickness.
-            if (k.eq.1) then
-               thickness(:,:) = H(k) - eta(:,:,k+1,2) 
-            else if (k.eq.nz) then
-               thickness(:,:) = H(k) + eta(:,:,k,2)
-            else
-               thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
-            end if
+            do k = 1,nz-1
+               ! 1. Finding thickness of current layer. 
+               if (k.eq.1) then
+                  thickness(:,:) = H(k) - eta(:,:,k+1,2) 
+               else if (k.eq.nz) then
+                  thickness(:,:) = H(k) + eta(:,:,k,2)
+               else
+                  thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
+               end if
+            
+               ! 2. Finding thickness ratio 
+               tmp(1) = minval(thickness)/H(k)
 
-            ! Applying mass transfert.
-            if (numerical_mixing) then            
-            tmp(1) = minval(thickness)/H(k)
-            do while (tmp(1).lt.0.20) ! 20%
-               print *, " > minval = ",minval(thickness), "MINVAL/H(k) = ", tmp(1), 'H(k)=', H(k), 'its=',its
-               !include 'subs/mass_transfert_new.f90'
-               include 'subs/thickness_capping.f90'
-               print *, "Thickness after : minval", minval(thickness)
-               tmp(1) = minval(thickness)/H(k)               
-            enddo
-            endif
-         enddo  ! k
+               ! 3. Threshold with while loop
+               do while (tmp(1).lt.0.02) ! 2%
+                  !
+                  print *, " ------------------------------------------- "
+                  print *, " > Thickness before correction :: its=", its
+                  print *, "  -> minval(h) = ", minval(thickness)
+                  print *, "  -> Ratio = minval(h)/H(k) = ", tmp(1)
+                  print *, "  -> H(k) =", H(k)
+                  !
+                  include 'subs/thickness_correction.f90'
+                  tmp(1) = minval(thickness)/H(k)
+                  !
+                  print *, " > Thickness after correction :"
+                  print *, "  -> minval(h) = ", minval(thickness)
+                  print *, "  -> Ratio = minval(h)/H(k) = ", tmp(1)
+                  ! 
+               enddo
+            enddo  ! k
          endif
-         ! Mass transfert (End)
+         ! Thickness correction (End)
          !
          
          pressure(:,:) =  0.
@@ -658,7 +669,7 @@
          
          ! --- Updating time ---
          time = time + dt
-         today = time/86400
+         today = time/86400.
          !call get_taux(taux_steady,amp_matrix(its),taux)
 
          ! robert filter
@@ -683,7 +694,7 @@
          enddo
          enddo      
 
-         write(300,'(i6,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
+         write(300,'(i8,1f12.4,3e12.4)') its, time/86400.,taux(nx/2,ny/2), ke1/nx/ny, ke2/nx/ny
          call flush(300)
 
          !if(nsteps.lt.1.and.save_movie) then
@@ -782,7 +793,9 @@
      !===== time loop ends here
 
      ! MPI-COUPLING
-     CALL MPI_FINALIZE(ierror)
+     if (cou) then 
+        CALL MPI_FINALIZE(ierror)
+     endif
      ! MPI-COUPLING
      !include 'fftw_stuff/fft_destroy.f90'
     end program main

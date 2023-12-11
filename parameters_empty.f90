@@ -33,7 +33,7 @@
  
    parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = NAH*1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( thickness_viscosity = 0., numerical_mixing = .true. )
+   parameter ( thickness_viscosity = 0., thickness_correction = .true. )
 
    parameter ( rf = 0.001*RFFF ) !0.001
  
@@ -45,7 +45,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 0.1) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))

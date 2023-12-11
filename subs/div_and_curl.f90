@@ -2,6 +2,8 @@
   ! this subroutine calculate the divergence and curl of anything basically.
   ! As long as it can be expressed as array_x and array_y.
   ! In opposition to div_rot.f90 who does it for u(:,:,k,ilevel)
+
+  div(:,:) = 0.
   
   do j = 1, ny-1
      jp1 = j+1
@@ -30,3 +32,8 @@
   end do
   end do
 
+  ! Boundary conditions for zeta : 
+  zeta(1 ,:) = 0.
+  zeta(nx,:) = 0.
+  zeta(:, 1) = 0.
+  zeta(:,ny) = 0.

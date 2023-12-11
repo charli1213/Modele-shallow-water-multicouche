@@ -146,25 +146,25 @@
           &           + (grad2h(i,jp1)+grad2h(i,jm1)-2.*grad2h(i,j))/dy/dy
 
           
-          ! Tau_ocean coupling (or not => only simple wind) :
-          if (cou) then 
+          ! >> Tau_ocean coupling
+          !
+          ! COUPLED (with WW3)
+          if (cou) then
+          ! Stress from coupled model (include step by def.)
           taux(i,j) = ramp*taux_oc(i,j,2)
           tauy(i,j) = ramp*tauy_oc(i,j,2)
-          !
-          taux(i,j) = taux(i,j) + (1.-ramp) * tau0 * (1+step*SIN(it*f0*dt)) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
+          ! Stress from SW model (step no included in terms)
+          taux(i,j) = taux(i,j) + (1.-ramp) * tau0 * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
           tauy(i,j) = tauy(i,j) + 0.
-          !
-          else ! not (cou)
-          taux(i,j) = ramp*tau0 * (1+step*SIN(it*f0*dt)) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
+
+          ! UN-COUPLED (Only SW model)
+          else ! not (cou)    ! then step is included in SW stress : 
+          taux(i,j) = tau0 * (1.+ramp*step*SIN(REAL(its)*dt*f0)) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
           tauy(i,j) = 0
           end if
-
-          ! creating wind term.
-          taux(i,j) = taux(i,j)/rho(1)/H(k)
-          tauy(i,j) = tauy(i,j)/rho(1)/H(k)
+          
        enddo
        enddo
-
        
        ! >>> Right Hand Side (RHS) >>>
        ! Sides loop
@@ -181,7 +181,7 @@
        &            + Ah2*grad2u(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*ramp*taux(i,j)                            &  ! Vent en x
+       &            + top(k)*taux(i,j)/rho(1)/H(k)                     &  ! Vent en x
        &            + top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i ,j, 2)     &  ! S.-C. et C.-L.
        &                                                  + VStokes(im,j, 2))/HS(i,j) &  ! S.-C. et C.-L.
        &            + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)     &  ! S.-C. et C.-L.
@@ -193,7 +193,7 @@
        &            + Ah2*grad2v(i,j)                                  &  ! Viscosité laplacienne
        &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
        &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*ramp*tauy(i,j)                            &  ! Vent en y
+       &            + top(k)*tauy(i,j)/rho(1)/H(k)                     &  ! Vent en y
        &            - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)           & ! S.-C et C.-L.
        &                                                + UStokes(i,  jm,2))/HS(i,j)  & ! S.-C et C.-L.
        &            - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)         & ! S.-C et C.-L.
@@ -226,3 +226,33 @@
        enddo
        ! note : No need to add any boundaries conditions for eta.
        ! <<< Right Hand Side (End) <<<
+
+
+
+
+       ! Calculating Coupled RHS, only if Stokes is active AND if output timestep : 
+       if (mod(its,iout).eq.0) then
+       if (cou) then
+       if (k.eq.1) then
+             
+       do j = 1, ny-1
+          jp = j+1
+          jm = j-1
+       do i = 1, nx-1
+          ip1 = i+1
+          im = i-1
+             
+          RHSu_Stokes(i,j) = top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i, j, 2)            &  ! S.-C. et C.-L.
+          &                                                      + VStokes(i, j, 2))/HS(i,j)   &  ! S.-C. et C.-L.
+          &                + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)            &  ! S.-C. et C.-L.
+          &                                                      + VStokes(im,jp,2))/HS(i,j)      ! S.-C. et C.-L.
+          RHSv_Stokes(i,j) = - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)           & ! S.-C et C.-L.
+          &                                                      + UStokes(i,  jm,2))/HS(i,j)  & ! S.-C et C.-L.
+          &                - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)           & ! S.-C et C.-L.
+          &                                                      + UStokes(ip1,jm,2) )/HS(i,j)   ! S.-C et C.-L.
+
+       enddo
+       enddo
+       endif
+       endif
+       endif

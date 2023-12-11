@@ -2,7 +2,8 @@
   
   WRITE(which,'(I6)') 100000 + icount
   !dummy_int = nz
-  dummy_int = nz! not nz because we have a lot of layers.
+  WRITE (*,*) "RAMP?", ramp
+  dummy_int = 3! not nz because we have a lot of layers.
 ! Note indices for (u,v,eta ...) starting with 0, useful part is 1:256
   !  real u_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz), v_out(0:nx/subsmprto+1,0:ny/subsmprto+1,nz)
   if (IO_field) then
@@ -94,6 +95,8 @@
 
 
   if (IO_RHS_uv) then
+
+     
   !*!   
   !*!   ! Barotropic RHS
   !*!   rhsuBT_out(:,:) = rhs_u_BT(isubx,isuby)
@@ -111,27 +114,83 @@
   !*!        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
   !*!   write(105,REC=1) ((rhsvBT_out(i,j),i=1,szsubx),j=1,szsuby)
   !*!   close(105)
-  !*!
-  !*!   ! Baroclinic RHS
-  !*!   do k = 1,dummy_int
-  !*!      rhsuBC_out(:,:,k) = rhs_u_BC(isubx,isuby,k)
-  !*!      rhsvBC_out(:,:,k) = rhs_v_BC(isubx,isuby,k)
-  !*!   enddo
-  !*!
-  !*!   do k = 1,dummy_int
-  !*!      WRITE (k_str,'(I0)') k
-  !*!      string6 =  './data/rhsuBC' // trim(k_str) // '_' // trim(which)
-  !*!      string7 =  './data/rhsvBC' // trim(k_str) // '_' // trim(which)       
-  !*!
-  !*!      open(unit=106,file=string6,access='DIRECT',&
-  !*!           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-  !*!      write(106,REC=1) ((rhsuBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
-  !*!      close(106)
-  !*!
-  !*!      open(unit=107,file=string7,access='DIRECT',&
-  !*!           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-  !*!      write(107,REC=1) ((rhsvBC_out(i,j,k),i=1,szsubx),j=1,szsuby)
-  !*!      close(107)
+
+
+     k = 1
+     WRITE (k_str,'(I0)') k
+
+     ! Normal RHS
+     
+     string6 =  './data/RHSu' // trim(k_str) // '_' // trim(which)  
+     open(unit=106,file=string6,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(106,REC=1) ((rhs_u(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     close(106)
+
+     string7 =  './data/RHSv' // trim(k_str) // '_' // trim(which)       
+     open(unit=107,file=string7,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(107,REC=1) ((rhs_v(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     close(107)
+
+     ! Calculating div and curl of RHSu/v
+     array_x(:,:) = rhs_u(:,:,k)
+     array_y(:,:) = rhs_v(:,:,k)
+     include 'subs/div_and_curl.f90'
+
+     ! Divergence 
+     string35 =  './data/divRHS'  // '_' // trim(which)
+     open(unit=135,file=string35,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(135,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     close(135)
+
+     ! Curl
+     string36 =  './data/curlRHS'  // '_' // trim(which)
+     open(unit=136,file=string36,access='DIRECT',&
+          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     write(136,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     close(136)
+        
+
+     ! Coupled Stokes' RHS
+     if (cou) then
+        
+        string6 =  './data/RHSu_Stokes' // trim(k_str) // '_' // trim(which)  
+        open(unit=106,file=string6,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(106,REC=1) ((RHSu_Stokes(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(106)
+
+        string7 =  './data/RHSv_Stokes' // trim(k_str) // '_' // trim(which)       
+        open(unit=107,file=string7,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(107,REC=1) ((RHSv_Stokes(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(107)
+
+        ! Calculating div and curl of RHSu/v
+        array_x(:,:) = RHSu_Stokes(:,:)
+        array_y(:,:) = RHSv_Stokes(:,:)
+        include 'subs/div_and_curl.f90'
+
+        ! Divergence 
+        string35 =  './data/divRHS_Stokes'  // '_' // trim(which)
+        open(unit=135,file=string35,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(135,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(135)
+
+        ! Curl
+        string36 =  './data/curlRHS_Stokes'  // '_' // trim(which)
+        open(unit=136,file=string36,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(136,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(136)
+        
+     endif
+     
+
+     
   !*!      
   !*!   enddo
   !*!
@@ -276,13 +335,13 @@
         string27 = './data/taux_ust'  // '_' // trim(which)
         open(unit=127,file=string27,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(127,REC=1) ((taux_ust(i,j),i=1,szsubx),j=1,szsuby)
+        write(127,REC=1) ((taux_ust_out(i,j),i=1,szsubx),j=1,szsuby)
         close(127)
         
         string28 = './data/tauy_ust'  // '_' // trim(which)
         open(unit=128,file=string28,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(128,REC=1) ((tauy_ust(i,j),i=1,szsubx),j=1,szsuby)
+        write(128,REC=1) ((tauy_ust_out(i,j),i=1,szsubx),j=1,szsuby)
         close(128)
         
         array_x = taux_ust
@@ -376,26 +435,33 @@
   ! IO_forcing
   if (IO_forcing) then
     ! Forcing-AG
-      string7 =  './data/forci_ag'  // '_' // trim(which)
-      open(unit=107,file=string7,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-      write(107,REC=1) ((forcing_ag(i,j),i=1,szsubx),j=1,szsuby)
-      close(107)
+      !!!string7 =  './data/forci_ag'  // '_' // trim(which)
+      !!!open(unit=107,file=string7,access='DIRECT',&
+      !!!& form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      !!!write(107,REC=1) ((forcing_ag(i,j),i=1,szsubx),j=1,szsuby)
+      !!!close(107)
 
     ! Forcing
-      string8 =  './data/forci_to'  // '_' // trim(which)
-      open(unit=108,file=string8,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-      write(108,REC=1) ((forcing_total(i,j),i=1,szsubx),j=1,szsuby)
-      close(108)
+      !!!string8 =  './data/forci_to'  // '_' // trim(which)
+      !!!open(unit=108,file=string8,access='DIRECT',&
+      !!!& form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      !!!write(108,REC=1) ((forcing_total(i,j),i=1,szsubx),j=1,szsuby)
+      !!!close(108)
 
   !  string11 = './data/q'  // '_' // trim(which)
 
       string12 =  './data/taux'  // '_' // trim(which)
       open(unit=112,file=string12,access='DIRECT',&
-      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)*dummy_int))
-      write(112,REC=1) ((taux(i,j),i=1,szsubx),j=1,szsuby)
+      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      write(112,REC=1) ((taux(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
       close(112)
+
+      string13 =  './data/tauy'  // '_' // trim(which)
+      open(unit=113,file=string13,access='DIRECT',&
+      & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      write(113,REC=1) ((tauy(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+      close(113)
+      
   end if !IO_forcing
   
   if (IO_QGAG) then

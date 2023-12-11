@@ -42,30 +42,11 @@
        array_y(:,:) = 0.
        faces_array(:,:) = 0.
   
-     ! Kronecker deltas arrays 
+     ! Kronecker deltas
        top(:) = 0.
        bot(:) = 0.
        top(1) = 1.
        bot(nz) = 1.
-
-     ! mass transfert arrays 
-       mass_window(:,  :) = 0.
-       mass_coef = 1.09184184635878
-       do i = -4,4
-       do j = -4,4
-          r = sqrt(real(i**2 + j**2))
-          if ((r/9).gt.0.51) then
-             mass_window(i+5,j+5) = 0.
-          else
-             mass_window(i+5,j+5) = COS( (1.5*twopi) * r/9)*EXP(-r/mass_coef)
-          endif
-       enddo
-       enddo
-       !!!mass_window(:,  :) = 0.
-       !!!mass_window(2:4,:) = 1.
-       !!!mass_window(:,2:4) = 1.
-       !!!mass_window(2:4,2:4) = 2.
-       !!!mass_window(3,3) = 0.
 
        !count_specs_1 = 0
        !count_specs_2 = 0

@@ -33,7 +33,7 @@
  
    parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( thickness_viscosity = 0., numerical_mixing = .false.  )
+   parameter ( thickness_viscosity = 0., thickness_correction = .true.  )
 
    parameter ( rf = 0.001 ) !0.001
  
@@ -45,7 +45,7 @@
   
    parameter ( ndays= 10*365, totaltime = 86400 * ndays ) !365
  
-   parameter ( nsteps = totaltime/dt+1 ,fileperday= 4) ! Generaly fileperday = 4. 288
+   parameter ( nsteps = totaltime/dt+1 ,fileperday= 0.2) ! Generaly fileperday = 4. 288
    
  ! parameter ( iout = 9 , i_diags = ifix(86400./16/dt) )
    parameter ( iout = int(nsteps/ndays/fileperday), i_diags = ifix(86400./16/dt))
@@ -64,11 +64,11 @@
 
    parameter ( restart = .true. , daysperrestart = 365)
    
-   parameter ( use_ramp = .true., cut_days = 4) 
+   parameter ( use_ramp = .true., cut_days = 0) 
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.false.)
+   parameter ( IO_field=.true. , IO_RHS_uv =.true.,  IO_forcing =.true.)
    parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.true.)
    parameter ( IO_BT   =.false. , IO_psimodes=.false.)
    
@@ -81,4 +81,4 @@
    
    parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
-   parameter ( step = 0.0 )
+   parameter ( step = 0.0 ) ! Works only when model is uncoupled.

@@ -68,17 +68,17 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.true.)
-   parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.true.)
-   parameter ( IO_BT   =.false. , IO_psimodes=.false.)
+   parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.true. )
+   parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.false.)
+   parameter ( IO_BT   =.false., IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
-   parameter ( cou=.true.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
+   parameter ( cou=.false.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
    
-   parameter ( ustar=.true., waves=.true., stokes=.true., HS_fixed = .true. ) !!! Coupling activation.
+   parameter ( ustar=.false., waves=.false., stokes=.false., HS_fixed = .true. ) !!! Coupling activation.
 
    parameter ( rho_atm = 1.225 ) !kg/m^3
    
    parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
-   parameter ( step = 0.0 ) ! Works only when model is uncoupled.
+   parameter ( step = 0.05 ) ! 0.00 or 0.05 -> 5% step.

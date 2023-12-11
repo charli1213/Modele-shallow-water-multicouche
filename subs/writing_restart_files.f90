@@ -107,6 +107,6 @@
       if(its==nsteps)then
         write(*,*) 'restart files are saved for the final step'
       else 
-        write(*,*) 'restart files are saved for day', today
-        write(*,*) 'restart files are saved at',which2
+        write(*,*) 'restart files are saved for day ', today
+        write(*,*) 'restart files are saved at ',which2
       end if

@@ -23,7 +23,7 @@ casepath = './'
 figpath  = casepath + 'figures/'
 
 # ---- MODEL PARAMETERS ----
-dt   = 0.25 # Fréquence des outputs (fileperday)
+dt   = 10. # Fréquence des outputs (fileperday)
 outt = 1    # Dénominateur du ratio de fichiers qu'on prend, ratio = 1/outt
 nx   =  257
 
@@ -60,7 +60,7 @@ timestamps_dict = {maxday : outt for maxday,outt in
 #                Hovmoller of curl, zeta, eta, unorm                #
 #                                                                   #
 # ================================================================= #
-# Code-Gate
+
 def hovmoller() : 
 
     # Figure params : 
@@ -180,64 +180,6 @@ def energy(outt = 2, nz=4, dt=0.25) :
         plt.show()
 
         return ds2
-            
-# ================================================================= #
-#                                                                   #
-#                        4-PANNELS ANIMATION                        #
-#                                                                   # 
-# ================================================================= #
-def debug(field='zetaBT1', outt=1, minday = 0, maxday = 50) :
-    """ Sort 12 plot-imshow pour les 12 premiers pas de temps."""
-    
-    # Opening data : 
-    ds = tls.bintods(outt = outt,
-                     minday = minday,
-                     maxday = maxday,
-                     dt = 1/4,
-                     fields_to_open = ['zetaBT1','eta1','u1','v1','zeta1','eta2',
-                                       'zetaBTpost1','divBT1','PsiBTcorrection1',
-                                       'zetaBTcorrection1'])
-    
-    # Figure :
-    fig, axes = plt.subplots(nrows=3,ncols=4, figsize = (15,10.5),sharex=True,sharey=True)
-    for t,ax in enumerate(axes.flat) :
-        try : 
-            ds[field].isel(time=t*outt).plot(x='x',ax=ax)
-        except : print('Field Missing')
-    plt.tight_layout()
-    plt.show()
-
-    return ds
-
-# ================================================================= #
-
-# ================================================================= #
-def eight_pannels(field = 'zetaBT1', t0=0, maxday = 500,dt=40, title = r"Zeta Barotrope ($\zeta_{BT}$)" ) : 
-    # Opening data ::
-    ds = tls.bintods(outt = 4,
-                     minday = t0,
-                     maxday = maxday,
-                     fields_to_open = [field],
-                     )
-
-    # Figure ::
-    fig, axes = plt.subplots(nrows=2,ncols=4, figsize = (14,7), sharex=True, sharey=True)
-    
-    for t,ax in enumerate(axes.flat) :
-        maxi = ds[field].isel(time=t*dt).max()    
-        ds[field].isel(time=t*dt).plot(ax=ax,
-                                       x='x',
-                                       vmin = -0.75*maxi,
-                                       vmax =  0.75*maxi,
-                                       cmap =  cmo.curl,
-                                       cbar_kwargs = {"label":""},
-                                       )
-    # Fine tunning ::
-    fig.suptitle(title)
-    plt.tight_layout()
-    plt.show()
-    return ds
-        
 
 # ================================================================= #
 #                                                                   #
@@ -272,6 +214,9 @@ def anim(dS,
         textcolor = 'white'
         cmap = cmr.wildfire
 
+    if isinstance(satu,float) :
+        satu = np.ones(len(dS))*satu
+        
     # >> Parameters ::
     nt = len(dS.time)
     dt = (dS.time.max() - dS.time.min())/(nt-1)
@@ -287,11 +232,11 @@ def anim(dS,
     txt = []
     
     # >> Colormap boundaries : 
-    mini = [dS[key].min() for key in dS.keys()]
-    maxi = [dS[key].max() for key in dS.keys()]
+    mini = [dS[key].isel(time=-1).min() for key in dS.keys()]
+    maxi = [dS[key].isel(time=-1).max() for key in dS.keys()]
     if min(mini)< 0 : # Saturation is applied.
-        mini = [-satu*maximum for maximum in maxi]
-        maxi = [ satu*maximum for maximum in maxi]
+        mini = [-satur*maximum for maximum,satur in zip(maxi,satu)]
+        maxi = [ satur*maximum for maximum,satur in zip(maxi,satu)]
 
     # >> Adding colorbar
     if add_colorbar : 
@@ -330,9 +275,9 @@ def anim(dS,
 
     # Show/Save :: (Faut installer imagemagick avant tout)
     if savefig :
-        ani.save('./figures/' + filename, writer=PillowWriter(fps=20)) #Save animation as
-    
-    plt.show()
+        ani.save(filename, writer=PillowWriter(fps=20)) #Save animation as
+    else : 
+        plt.show()
 
 
     
@@ -369,37 +314,37 @@ if __name__ == "__main__" :
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
     else : 
-        minday = 4
-        maxday = 3600
-        outt = 4
-        dt = 1/4
+        minday = 0
+        maxday = 3650
+        outt = 1
+        dt = 5
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
         
         # Ancien champ (dt = 0.5) :
         #>
         fields = ['thickness{}'.format(i) for i in range(1,n+1)]
+        ###ds = tls.bintods(outt = outt,
+        ###                 datapath='data/',
+        ###                 minday = minday,
+        ###                 maxday = maxday,
+        ###                 fields_to_open = fields,
+        ###                 dt=dt,
+        ###                 )
+        ###anim(ds,
+        ###     satu=1,interval=75,
+        ###     savefig=False,
+        ###     filename='./figures/thickness_anim.gif',
+        ###     )
+
+        # Other fields :
         ds = tls.bintods(outt = outt,
                          datapath='data/',
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = fields,
+                         fields_to_open = ['divRHS','divRHS_Stokes','RHS1','curlTauIN','divTauIN'],
                          dt=dt,
-                         )
-        anim(ds,
-             satu=1,interval=50,
-             savefig=False,
-             filename='thickness_anim.gif',
-             )
-
-        # Other fields :
-        ##ds = tls.bintods(outt = outt,
-        ##                 datapath='data/',
-        ##                 minday = minday,
-        ##                 maxday = maxday,
-        ##                 fields_to_open = ['taux_IN','taux_DS','taux_UST','divTauIN','zetaTauIN'],
-        ##                 dt=dt,
-        ##)
+        )
         
 
 

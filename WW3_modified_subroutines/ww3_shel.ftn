@@ -389,11 +389,10 @@
 !/NCC      MPI_COMM = MPI_COMM_WW
 !
 !!!!!!!!!!!!!!!!!!!!!!! MODIFICATION !!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 !/MPI      CALL MPI_COMM_SIZE ( MPI_COMM, NAPROC_FIRST, IERR_MPI )
 !/MPI      CALL MPI_COMM_RANK ( MPI_COMM, IAPROC, IERR_MPI )
-!/MPI      print *, 'WW3 (COMM_WORLD) : Je suis le proc :', IAPROC, 'sur', NAPROC_FIRST
-
+!/MPI      print *, 'WW3 (COMM_WORLD) : Je suis le proc :', IAPROC, 'sur', NAPROC_FIRST, &
+!/MPI      & 'Juste avant le split'
 !/MPI      CALL MPI_COMM_SPLIT( MPI_COMM_WORLD, 1, IAPROC, MPI_FIRST, IERR_MPI)
 
 !/MPI      MPI_COMM = MPI_FIRST
