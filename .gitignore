@@ -21,3 +21,5 @@ newcase/slurm_test.sh~
 newcase/exec
 ../Nlayer_beta
 data_initial.mod
+MPItest/exec_testmpi
+testpy.py
