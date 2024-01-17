@@ -1,9 +1,10 @@
   
-  ! this subroutine calculate the divergence and curl of anything basically.
+  ! this subroutine calculate the divergence and curl of basically anything.
   ! As long as it can be expressed as array_x and array_y.
   ! In opposition to div_rot.f90 who does it for u(:,:,k,ilevel)
 
   div(:,:) = 0.
+  zeta(:,:) = 0.
   
   do j = 1, ny-1
      jp1 = j+1

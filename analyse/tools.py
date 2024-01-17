@@ -29,9 +29,10 @@ def bintods(casepath='./',
             maxday=365*5,
             outt=1,
             klayer=klayer,
-            fields_to_open=None,
             dt=dt,
-            nx=nx) : 
+            fields_to_open=None,
+            nx=nx,
+            time_padding = 0) : 
 
     """
     La fonction 'bintods' ouvre un nombre nday/dt/outt de
@@ -48,6 +49,7 @@ def bintods(casepath='./',
      > klayer         :: (int) Indicateur de la couche à observer.
      > dt             :: (float)Intervalle de temps entre les output [en jours].
      > fields_to_open :: (list) Liste de str du genre ['u1','v1',...]. Si None, tous les champs sont ouverts.
+     > time_padding   :: (int)  Temps à rajouter à la creation du Xr.Dataset.
     >>> RETURNS ::
        ds (xarray.dataset) :: La base de données créée à partir des fichiers binaires.
     """
@@ -73,7 +75,7 @@ def bintods(casepath='./',
     ds   = xr.Dataset() #Création du dataset vide contenant toutes les données.
     step = outt*dt
     xx   = np.linspace(-Lx/2,Lx/2,nx) # Domaine spatial-x
-    tt   = np.arange(max(minday, min_filenumber%100000),
+    tt   = time_padding + np.arange(max(minday, min_filenumber%100000),
                      min(maxday+step, nb_of_files*dt),
                      step) # Le vecteur temps [jours]
 

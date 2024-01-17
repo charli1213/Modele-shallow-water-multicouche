@@ -132,6 +132,9 @@
      VStokes(i,j,2)  = (large_WW3Ustokes(i,j,2) + large_WW3Ustokes(i,j-1,2) )/2
   END DO
   END DO
+  ELSE
+     UStokes(:,:,:) = 0.
+     VStokes(:,:,:) = 0.
   END IF
 
   ! --- Boundary conditions ---

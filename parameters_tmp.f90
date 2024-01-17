@@ -27,13 +27,13 @@
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
-   parameter ( r_drag = 1*1.e-7 , alpha = 0/1e6 ) ! Test de friction?
+   parameter ( r_drag = 1.e-7 , alpha = 0. ) ! Test de friction?
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
+   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = 1.e-5*dx**4 )
  
-   parameter ( thickness_viscosity = 0., thickness_correction = .true.  )
+   parameter ( thickness_correction = .true. )
 
    parameter ( rf = 0.001 ) !0.001
  
@@ -68,9 +68,9 @@
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 
-   parameter ( IO_field=.true. , IO_RHS_uv =.false., IO_forcing =.true. )
-   parameter ( IO_QGAG =.false., IO_psivort=.false., IO_coupling=.false.)
-   parameter ( IO_BT   =.false., IO_psimodes=.false.)
+   parameter ( IO_field=.true.   , IO_RHS_uv =.true., IO_coupling=.true.)
+   parameter ( IO_forcing =.true., IO_QGAG =.false. , IO_psivort=.false.)
+   parameter ( IO_psimodes=.false.)
    
  ! --- Slab model/coupling switches --- 
    parameter ( cou=.false.) !!! Coupling vs Wind on top layer vs wind on slab layer (Out of these three, only one can be .true. here) Hs means H_Stokes
@@ -81,4 +81,4 @@
    
    parameter ( mpiratio = 3, nxcou = nxm1/mpiratio, nycou = nym1/mpiratio )
    
-   parameter ( step = 0.05 ) ! 0.00 or 0.05 -> 5% step.
+   parameter ( step = 0.10 ) ! 0.00 or 0.05 -> 5% step.

@@ -5,7 +5,7 @@
       integer nx_cou, ny_cou, nnx_cou, nny_cou
       integer i_diags
       double precision pi, twopi, Lx, Ly, dx, dy, H1, H2, H3, H4, H5, H6, Htot
-      real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction, thickness_viscosity
+      real f0, beta, r_drag, Ah2, Ah4, r_invLap, rf, g, alpha, fraction
       real tau0, tau1, wind_t0, variance, rho_atm
       real fileperday, daysperrestart
       integer nsteps,start_spec, cut_days
@@ -22,7 +22,7 @@
       ! I/O instruction for diognostics, to override, change parameters.f90
       logical  IO_field,   IO_forcing,  IO_QGAG
       logical  IO_psivort, IO_coupling, IO_RHS_uv
-      logical  IO_BT,      IO_psimodes
+      logical  IO_psimodes
       logical  thickness_correction
       
       !
@@ -90,12 +90,10 @@
       REAL :: divBT(0:nx,0:ny)
       REAL :: Psurf(0:nx,0:ny), rhs_Psurf(0:nx,0:ny)
       REAL :: B(0:nx,0:ny), B_nl(0:nx,0:ny), BS(0:nx,0:ny)
-      REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny), thickness_old(0:nx,0:ny,nz)
+      REAL :: pressure(0:nx,0:ny), thickness(0:nx,0:ny)
       REAL :: eta_ag(0:nx,0:ny), eta_qg(0:nx,0:ny)
       REAL :: eta_ag_p(0:nx,0:ny,2)
       REAL :: p_out(0:nx,0:ny)
-      REAL :: grad2h(0:nx,0:ny)
-      REAL :: grad4h(0:nx,0:ny)
       REAL :: faces_array(0:nx,0:ny) ! dummy
       
       ! Noeuds/Nodes :
@@ -130,8 +128,10 @@
       REAL :: taux_DS(0:nnx,0:ny),    tauy_DS(0:nx,0:nny)
       REAL :: taux_oc(0:nnx,0:ny,2),  tauy_oc(0:nx,0:nny,2) ! WW3 Coupling
       REAL :: UStokes(0:nnx,0:ny,2),  VStokes(0:nx,0:nny,2) ! WW3 Coupling
-      REAL :: RHSu_Stokes(0:nnx,0:ny), RHSv_Stokes(0:nx,0:nny) ! WW3 Coupling (Output only. See dump_bin.f90)
-
+      REAL :: RHSu_SC(0:nnx,0:ny), RHSv_SC(0:nx,0:nny) ! WW3 Coupling (See rhs.f90 and dump_bin.f90)
+      REAL :: RHSu_CL(0:nnx,0:ny), RHSv_CL(0:nx,0:nny) ! WW3 Coupling (See rhs.f90 and dump_bin.f90)
+      REAL :: RHSu_BS(0:nnx,0:ny), RHSv_BS(0:nx,0:nny) ! WW3 Coupling (See rhs.f90 and dump_bin.f90)
+      REAL :: rhsu_SW(0:nnx,0:ny,nz), rhsv_SW(0:nx,0:nny,nz) ! WW3 Coupling (See rhs.f90 and dump_bin.f90)
       !
       INTEGER :: mpi_grid_size
       real    :: HS(0:nx,0:ny) ! Stokes' drift thickness layer.
@@ -274,6 +274,54 @@
 
       INTEGER :: dummy_int
       REAL ::  dummy !Usep this for anything
+
+     !!! Lowpass variables (see subs/Lowpass_filter.f90)
+      REAL :: tcenter, tstart, tstop, param
+      !! Filtered :   
+      ! Curl
+      REAL :: curlRHS_filtered(1:nx,1:ny)
+      REAL :: curlRHS_BS_filtered(1:nx,1:ny)
+      REAL :: curlRHS_CL_filtered(1:nx,1:ny)
+      REAL :: curlRHS_SC_filtered(1:nx,1:ny)
+      REAL :: zeta1_filtered(1:nx,1:ny)
+      REAL :: curlTauUST_filtered(1:nx,1:ny)
+      REAL :: curlTauIN_filtered(1:nx,1:ny)
+      REAL :: curlTauDS_filtered(1:nx,1:ny)
+      REAL :: curlUStokes_filtered(1:nx,1:ny)
+      ! Div
+      REAL :: divRHS_filtered(0:nx,0:ny)
+      REAL :: divRHS_BS_filtered(0:nx,0:ny)
+      REAL :: divRHS_CL_filtered(0:nx,0:ny)
+      REAL :: divRHS_SC_filtered(0:nx,0:ny)
+      REAL :: div1_filtered(0:nx,0:ny)
+      REAL :: divTauIN_filtered(0:nx,0:ny)
+      REAL :: divTauUST_filtered(0:nx,0:ny)
+      REAL :: divTauDS_filtered(0:nx,0:ny)
+      REAL :: divUStokes_filtered(0:nx,0:ny)
+      !! Snap
+      ! Curl
+      REAL :: curlRHS_snap(1:nx,1:ny)
+      REAL :: curlRHS_BS_snap(1:nx,1:ny)
+      REAL :: curlRHS_CL_snap(1:nx,1:ny)
+      REAL :: curlRHS_SC_snap(1:nx,1:ny)
+      REAL :: curl1_snap(1:nx,1:ny)
+      REAL :: curlTauUST_snap(1:nx,1:ny)
+      REAL :: curlTauIN_snap(1:nx,1:ny)
+      REAL :: curlTauDS_snap(1:nx,1:ny)
+      REAL :: curlUStokes_snap(1:nx,1:ny)
+      ! Div
+      REAL :: divRHS_snap(0:nx,0:ny)
+      REAL :: divRHS_BS_snap(0:nx,0:ny)
+      REAL :: divRHS_CL_snap(0:nx,0:ny)
+      REAL :: divRHS_SC_snap(0:nx,0:ny)
+      REAL :: div1_snap(0:nx,0:ny)
+      REAL :: divTauIN_snap(0:nx,0:ny)
+      REAL :: divTauUST_snap(0:nx,0:ny)
+      REAL :: divTauDS_snap(0:nx,0:ny)
+      REAL :: divUStokes_snap(0:nx,0:ny)
+     ! ==================================== ! 
+
+      
       
       !include 'fftw_stuff/fft_params.f90'
       !include 'fftw_stuff/fft_init.f90'
@@ -349,6 +397,23 @@
       
       !call get_taux(taux_steady,amp_matrix(its),taux)
 
+      ! Lowpass filter (see subs/Lowpass_filter.f90)
+      if (cou) then
+         ! 100 days after coupling
+         tstart  = 100.*86400.
+      else
+         ! Two years after begining : 
+         tstart  = 2.*365.*86400.
+      endif
+      tstop   = tstart + 8.*86400.
+      tcenter = (tstart + tstop)/2
+      ! Gaussian parameter for each timestep.
+      param = (time-tcenter)/1.1/86400.
+      param = param**2
+      !normalization 2304 for dt = 300, window = 8 days width = 1.1
+
+
+      
       !==============================================================
       !
       !      1st time step
@@ -463,7 +528,6 @@
             pressure(:,:) =  pressure(:,:) + rho(1)*gprime(k)*eta(:,:,k,1) 
             thickness(:,:) =  H(k) + eta(:,:,k,1) - eta(:,:,k+1,1)
          endif
-         thickness_old(:,:,k) = thickness(:,:)
          include 'subs/rhs.f90'
       enddo  ! end of the do k = 1,nz loop
 
@@ -629,7 +693,6 @@
                thickness(:,:) = H(k) + eta(:,:,k,2) - eta(:,:,k+1,2)
             end if
             include 'subs/rhs.f90'
-            thickness_old(:,:,k) = thickness(:,:)
          enddo  ! k
          
          

@@ -1,6 +1,6 @@
 
-
-       ! Stoping model if problem.
+  
+       ! --- Stoping model if problem.
        tmp(1) = minval(thickness)/H(k)
        if(tmp(1).le.0.02) then
           print*, 'its',its
@@ -12,14 +12,24 @@
           stop
        endif
 
-       ! Setting H_Stokes (HS) :
+       
+       
+       ! --- Updating Stokes' layer thickness or H_Stokes (HS) :
        if (HS_fixed) then
-          HS = H(1)
+          ! Fixed thickness, (first layer mean thickness)
+          HS(:,:) = H(1)
        else
+          ! Variable thickness (dependent on first layer thickness)
           HS = thickness
        endif
+
        
-       ! Boundaries :
+       ! --- 
+       rhsu_SW(:,:,k) = 0.
+       rhsv_SW(:,:,k) = 0.
+
+       
+       ! --- Setting boundaries for currents and thickness :
        array_x = uu
        array_y = vv
        include 'subs/no_normal_flow.f90'
@@ -35,7 +45,7 @@
        vv_old = array_y
 
        
-       ! --- Faces loop
+       ! --- Divergence and Bernouilli (Center of square loop)
        do j = 1,ny-1
           jp1 = j+1
           jm1 = j-1
@@ -51,18 +61,20 @@
           B(i,j) = B(i,j) + pressure(i,j)/rho(k)
 
           ! Coupling quantities (if Ustokes =/= 0.)
+          if (cou) then
           if (stokes) then
           BS(i,j) =  0.25*(UStokes(i,j,2)**2+UStokes(ip1,j,2)**2 &
                &         + VStokes(i,j,2)**2+VStokes(i,jp1,2)**2)/(HS(i,j)**2)
-          BS(i,j) = BS(i,j) + 0.5*(uu(i,j)*UStokes(i,j,2) + uu(i+1,j)*UStokes(ip1,j,2) &
-               &                 + vv(i,j)*VStokes(i,j,2) + vv(i,j+1)*VStokes(i,jp1,2) )/HS(i,j)
-          B(i,j) = B(i,j) + ramp*top(k)*BS(i,j)
+          BS(i,j) = BS(i,j) + 0.5*(uu(i,j)*UStokes(i,j,2) + uu(ip1,j)*UStokes(ip1,j,2) &
+               &                 + vv(i,j)*VStokes(i,j,2) + vv(i,jp1)*VStokes(i,jp1,2) )/HS(i,j)
+          endif
           endif
        enddo
        enddo
 
+
        
-       ! --- Nodes loop (! note : marche aussi entre 2 et nx-1)
+       ! --- Zeta and Curl (Nodes loop)
        do j = 1,nx
        do i = 1,ny
              
@@ -71,48 +83,35 @@
 
        enddo
        enddo
-
-       ! Laplacian boundary for grad2h
-       thickness_old(0, :,k) = thickness_old(1,   :,k)
-       thickness_old(nx,:,k) = thickness_old(nx-1,:,k)
-       thickness_old(:, 0,k) = thickness_old(:,   1,k)
-       thickness_old(:,ny,k) = thickness_old(:,ny-1,k)
-
-
+       
+       zeta(1,:)  = 0.
+       zeta(nx,:) = 0.
+       zeta(:,1)  = 0.
+       zeta(:,ny) = 0.
+       
+       ! --- U/V Transport,  grad2u/v (Edges of squares)
        do j = 1,ny-1
-          jp = j+1
-          jm = j-1
+          jp1 = j+1
+          jm1 = j-1
        do i = 1,nx-1
           ip1 = i+1
-          im = i-1
+          im1 = i-1
           
-          ! --- Edges (u,v,uh,vh,etc)
-          grad2u(i,j) = (uu_old(ip1,j)+uu_old(im,j)-2.*uu_old(i,j))/dx/dx   &
-          &           + (uu_old(i,jp)+uu_old(i,jm)-2.*uu_old(i,j))/dy/dy   
+          grad2u(i,j) = (uu_old(ip1,j)+uu_old(im1,j)-2.*uu_old(i,j))/dx/dx   &
+          &           + (uu_old(i,jp1)+uu_old(i,jm1)-2.*uu_old(i,j))/dy/dy   
           
-          grad2v(i,j) = (vv_old(ip1,j)+vv_old(im,j)-2.*vv_old(i,j))/dx/dx   &
-          &           + (vv_old(i,jp)+vv_old(i,jm)-2.*vv_old(i,j))/dy/dy   
+          grad2v(i,j) = (vv_old(ip1,j)+vv_old(im1,j)-2.*vv_old(i,j))/dx/dx   &
+          &           + (vv_old(i,jp1)+vv_old(i,jm1)-2.*vv_old(i,j))/dy/dy   
 
-          uh(i,j) = 0.5*(thickness(i,j)+thickness(im,j))*uu(i,j)
-          vh(i,j) = 0.5*(thickness(i,j)+thickness(i,jm))*vv(i,j)
-
-          ! --- faces (h,eta,div,etc)
-          grad2h(i,j) = (thickness_old(ip1,j,k)+thickness_old(im1,j,k)-2.*thickness_old(i,j,k))/dx/dx &
-          &           + (thickness_old(i,jp1,k)+thickness_old(i,jm1,k)-2.*thickness_old(i,j,k))/dy/dy
+          uh(i,j) = 0.5*(thickness(i,j) + thickness(im1,j))*uu(i,j)
+          vh(i,j) = 0.5*(thickness(i,j) + thickness(i,jm1))*vv(i,j)
           
        enddo
        enddo
-
-       ! Laplacian boundary for grad2h (Neumann bndy cond.)
-       grad2h(0, :) = grad2h(1,   :)
-       grad2h(nx,:) = grad2h(nx-1,:)
-       grad2h(:, 0) = grad2h(:,   1)
-       grad2h(:,ny) = grad2h(:,ny-1)
        
-       ! Boundaries call for correction. 
+       ! Boundaries call for grad2u/v and uh/vh.
        array_x = grad2u
        array_y = grad2v
-       ! include 'subs/laplacian_bndy.f90'
        include 'subs/no_normal_flow.f90'
        include 'subs/free_or_partial_slip.f90'
        grad2u = array_x
@@ -125,9 +124,13 @@
        uh = array_x
        vh = array_y
 
+
+       
+       ! --- Wind stress on surface (Tau_atm or Tau_ocean coupling) AND viscosity. 
+
        taux(:,:) = 0.
        tauy(:,:) = 0.
-
+       
        do j = 1, ny-1
           jp1 = j+1
           jm1 = j-1
@@ -135,20 +138,14 @@
           ip1 = i+1
           im1 = i-1
 
-          ! Grad 4
+          ! Grad 4 (Bilaplacian viscosity)
           grad4u(i,j) = (grad2u(ip1,j)+grad2u(im1,j)-2.*grad2u(i,j))/dx/dx   &
           &           + (grad2u(i,jp1)+grad2u(i,jm1)-2.*grad2u(i,j))/dy/dy   
           grad4v(i,j) = (grad2v(ip1,j)+grad2v(im1,j)-2.*grad2v(i,j))/dx/dx   &
           &           + (grad2v(i,jp1)+grad2v(i,jm1)-2.*grad2v(i,j))/dy/dy
-
-          ! grad2h
-          grad4h(i,j) = (grad2h(ip1,j)+grad2h(im1,j)-2.*grad2h(i,j))/dx/dx &
-          &           + (grad2h(i,jp1)+grad2h(i,jm1)-2.*grad2h(i,j))/dy/dy
-
           
-          ! >> Tau_ocean coupling
           !
-          ! COUPLED (with WW3)
+          ! > COUPLED (with WW3)
           if (cou) then
           ! Stress from coupled model (include step by def.)
           taux(i,j) = ramp*taux_oc(i,j,2)
@@ -157,50 +154,129 @@
           taux(i,j) = taux(i,j) + (1.-ramp) * tau0 * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
           tauy(i,j) = tauy(i,j) + 0.
 
-          ! UN-COUPLED (Only SW model)
+          ! > UN-COUPLED (Only SW model)
           else ! not (cou)    ! then step is included in SW stress : 
           taux(i,j) = tau0 * (1.+ramp*step*SIN(REAL(its)*dt*f0)) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
-          tauy(i,j) = 0
+          tauy(i,j) = 0.
           end if
           
        enddo
        enddo
+
+
+
+
        
-       ! >>> Right Hand Side (RHS) >>>
-       ! Sides loop
+! ========== Shallow water Right Hand Side (RHS) ========== >
+
+       ! u/v (du/dt)
        do j = 1, ny-1
-          jp = j+1
-          jm = j-1
+          jp1 = j+1
+          jm1 = j-1
        do i = 1, nx-1
           ip1 = i+1
-          im = i-1
+          im1 = i-1
 
-       rhs_u(i,j,k) = -(B(i,j)-B(im,j))/dx                             &  ! Bernouilli
-       &            + 0.25*(f(j) +zeta(i,j))* (vv(i,j) +vv(im,j))      &  ! Coriolis/Vorticité
-       &            + 0.25*(f(jp)+zeta(i,jp))*(vv(i,jp)+vv(im,jp))     &  ! Coriolis/Vorticité
-       &            + Ah2*grad2u(i,j)                                  &  ! Viscosité laplacienne
-       &            - Ah4*grad4u(i,j)                                  &  ! Viscosité bilaplacienne
-       &            - bot(k)*r_drag*uu_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*taux(i,j)/rho(1)/H(k)                     &  ! Vent en x
-       &            + top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i ,j, 2)     &  ! S.-C. et C.-L.
-       &                                                  + VStokes(im,j, 2))/HS(i,j) &  ! S.-C. et C.-L.
-       &            + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)     &  ! S.-C. et C.-L.
-       &                                                  + VStokes(im,jp,2))/HS(i,j)    ! S.-C. et C.-L.
+       rhsu_SW(i,j,k) = -(B(i,j)-B(im1,j))/dx                              &  ! Bernouilli
+       &            + 0.25*(f(j) +zeta(i,j))* (vv(i,j) +vv(im1,j))         &  ! Coriolis/Vorticité
+       &            + 0.25*(f(jp1)+zeta(i,jp1))*(vv(i,jp1)+vv(im1,jp1))    &  ! Coriolis/Vorticité
+       &            + Ah2*grad2u(i,j)                                      &  ! Viscosité laplacienne
+       &            - Ah4*grad4u(i,j)                                      &  ! Viscosité bilaplacienne
+       &            - bot(k)*r_drag*uu_old(i,j)                            &  ! Frottement au fond
+       &            + top(k)*taux(i,j)/rho(1)/H(1)                            ! Vent en x
        
-       rhs_v(i,j,k) = -(B(i,j)-B(i,jm))/dy                             &  ! Bernouilli
-       &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm))         &  ! Coriolis/Vorticité
-       &            - 0.25*(f(jp)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm))  &  ! coriolis/Vorticité
-       &            + Ah2*grad2v(i,j)                                  &  ! Viscosité laplacienne
-       &            - Ah4*grad4v(i,j)                                  &  ! Viscosité bilaplacienne
-       &            - bot(k)*r_drag*vv_old(i,j)                        &  ! Frottement au fond
-       &            + top(k)*tauy(i,j)/rho(1)/H(k)                     &  ! Vent en y
-       &            - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)           & ! S.-C et C.-L.
-       &                                                + UStokes(i,  jm,2))/HS(i,j)  & ! S.-C et C.-L.
-       &            - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)         & ! S.-C et C.-L.
-       &                                                  + UStokes(ip1,jm,2) )/HS(i,j) ! S.-C et C.-L.
+       rhsv_SW(i,j,k) = -(B(i,j)-B(i,jm1))/dy                              &  ! Bernouilli
+       &            - 0.25*(f(j)+zeta(i,j))*(uu(i,j)+uu(i,jm1))            &  ! Coriolis/Vorticité
+       &            - 0.25*(f(jp1)+zeta(ip1,j))*(uu(ip1,j)+uu(ip1,jm1))    &  ! coriolis/Vorticité
+       &            + Ah2*grad2v(i,j)                                      &  ! Viscosité laplacienne
+       &            - Ah4*grad4v(i,j)                                      &  ! Viscosité bilaplacienne
+       &            - bot(k)*r_drag*vv_old(i,j)                            &  ! Frottement au fond
+       &            + top(k)*tauy(i,j)/rho(1)/H(1)                            ! Vent en y
+       
        enddo
        enddo
 
+       ! eta (dh/dt)
+       do j = 1,ny-1
+          jp1 = j+1
+       do i = 1,nx-1
+          ip1 = i+1
+          
+       rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
+       &              -  (vh(i,jp1)-vh(i,j))/dy                       &
+       &              -  top(k)*ramp*(                                &  ! h*div(UStokes\HS(i,j))
+       &                  (UStokes(ip1,j,2)-UStokes(i,j,2))/dx        &
+       &              +   (VStokes(i,jp1,2)-VStokes(i,j,2))/dy )      !&
+
+       enddo
+       enddo
+       ! note : No need to add any boundaries conditions for eta.
+
+       ! Boundary conditions for rhsu/v
+       array_x(:,:) = rhsu_SW(:,:,k)
+       array_y(:,:) = rhsv_SW(:,:,k)
+       include 'subs/no_normal_flow.f90'
+       include 'subs/free_or_partial_slip.f90'
+       rhsu_SW(:,:,k) = array_x
+       rhsv_SW(:,:,k) = array_y
+      
+! ========== SW Right Hand Side (End) ========== <
+
+
+   
+       
+
+
+! ========== COUPLED Right Hand Side (RHS) calculations ========== >
+       
+       ! Calculating COUPLED RHS quantities (if cou=.true.)
+       if (k.eq.1) then
+       if (cou) then
+   
+          do j = 1, ny-1
+             jp1 = j+1
+             jm1 = j-1
+          do i = 1, nx-1
+             ip1 = i+1
+             im1 = i-1
+             
+             ! Stokes-Coriolis
+             RHSu_SC(i,j) =   0.25*f(j  )*(VStokes(i,j  , 2) + VStokes(im1,j,  2))/HS(i,j)  &
+             &              + 0.25*f(jp1)*(VStokes(i,jp1, 2) + VStokes(im1,jp1,2))/HS(i,j)
+   
+             RHSv_SC(i,j) = - 0.25*f(j  )*(UStokes(i,  j ,2) + UStokes(i,  jm1,2))/HS(i,j)  &
+             &              - 0.25*f(jp1)*(UStokes(ip1,j ,2) + UStokes(ip1,jm1,2))/HS(i,j)
+   
+             ! Craik-Leibovich
+             RHSu_CL(i,j) =   0.25*zeta(i,j  )*(VStokes(i,j  , 2) + VStokes(im1, j, 2))/HS(i,j) &
+             &              + 0.25*zeta(i,jp1)*(VStokes(i,jp1, 2) + VStokes(im1,jp1,2))/HS(i,j)
+   
+             RHSv_CL(i,j) = - 0.25*zeta(i,  j)*(UStokes(i,  j ,2) + UStokes(i,  jm1,2))/HS(i,j) &
+             &              - 0.25*zeta(ip1,j)*(UStokes(ip1,j ,2) + UStokes(ip1,jm1,2))/HS(i,j)
+   
+             ! Bernouilli-Stokes
+             RHSu_BS(i,j) = -(BS(i,j)-BS(im1,j))/dx
+             RHSv_BS(i,j) = -(BS(i,j)-BS(i,jm1))/dy
+             
+          enddo
+          enddo
+             
+       endif ! coupling       
+       endif ! k=1
+       
+! ========== COUPLED Right Hand Side calculations (END) ========== <
+
+
+
+       
+
+! --- Finalising and adding (SW + Coupled) RHS together >>>
+
+       ! Adding each RHS together when coupled with Wavewatch III . WW3RHS = 0 if cou=.false.
+       rhs_u(:,:,k) = rhsu_SW(:,:,k)  + top(k)*ramp*( RHSu_SC(:,:) + RHSu_CL(:,:) + RHSu_BS(:,:) )
+       rhs_v(:,:,k) = rhsv_SW(:,:,k)  + top(k)*ramp*( RHSv_SC(:,:) + RHSv_CL(:,:) + RHSv_BS(:,:) )
+
+       ! Boundary conditions : 
        array_x(:,:) = rhs_u(:,:,k)
        array_y(:,:) = rhs_v(:,:,k)
        include 'subs/no_normal_flow.f90'
@@ -209,50 +285,5 @@
        rhs_v(:,:,k) = array_y
        
 
-       ! Face loop
-       do j = 1,ny-1
-          jp = j+1
-       do i = 1,nx-1
-          ip1 = i+1
-          
-       rhs_eta(i,j,k) = -(uh(ip1,j)-uh(i,j))/dx                       &  ! div(u*h)
-       &              -  (vh(i,jp)-vh(i,j))/dy                        &
-       &              -  top(k)*ramp*(                                &  ! h*div(UStokes\HS(i,j))
-       &                  (UStokes(ip1,j,2)-UStokes(i,j,2))/dx        &
-       &              +   (VStokes(i,jp,2) -VStokes(i,j,2))/dy )      !&
-       !&              -  thickness_viscosity*grad4h(i,j) 
+! --- End of subroutine 
        
-       enddo
-       enddo
-       ! note : No need to add any boundaries conditions for eta.
-       ! <<< Right Hand Side (End) <<<
-
-
-
-
-       ! Calculating Coupled RHS, only if Stokes is active AND if output timestep : 
-       if (mod(its,iout).eq.0) then
-       if (cou) then
-       if (k.eq.1) then
-             
-       do j = 1, ny-1
-          jp = j+1
-          jm = j-1
-       do i = 1, nx-1
-          ip1 = i+1
-          im = i-1
-             
-          RHSu_Stokes(i,j) = top(k)*ramp*0.25*(f(j) + zeta(i,j))*( VStokes(i, j, 2)            &  ! S.-C. et C.-L.
-          &                                                      + VStokes(i, j, 2))/HS(i,j)   &  ! S.-C. et C.-L.
-          &                + top(k)*ramp*0.25*(f(jp)+ zeta(i,jp))*(VStokes(i,jp, 2)            &  ! S.-C. et C.-L.
-          &                                                      + VStokes(im,jp,2))/HS(i,j)      ! S.-C. et C.-L.
-          RHSv_Stokes(i,j) = - top(k)*ramp*0.25*(f(j) +zeta(i,j))*(UStokes(i,  j ,2)           & ! S.-C et C.-L.
-          &                                                      + UStokes(i,  jm,2))/HS(i,j)  & ! S.-C et C.-L.
-          &                - top(k)*ramp*0.25*(f(jp)+zeta(ip1,j))*(UStokes(ip1,j ,2)           & ! S.-C et C.-L.
-          &                                                      + UStokes(ip1,jm,2) )/HS(i,j)   ! S.-C et C.-L.
-
-       enddo
-       enddo
-       endif
-       endif
-       endif

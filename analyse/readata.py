@@ -224,8 +224,9 @@ def anim(dS,
     yy = dS.y.values
     
     # >> Figure creation ::
-    if len(dS) > 4    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[13.5,7.5], sharey=True)
-    elif len(dS) == 4 : fig, axes = plt.subplots(ncols=2, nrows=2, figsize=[9,7.5], sharey=True)
+    if len(dS) == 4 : fig, axes = plt.subplots(ncols=2, nrows=2, figsize=[9,7.5], sharey=True)
+    elif len(dS) > 4    : fig, axes = plt.subplots(ncols=4, nrows=2, figsize=[18.0,7.5], sharey=True)
+    elif len(dS) > 3    : fig, axes = plt.subplots(ncols=3, nrows=2, figsize=[13.5,7.5], sharey=True)
     else : fig, axes = plt.subplots(ncols=len(dS), figsize=(4.5*len(dS),3.75), sharey=True)
     if not isinstance(axes,np.ndarray) : axes = np.array(axes)
     im = []
@@ -342,10 +343,13 @@ if __name__ == "__main__" :
                          datapath='data/',
                          minday = minday,
                          maxday = maxday,
-                         fields_to_open = ['divRHS','divRHS_Stokes','RHS1','curlTauIN','divTauIN'],
+                         fields_to_open = ['div1','zeta1','divRHS','curlRHS','curlRHS_CL','UStokes','tauy','divRHS_CL'],
                          dt=dt,
         )
-        
+
+        #fields_to_open = ['u1','u2','thickness1'],
+        #fields_to_open = ['UStokes','VStokes','taux'],
+        #fields_to_open = ['divRHS_SC','divRHS_CL','divRHS_BS', 'divTau','divRHS','divUStokes','curlRHS_SC','curlRHS_CL','curlRHS_BS', 'curlTau','curlRHS','curlUStokes','zeta1','div1'],        
 
 
         

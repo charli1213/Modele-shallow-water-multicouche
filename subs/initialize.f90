@@ -10,7 +10,44 @@
        taux_DS(:,:) = 0.
        tauy_DS(:,:) = 0.
        UStokes(:,:,:) = 0.
-       VStokes(:,:,:) = 0. 
+       VStokes(:,:,:) = 0.
+
+       
+       ! Initialising Coupled RHS as nul.
+       ! N.B. Will stay unmodified is cou = .false.
+       RHSu_SC(:,:) = 0.
+       RHSv_SC(:,:) = 0.
+       RHSu_CL(:,:) = 0.
+       RHSv_CL(:,:) = 0.
+       RHSu_BS(:,:) = 0.
+       RHSv_BS(:,:) = 0.
+       ! This on will always be modified (see rhs.f90)
+       rhsu_SW(:,:,:) = 0.
+       rhsv_SW(:,:,:) = 0.
+
+       
+       ! Lowpass_filter (see subs/Lowpass_filter.f90)
+       ! curl
+       curlRHS_snap(:,:)     = 0.
+       curlRHS_BS_snap(:,:)  = 0.
+       curlRHS_CL_snap(:,:)  = 0.
+       curlRHS_SC_snap(:,:)  = 0.
+       curl1_snap(:,:)       = 0.
+       curlTauUST_snap(:,:)  = 0.
+       curlTauIN_snap(:,:)   = 0.
+       curlTauDS_snap(:,:)   = 0.
+       curlUStokes_snap(:,:) = 0.   
+       ! Div
+       divRHS_snap(:,:)     = 0.
+       divRHS_BS_snap(:,:)  = 0.
+       divRHS_CL_snap(:,:)  = 0.
+       divRHS_SC_snap(:,:)  = 0.
+       div1_snap(:,:)       = 0.
+       divTauIN_snap(:,:)   = 0.
+       divTauUST_snap(:,:)  = 0.
+       divTauDS_snap(:,:)   = 0.
+       divUStokes_snap(:,:) = 0. 
+       
      ! Model arrays >>>
        u(:,:,:,:) = 0.
        v(:,:,:,:) = 0.

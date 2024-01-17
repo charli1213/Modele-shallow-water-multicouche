@@ -121,21 +121,21 @@
 
      ! Normal RHS
      
-     string6 =  './data/RHSu' // trim(k_str) // '_' // trim(which)  
-     open(unit=106,file=string6,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(106,REC=1) ((rhs_u(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
-     close(106)
-
-     string7 =  './data/RHSv' // trim(k_str) // '_' // trim(which)       
-     open(unit=107,file=string7,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(107,REC=1) ((rhs_v(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
-     close(107)
+     !!!string6 =  './data/RHSu' // trim(k_str) // '_' // trim(which)  
+     !!!open(unit=106,file=string6,access='DIRECT',&
+     !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !!!write(106,REC=1) ((rhs_u(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     !!!close(106)
+     !!!
+     !!!string7 =  './data/RHSv' // trim(k_str) // '_' // trim(which)       
+     !!!open(unit=107,file=string7,access='DIRECT',&
+     !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+     !!!write(107,REC=1) ((rhs_v(i,j,k),i=1,nx,subsmprto),j=1,ny,subsmprto)
+     !!!close(107)
 
      ! Calculating div and curl of RHSu/v
-     array_x(:,:) = rhs_u(:,:,k)
-     array_y(:,:) = rhs_v(:,:,k)
+     array_x(:,:) = rhsu_SW(:,:,k)
+     array_y(:,:) = rhsv_SW(:,:,k)
      include 'subs/div_and_curl.f90'
 
      ! Divergence 
@@ -156,122 +156,83 @@
      ! Coupled Stokes' RHS
      if (cou) then
         
-        string6 =  './data/RHSu_Stokes' // trim(k_str) // '_' // trim(which)  
-        open(unit=106,file=string6,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(106,REC=1) ((RHSu_Stokes(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
-        close(106)
+        !!!string6 =  './data/RHSu_SC' // trim(k_str) // '_' // trim(which)  
+        !!!open(unit=106,file=string6,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(106,REC=1) ((RHSu_SC(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        !!!close(106)
+        !!!
+        !!!string7 =  './data/RHSv_SC' // trim(k_str) // '_' // trim(which)       
+        !!!open(unit=107,file=string7,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(107,REC=1) ((RHSv_SC(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        !!!close(107)
 
-        string7 =  './data/RHSv_Stokes' // trim(k_str) // '_' // trim(which)       
-        open(unit=107,file=string7,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(107,REC=1) ((RHSv_Stokes(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
-        close(107)
-
-        ! Calculating div and curl of RHSu/v
-        array_x(:,:) = RHSu_Stokes(:,:)
-        array_y(:,:) = RHSv_Stokes(:,:)
+        
+        !> Calculating div and curl of RHSu/v Stokes-Coriolis
+        array_x(:,:) = RHSu_SC(:,:)
+        array_y(:,:) = RHSv_SC(:,:)
         include 'subs/div_and_curl.f90'
 
         ! Divergence 
-        string35 =  './data/divRHS_Stokes'  // '_' // trim(which)
+        string35 =  './data/divRHS_SC'  // '_' // trim(which)
         open(unit=135,file=string35,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
         write(135,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
         close(135)
 
         ! Curl
-        string36 =  './data/curlRHS_Stokes'  // '_' // trim(which)
+        string36 =  './data/curlRHS_SC'  // '_' // trim(which)
         open(unit=136,file=string36,access='DIRECT',&
              & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
         write(136,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
         close(136)
-        
-     endif
-     
 
-     
-  !*!      
-  !*!   enddo
-  !*!
-  !*!   ! divergence du RHS_barotrope (devrait être nul) [La variable divBT est dummy].
-  !*!   faces_array(:,:) = 0.
-  !*!   do j = 1,ny-1
-  !*!   jp = j+1   
-  !*!   do i = 1,nx-1
-  !*!   ip1 = i+1
-  !*!   faces_array(i,j) = (rhs_u_BT(ip1,j)-rhs_u_BT(i,j))/dx   &
-  !*!        &           + (rhs_v_BT(i,jp)-rhs_v_BT(i,j))/dy
-  !*!   enddo
-  !*!   enddo
-  !*!
-  !*!   divBT_out (:,:) = faces_array(isubx,isuby)
-  !*!
-  !*!   ! Outputing the divergence of the baroclinic current (Should be zero).
-  !*!   string8 =  './data/div_rhsBT' // '1' // '_' // trim(which)
-  !*!   open(unit=108,file=string8,access='DIRECT',&
-  !*!        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-  !*!   write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
-  !*!   close(108)
-  !*!   
-     
+
+        !> Calculating div and curl of RHSu/v Craik-Leibovich
+        array_x(:,:) = RHSu_CL(:,:)
+        array_y(:,:) = RHSv_CL(:,:)
+        include 'subs/div_and_curl.f90'
+
+        ! Divergence 
+        string37 =  './data/divRHS_CL'  // '_' // trim(which)
+        open(unit=137,file=string37,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(137,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(137)
+
+        ! Curl
+        string38 =  './data/curlRHS_CL'  // '_' // trim(which)
+        open(unit=138,file=string38,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(138,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(138)
+
+        
+        !> Calculating div and curl of RHSu/v Bernouilli-Stokes
+        array_x(:,:) = RHSu_BS(:,:)
+        array_y(:,:) = RHSv_BS(:,:)
+        include 'subs/div_and_curl.f90'
+
+        ! Divergence 
+        string37 =  './data/divRHS_BS'  // '_' // trim(which)
+        open(unit=137,file=string37,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(137,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(137)
+
+        ! Curl
+        string38 =  './data/curlRHS_BS'  // '_' // trim(which)
+        open(unit=138,file=string38,access='DIRECT',&
+             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        write(138,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+        close(138)
+        
+     endif     
      
   endif ! IO_rhsuv
 
-  
 
-  
-  ! IO_BT
-  if (IO_BT) then
-
-     divBT(:,:) = 0.
-     
-     do j = 1, ny-1
-        jp = j+1
-     do i = 1, nx-1
-        ip1 = i+1
-        ! ZetaBT is already calculated in psiBT_correction_fishpack.f90
-        ! divBT post-Mudpack (while zetaBT is calculated pre-Fishpack)
-        divBT(i,j) = (uBT(ip1,j)- uBT(i,j))/dx   &
-        &          + (vBT(i,jp) - vBT(i,j))/dy 
-     enddo
-     enddo
-     
-     ! Out block
-     divBT_out(:,:)  = divBT(isubx,isuby)
-     zetaBT_out(:,:) = zetaBT(isubx,isuby)
-     uBT_out(:,:) = uBT(isubx,isuby)
-     vBT_out(:,:) = vBT(isubx,isuby)
-     
-     ! Outputing the divergence of the baroclinic current (Should be zero).
-     string8 =  './data/divBT' // '1' // '_' // trim(which)
-     open(unit=108,file=string8,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(108,REC=1) ((divBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(108)
-
-     string9 =  './data/zetaBT' // '1' // '_' // trim(which)
-     open(unit=109,file=string9,access='DIRECT',&
-          & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     write(109,REC=1) ((zetaBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     close(109)
-
-     !%%%!string10 =  './data/uBT' // '1' // '_' // trim(which)
-     !%%%!open(unit=110,file=string10,access='DIRECT',&
-     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !%%%!write(110,REC=1) ((uBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     !%%%!close(110)
-     !%%%!
-     !%%%!string11 =  './data/vBT' // '1' // '_' // trim(which)
-     !%%%!open(unit=111,file=string11,access='DIRECT',&
-     !%%%!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-     !%%%!write(111,REC=1) ((vBT_out(i,j),i=1,szsubx),j=1,szsuby)
-     !%%%!close(111)
-     
-  endif !IO_BT
-
-
-  
   
   if (IO_coupling) then
 
@@ -329,20 +290,22 @@
      
      ENDIF
 
+
+     
      ! Friction velocity
      IF (ustar) THEN
         
-        string27 = './data/taux_ust'  // '_' // trim(which)
-        open(unit=127,file=string27,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(127,REC=1) ((taux_ust_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(127)
-        
-        string28 = './data/tauy_ust'  // '_' // trim(which)
-        open(unit=128,file=string28,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(128,REC=1) ((tauy_ust_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(128)
+        !!!string27 = './data/taux_ust'  // '_' // trim(which)
+        !!!open(unit=127,file=string27,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(127,REC=1) ((taux_ust_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(127)
+        !!!
+        !!!string28 = './data/tauy_ust'  // '_' // trim(which)
+        !!!open(unit=128,file=string28,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(128,REC=1) ((tauy_ust_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(128)
         
         array_x = taux_ust
         array_y = tauy_ust
@@ -366,18 +329,18 @@
 
 
      IF (waves) THEN
-        ! > Wave-supported stress
-        string29 =  './data/taux_IN'  // '_' // trim(which)
-        open(unit=129,file=string29,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(129,REC=1) ((taux_IN_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(129)
-        
-        string30 =  './data/tauy_IN'  // '_' // trim(which)
-        open(unit=130,file=string30,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(130,REC=1) ((tauy_IN_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(130)
+        !!!! > Wave-supported stress
+        !!!string29 =  './data/taux_IN'  // '_' // trim(which)
+        !!!open(unit=129,file=string29,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(129,REC=1) ((taux_IN_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(129)
+        !!!
+        !!!string30 =  './data/tauy_IN'  // '_' // trim(which)
+        !!!open(unit=130,file=string30,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(130,REC=1) ((tauy_IN_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(130)
    
         array_x = taux_IN
         array_y = tauy_IN
@@ -398,17 +361,17 @@
         close(136)
         
         ! > Wave induced stress
-        string31 =  './data/taux_DS'  // '_' // trim(which)
-        open(unit=131,file=string31,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(131,REC=1) ((taux_DS_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(131)
-        
-        string32 =  './data/tauy_DS'  // '_' // trim(which)
-        open(unit=132,file=string32,access='DIRECT',&
-             & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-        write(132,REC=1) ((tauy_DS_out(i,j),i=1,szsubx),j=1,szsuby)
-        close(132)
+        !!!string31 =  './data/taux_DS'  // '_' // trim(which)
+        !!!open(unit=131,file=string31,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(131,REC=1) ((taux_DS_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(131)
+        !!!
+        !!!string32 =  './data/tauy_DS'  // '_' // trim(which)
+        !!!open(unit=132,file=string32,access='DIRECT',&
+        !!!     & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+        !!!write(132,REC=1) ((tauy_DS_out(i,j),i=1,szsubx),j=1,szsuby)
+        !!!close(132)
         ENDIF
 
         array_x = taux_DS
@@ -432,6 +395,7 @@
   endif ! IO_coupling  
 
 
+  
   ! IO_forcing
   if (IO_forcing) then
     ! Forcing-AG
@@ -455,14 +419,34 @@
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
       write(112,REC=1) ((taux(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
       close(112)
-
+      
       string13 =  './data/tauy'  // '_' // trim(which)
       open(unit=113,file=string13,access='DIRECT',&
       & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
       write(113,REC=1) ((tauy(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
       close(113)
+
+      array_x = taux
+      array_y = tauy
+      include 'subs/div_and_curl.f90'
+      
+      ! Divergence 
+      string14 =  './data/divTau'  // '_' // trim(which)
+      open(unit=114,file=string14,access='DIRECT',&
+           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      write(114,REC=1) ((div(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+      close(114)
+
+      ! Curl
+      string15 =  './data/curlTau'  // '_' // trim(which)
+      open(unit=115,file=string15,access='DIRECT',&
+           & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
+      write(115,REC=1) ((zeta(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+      close(115)
       
   end if !IO_forcing
+
+
   
   if (IO_QGAG) then
       string13 =  './data/u_qg'  // '_' // trim(which)
@@ -470,6 +454,8 @@
       string15 =  './data/v_qg'  // '_' // trim(which)
   !  string16 = './data/v_ag'  // '_' // trim(which)
   end if !IO_QGAG
+
+
 
   if(IO_psivort) then
 
@@ -505,6 +491,8 @@
      close(122)
      
   end if !IO_psivort
+
+
 
   if(IO_psimodes) then
      
