@@ -288,6 +288,7 @@
       REAL :: curlTauIN_filtered(1:nx,1:ny)
       REAL :: curlTauDS_filtered(1:nx,1:ny)
       REAL :: curlUStokes_filtered(1:nx,1:ny)
+
       ! Div
       REAL :: divRHS_filtered(0:nx,0:ny)
       REAL :: divRHS_BS_filtered(0:nx,0:ny)
@@ -298,17 +299,19 @@
       REAL :: divTauUST_filtered(0:nx,0:ny)
       REAL :: divTauDS_filtered(0:nx,0:ny)
       REAL :: divUStokes_filtered(0:nx,0:ny)
+
       !! Snap
       ! Curl
       REAL :: curlRHS_snap(1:nx,1:ny)
       REAL :: curlRHS_BS_snap(1:nx,1:ny)
       REAL :: curlRHS_CL_snap(1:nx,1:ny)
       REAL :: curlRHS_SC_snap(1:nx,1:ny)
-      REAL :: curl1_snap(1:nx,1:ny)
+      REAL :: zeta1_snap(1:nx,1:ny)
       REAL :: curlTauUST_snap(1:nx,1:ny)
       REAL :: curlTauIN_snap(1:nx,1:ny)
       REAL :: curlTauDS_snap(1:nx,1:ny)
       REAL :: curlUStokes_snap(1:nx,1:ny)
+
       ! Div
       REAL :: divRHS_snap(0:nx,0:ny)
       REAL :: divRHS_BS_snap(0:nx,0:ny)
@@ -319,6 +322,7 @@
       REAL :: divTauUST_snap(0:nx,0:ny)
       REAL :: divTauDS_snap(0:nx,0:ny)
       REAL :: divUStokes_snap(0:nx,0:ny)
+
      ! ==================================== ! 
 
       
@@ -553,31 +557,37 @@
       !                      RHS (END)                     !
       ! ================================================== !
 
-      ! >>> barotropic psi-correction
+      
+      ! -------------------------------------------------- !
+      !        ->>>- Barotropic psi-correction ->>>-       !
+      ! -------------------------------------------------- !
+        !
+        !     need to correct RHS_u,v for surface pressure 
+        !
       write(*,*) 'First barotropic psi-correction'
-      !
-      !     need to correct RHS_u,v for surface pressure 
-      !
       ilevel = 2
       p_out(:,:) = 0.
       ! include 'subs/psiBT_correction.f90'
       include 'subs/init_fishpack.f90'
       include 'subs/psiBT_correction_fishpack.f90'
-      ! <<< barotropic correction (End)
 
+      ! -------------------------------------------------- !
+      !    -<<<- Barotropic psi-correction (End) -<<<-     !
+      ! -------------------------------------------------- !
+
+      ! --- updating time ---
       time = dt
       its = its + 1
       !call get_taux(taux_steady,amp_matrix(its),taux)
 
-
+      ! --- Updating fields indicators ---
       u(:,:,:,3) = u(:,:,:,2)
       v(:,:,:,3) = v(:,:,:,2)
       eta(:,:,2:nz,3) = eta(:,:,2:nz,2)
-      ! Eta1 is barotropic streamfunction (psiBT).
+      ! eta1 is barotropic streamfunction (psiBT).
       eta(1:nx,1:ny,1,3) = PsiBT(1:nx,1:ny)
 
-      !
-      
+      ! --- Print output --- 
       include 'subs/dump_bin.f90'
       !
 
@@ -627,18 +637,20 @@
 
 
          !
-         ! >>> Modification CEL >>>
-         ! --- SUBSEQUENT MPI CALL HERE. 
+         ! --- SUBSEQUENT MPI CALL HERE ---
+         ! Fetching coupled fields
          IF (cou) THEN
             uu(:,:) = u(:,:,1,2) 
             vv(:,:) = v(:,:,1,2)
             include 'subs/coupling_ww3.f90'
          END IF
-         ! <<< Modification CEL <<<
          !
          
+
+         ! --- Thickness correction (begin) ---
+         !  n.b. this mecanism balance isopicnals of the model before it explodes
+         !       of before layers get null thicknesses.
          !
-         ! Thickness correction (begin)
          if (.true.) then
             do k = 1,nz-1
                ! 1. Finding thickness of current layer. 
@@ -699,9 +711,9 @@
       ! ================================================== !
       !                  RHS (begining)                    !
       ! ================================================== !
-         
-         ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)
-
+         !
+         ! -> We apply Leapfrog timestep qty(3) = qty(1) + RHS_qty(2)*dt
+         !
          ! eta-loop : Starts from the bottom, because RHS eta_k = RHS h_k + RHS eta_k-1
          rhs_eta(:,:,1) = 0. ! Rigid lid
          faces_array(:,:) = rhs_eta(:,:,nz)
@@ -713,29 +725,37 @@
          
          u(:,:,:,3) = u(:,:,:,1) + 2.*dt*rhs_u(:,:,:)
          v(:,:,:,3) = v(:,:,:,1) + 2.*dt*rhs_v(:,:,:)
+         
       ! ================================================== !
       !                      RHS (End)                     !
       ! ================================================== !
 
 
-         ! >>> Barotropic psi-correction
+         
+      ! -------------------------------------------------- !
+      !        ->>>- Barotropic psi-correction ->>>-       !
+      ! -------------------------------------------------- !
          !
          !     stuff for barotropic psi-correction
          !
          ilevel = 3
          p_out(:,:) = 0.
-         !include 'subs/psiBT_correction.f90'
          include 'subs/psiBT_correction_fishpack.f90'
-         ! <<< Barotropic psi-correction (End)
+         
+      ! -------------------------------------------------- !
+      !    -<<<- Barotropic psi-correction (End) -<<<-     !
+      ! -------------------------------------------------- !
 
          
+         ! ->- Lowpass filter output ->-
+         include "subs/Lowpass_filter.f90"
          
          ! --- Updating time ---
          time = time + dt
          today = time/86400.
          !call get_taux(taux_steady,amp_matrix(its),taux)
 
-         ! robert filter
+         ! --- robert filter ---
          u(:,:,:,2) = u(:,:,:,2) + rf*(u(:,:,:,1)+u(:,:,:,3)-2*u(:,:,:,2))
          v(:,:,:,2) = v(:,:,:,2) + rf*(v(:,:,:,1)+v(:,:,:,3)-2*v(:,:,:,2))
          eta(:,:,:,2) = eta(:,:,:,2)   &
@@ -747,7 +767,7 @@
          v(:,:,:,2) = v(:,:,:,3)
          eta(:,:,:,2) = eta(:,:,:,3)
 
-         ! mean energy diagnostics : 
+         ! --- mean kinetic energy diagnostics --- 
          ke1 = 0.
          ke2 = 0.
          do j = 1, ny-1

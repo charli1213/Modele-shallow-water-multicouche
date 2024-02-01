@@ -16,7 +16,7 @@ for step in step_list :
     
     step = str(step)
     base_file = '/home/celiz2/scratch/sw-work/sw_test/'
-    sw_file   = '/home/celiz2/scratch/sw-work/test_sw3nz_S{}%/'.format(step)
+    sw_file   = '/home/celiz2/scratch/sw-work/1test_sw3nz_S{}%/'.format(step)
     cou_files = ['/home/celiz2/scratch/rhoO/1test_COU3nz_S{}%/'.format(step),'/home/celiz2/scratch/rhoO/2test_COU3nz_S{}%/'.format(step)]
     # ---
     

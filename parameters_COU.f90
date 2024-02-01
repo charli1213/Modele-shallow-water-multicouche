@@ -23,7 +23,7 @@
    
    ! --- Physical parameters ---
  
-   parameter ( tau0 = 0.05, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2], wind_t0 [timestep]
+   parameter ( tau0 = 0.1, tau1 = 1.e-5, wind_t0 = 10000, variance = 1000 ) !tau0 in classical definition [N/m^2], wind_t0 [timestep]
  
    parameter ( f0 = 7.e-5, beta = 2.e-11 )
    
@@ -31,9 +31,9 @@
  
    parameter ( r_invLap = 1.e-6*twopi**2/Ly**2 )
  
-   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = 1.e-5*dx**4 )
+   parameter ( Ah2 = 0*1.e-7*dx**2, Ah4 = 1.e-5*dx**4 ) !parameter ( Ah4 = Ah4 = 1.e-5*dx**4 )
  
-   parameter ( thickness_correction = .true.  )
+   parameter ( thickness_viscosity = 0., thickness_correction = .true.  )
 
    parameter ( rf = 0.001 ) !0.001
  
@@ -64,7 +64,7 @@
 
    parameter ( restart = .true. , daysperrestart = 365)
    
-   parameter ( use_ramp = .true., cut_days = 0) 
+   parameter ( use_ramp = .false., cut_days = 0) 
  
    parameter ( c_theta=5.*f0, c_mu=0.,  c_sigma=0.1,c_tauvar=0.45)
 

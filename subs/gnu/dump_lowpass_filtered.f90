@@ -27,10 +27,10 @@
   write(134,REC=1) ((curlRHS_SC_filtered(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(134)
 
-  string35 =  './lowpass_data/curl1_filtered'  // '_' // trim(which)
+  string35 =  './lowpass_data/zeta1_filtered'  // '_' // trim(which)
   open(unit=135,file=string35,access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-  write(135,REC=1) ((curl1_filtered(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+  write(135,REC=1) ((zeta1_filtered(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(135)
   
   string36 =  './lowpass_data/curlTauUST_filtered'  // '_' // trim(which)
@@ -57,7 +57,7 @@
   write(139,REC=1) ((curlUStokes_filtered(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(139)
 
-
+  
   ! div
 
   string41 =  './lowpass_data/divRHS_filtered'  // '_' // trim(which)

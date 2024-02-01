@@ -9,7 +9,7 @@
      curlRHS_BS_snap(:,:)  = 0.
      curlRHS_CL_snap(:,:)  = 0.
      curlRHS_SC_snap(:,:)  = 0.
-     curl1_snap(:,:)       = 0.
+     zeta1_snap(:,:)       = 0.
      curlTauUST_snap(:,:)  = 0.
      curlTauIN_snap(:,:)   = 0.
      curlTauDS_snap(:,:)   = 0.
@@ -49,9 +49,8 @@
         &                    + (tauy_UST(i,jp1)-tauy_UST(i,j))/dy 
         divTauDS_snap(i,j)   = (taux_DS(ip1,j)-taux_DS(i,j))/dx &
         &                    + (tauy_DS(i,jp1)-tauy_DS(i,j))/dy 
-        divUStokes_snap(i,j) = (UStokes(ip1,j)-UStokes(i,j))/dx &
-        &                    + (VStokes(i,jp1)-VStokes(i,j))/dy 
-
+        divUStokes_snap(i,j) = (UStokes(ip1,j,2)-UStokes(i,j,2))/dx &
+        &                    + (VStokes(i,jp1,2)-VStokes(i,j,2))/dy 
      enddo
      enddo
 
@@ -70,7 +69,7 @@
         &                     - (rhsu_CL(i,j)-rhsu_CL(i,jm1))/dy 
         curlRHS_SC_snap(i,j)  = (rhsv_SC(i,j)-rhsv_SC(im1,j))/dx &
         &                     - (rhsu_SC(i,j)-rhsu_SC(i,jm1))/dy 
-        curl1_snap(i,j)       = (v(i,j,1,2)-v(im1,j,1,2))/dx &
+        zeta1_snap(i,j)       = (v(i,j,1,2)-v(im1,j,1,2))/dx &
         &                     - (u(i,j,1,2)-u(i,jm1,1,2))/dy 
         curlTauIN_snap(i,j)   = (tauy_IN(i,j)-tauy_IN(im1,j))/dx &
         &                     - (taux_IN(i,j)-taux_IN(i,jm1))/dy 
@@ -78,12 +77,15 @@
         &                     - (taux_UST(i,j)-taux_UST(i,jm1))/dy 
         curlTauDS_snap(i,j)   = (tauy_DS(i,j)-tauy_DS(im1,j))/dx &
         &                     - (taux_DS(i,j)-taux_DS(i,jm1))/dy 
-        curlUStokes_snap(i,j) = (VStokes(i,j)-VStokes(im1,j))/dx &
-        &                     - (UStokes(i,j)-UStokes(i,jm1))/dy 
-
+        curlUStokes_snap(i,j) = (VStokes(i,j,2)-VStokes(im1,j,2))/dx &
+        &                     - (UStokes(i,j,2)-UStokes(i,jm1,2))/dy 
      enddo
      enddo
 
+     ! If we're at the middle of the gaussian weight function, we print. 
+     if( (time.ge.tcenter-dt).and.(time.lt.tcenter+dt) ) then
+        include 'subs/gnu/dump_lowpass_snap.f90'
+     endif
 
      !!! filtering the fields with the weight function ( normalised gaussian func).
 
@@ -96,8 +98,8 @@
             &                    + curlRHS_CL_snap(:,:)*exp(-param)/561.512451
        curlRHS_SC_filtered(:,:)  = curlRHS_SC_filtered(:,:)   &
             &                    + curlRHS_SC_snap(:,:)*exp(-param)/561.512451
-       curl1_filtered(:,:)       = curl1_filtered(:,:)        &
-            &                    + curl1_snap(:,:)*exp(-param)/561.512451
+       zeta1_filtered(:,:)       = zeta1_filtered(:,:)        &
+            &                    + zeta1_snap(:,:)*exp(-param)/561.512451
        curlTauUST_filtered(:,:)  = curlTauUST_filtered(:,:)   &
             &                    + curlTauUST_snap(:,:)*exp(-param)/561.512451
        curlTauIN_filtered(:,:)   = curlTauIN_filtered(:,:)    &
@@ -128,13 +130,7 @@
             &                   + divUStokes_snap(:,:)*exp(-param)/561.512451
        
 
-       ! If we're at the middle of the gaussian weight function, we print. 
-       if( (time.ge.tcenter-dt).and.(time.lt.tcenter+dt) ) then
-          include 'subs/gnu/dump_lowpass_snap.f90'
-       endif        
-
      endif ! time interval for lowpass filter. 
-
      
      ! when it's over, we print the filtered fields. 
      if(time.ge.tstop.and.time.lt.tstop+dt) then

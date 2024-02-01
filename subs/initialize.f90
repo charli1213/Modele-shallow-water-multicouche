@@ -26,18 +26,19 @@
        rhsv_SW(:,:,:) = 0.
 
        
-       ! Lowpass_filter (see subs/Lowpass_filter.f90)
-       ! curl
+     ! Lowpass_filter (see subs/Lowpass_filter.f90)
+      ! Snap
+      ! curl
        curlRHS_snap(:,:)     = 0.
        curlRHS_BS_snap(:,:)  = 0.
        curlRHS_CL_snap(:,:)  = 0.
        curlRHS_SC_snap(:,:)  = 0.
-       curl1_snap(:,:)       = 0.
+       zeta1_snap(:,:)       = 0.
        curlTauUST_snap(:,:)  = 0.
        curlTauIN_snap(:,:)   = 0.
        curlTauDS_snap(:,:)   = 0.
        curlUStokes_snap(:,:) = 0.   
-       ! Div
+      ! Div
        divRHS_snap(:,:)     = 0.
        divRHS_BS_snap(:,:)  = 0.
        divRHS_CL_snap(:,:)  = 0.
@@ -46,7 +47,30 @@
        divTauIN_snap(:,:)   = 0.
        divTauUST_snap(:,:)  = 0.
        divTauDS_snap(:,:)   = 0.
-       divUStokes_snap(:,:) = 0. 
+       divUStokes_snap(:,:) = 0.
+       
+     ! Filtered
+      ! curl
+       curlRHS_filtered(:,:)     = 0.
+       curlRHS_BS_filtered(:,:)  = 0.
+       curlRHS_CL_filtered(:,:)  = 0.
+       curlRHS_SC_filtered(:,:)  = 0.
+       zeta1_filtered(:,:)       = 0.
+       curlTauUST_filtered(:,:)  = 0.
+       curlTauIN_filtered(:,:)   = 0.
+       curlTauDS_filtered(:,:)   = 0.
+       curlUStokes_filtered(:,:) = 0.   
+      ! Div
+       divRHS_filtered(:,:)     = 0.
+       divRHS_BS_filtered(:,:)  = 0.
+       divRHS_CL_filtered(:,:)  = 0.
+       divRHS_SC_filtered(:,:)  = 0.
+       div1_filtered(:,:)       = 0.
+       divTauIN_filtered(:,:)   = 0.
+       divTauUST_filtered(:,:)  = 0.
+       divTauDS_filtered(:,:)   = 0.
+       divUStokes_filtered(:,:) = 0. 
+
        
      ! Model arrays >>>
        u(:,:,:,:) = 0.

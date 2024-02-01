@@ -4,7 +4,7 @@
 #SBATCH --mail-type=NONE
 #SBATCH --ntasks=1
 #SBATCH --mem=0
-#SBATCH --time=00-02:00:00
+#SBATCH --time=00-06:00:00
 #SBATCH --output=log-launching.log
 # Batch system info
 echo "Current working directory: `pwd`"
@@ -35,11 +35,11 @@ echo ""
 # --------------------------------------------------------------------------- #
 
 
-# 0. Important parameters : 
+# 0. Important parameters :
 workdir=$SCRATCH/sw-work
 model_path=$HOME/projects/def-lpnadeau/celiz2/modelSW
 new_filenumber=1
-step_array=(0 5)
+step_array=(0 5 10 25)
 
 
 # 1. Main loop

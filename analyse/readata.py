@@ -317,7 +317,7 @@ if __name__ == "__main__" :
     else : 
         minday = 0
         maxday = 3650
-        outt = 1
+        outt = 10
         dt = 5
         print(f'Minday {minday} // Maxday {maxday} // outt {outt}')
         n = int(input("Nombre de couches?"))        
@@ -342,11 +342,13 @@ if __name__ == "__main__" :
         ds = tls.bintods(outt = outt,
                          datapath='data/',
                          minday = minday,
-                         maxday = maxday,
-                         fields_to_open = ['div1','zeta1','divRHS','curlRHS','curlRHS_CL','UStokes','tauy','divRHS_CL'],
+                         maxday = maxday,                     
+                         fields_to_open = ['curlTauDS', 'curlTauIN', 'curlTauUST', 'curlTau','taux','tauy' ],
                          dt=dt,
         )
 
+
+        #['div1','zeta1','divRHS','curlRHS','curlRHS_CL','UStokes','curlTau','divRHS_CL'],
         #fields_to_open = ['u1','u2','thickness1'],
         #fields_to_open = ['UStokes','VStokes','taux'],
         #fields_to_open = ['divRHS_SC','divRHS_CL','divRHS_BS', 'divTau','divRHS','divUStokes','curlRHS_SC','curlRHS_CL','curlRHS_BS', 'curlTau','curlRHS','curlUStokes','zeta1','div1'],        

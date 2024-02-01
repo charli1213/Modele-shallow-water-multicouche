@@ -1,6 +1,6 @@
 Current working directory: /home/celiz2/projects/def-lpnadeau/celiz2/modelSW/launchers
-Starting run at: Wed Jan 17 16:23:14 EST 2024
-Host:            bc12017.int.ets1.calculquebec.ca
+Starting run at: Mon Jan 29 20:38:04 EST 2024
+Host:            bc12117.int.ets1.calculquebec.ca
 
 !! Using setting for Beluga with fishpack stored at /home/celiz2/projects/def-lpnadeau/celiz2/fishpack-master/lib and lapack at 
 !! Parameters file copied from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW to newcase
@@ -11,7 +11,7 @@ Host:            bc12017.int.ets1.calculquebec.ca
  > Modifiying run-model.slurm file.
  > Copying old restart files.
  > Launching Shallow water model
-Submitted batch job 43914293
+Submitted batch job 44194581
  >>> Going back.
 !! Using setting for Beluga with fishpack stored at /home/celiz2/projects/def-lpnadeau/celiz2/fishpack-master/lib and lapack at 
 !! Parameters file copied from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW to newcase
@@ -22,7 +22,29 @@ Submitted batch job 43914293
  > Modifiying run-model.slurm file.
  > Copying old restart files.
  > Launching Shallow water model
-Submitted batch job 43914299
+Submitted batch job 44194593
+ >>> Going back.
+!! Using setting for Beluga with fishpack stored at /home/celiz2/projects/def-lpnadeau/celiz2/fishpack-master/lib and lapack at 
+!! Parameters file copied from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW to newcase
+!! Compilation of newcase/exec completed on the computer Beluga.
+ > Creating the new file.
+ > Updating exec file and « .inp » files.
+ > Copying exec and parametes files from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW/newcase
+ > Modifiying run-model.slurm file.
+ > Copying old restart files.
+ > Launching Shallow water model
+Submitted batch job 44194594
+ >>> Going back.
+!! Using setting for Beluga with fishpack stored at /home/celiz2/projects/def-lpnadeau/celiz2/fishpack-master/lib and lapack at 
+!! Parameters file copied from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW to newcase
+!! Compilation of newcase/exec completed on the computer Beluga.
+ > Creating the new file.
+ > Updating exec file and « .inp » files.
+ > Copying exec and parametes files from /home/celiz2/projects/def-lpnadeau/celiz2/modelSW/newcase
+ > Modifiying run-model.slurm file.
+ > Copying old restart files.
+ > Launching Shallow water model
+Submitted batch job 44194596
  >>> Going back.
 
-Run ended at: Wed Jan 17 16:23:39 EST 2024
+Run ended at: Mon Jan 29 20:38:58 EST 2024

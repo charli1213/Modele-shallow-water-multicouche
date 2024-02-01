@@ -27,10 +27,10 @@
   write(134,REC=1) ((curlRHS_SC_snap(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(134)
 
-  string35 =  './lowpass_data/curl1_snap'  // '_' // trim(which)
+  string35 =  './lowpass_data/zeta1_snap'  // '_' // trim(which)
   open(unit=135,file=string35,access='DIRECT',&
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
-  write(135,REC=1) ((curl1_snap(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
+  write(135,REC=1) ((zeta1_snap(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(135)
   
   string36 =  './lowpass_data/curlTauUST_snap'  // '_' // trim(which)
@@ -113,3 +113,4 @@
        & form='UNFORMATTED',status='UNKNOWN',RECL=4*(size(isubx)*size(isuby)))
   write(149,REC=1) ((divUStokes_snap(i,j),i=1,nx,subsmprto),j=1,ny,subsmprto)
   close(149)
+

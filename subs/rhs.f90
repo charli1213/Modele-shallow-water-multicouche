@@ -147,17 +147,19 @@
           !
           ! > COUPLED (with WW3)
           if (cou) then
-          ! Stress from coupled model (include step by def.)
-          taux(i,j) = ramp*taux_oc(i,j,2)
-          tauy(i,j) = ramp*tauy_oc(i,j,2)
-          ! Stress from SW model (step no included in terms)
-          taux(i,j) = taux(i,j) + (1.-ramp) * tau0 * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
-          tauy(i,j) = tauy(i,j) + 0.
+             ! Stress from coupled model (include step by def.)
+             taux(i,j) = ramp*taux_oc(i,j,2)
+             tauy(i,j) = ramp*tauy_oc(i,j,2)
+             ! Stress from SW model (step no included in terms)
+             taux(i,j) = taux(i,j) + (1.-ramp) * (tau0/2.) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
+             tauy(i,j) = tauy(i,j) + 0.
+             ! n.b. if use_ramp=.false. then ramp=1 : therefore only coupled tau is used here
 
           ! > UN-COUPLED (Only SW model)
           else ! not (cou)    ! then step is included in SW stress : 
-          taux(i,j) = tau0 * (1.+ramp*step*SIN(REAL(its)*dt*f0)) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
-          tauy(i,j) = 0.
+             taux(i,j) = (1.+ramp*step*SIN(REAL(its)*dt*f0)) * (tau0/2.) * (1-COS(twopi*(jm1-1)/(ny-1)*1.))
+             tauy(i,j) = 0.
+             ! n.b. ramp is only applied to the anomaly in un-coupled cases.
           end if
           
        enddo
